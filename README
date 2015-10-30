@@ -1,0 +1,44 @@
+
+How to build and use js2mpl
+
+  1. cd to your work area and get source code from the following git repositories
+     note all the steps assume you are in the work directory
+      % git clone http://name:passwd@12.234.36.18/Mempool.git
+      % git clone http://name:passwd@12.234.36.18/mapleir.git
+      % git clone http://name:passwd@12.234.36.18/maplebe.git
+      % git clone http://name:passwd@12.234.36.18/libjsrt.git
+      % git clone http://name:passwd@12.234.36.18/mozjs.git
+      % git clone http://name:passwd@12.234.36.18/js2mpl.git
+
+     at this point, the directory structure should look like
+       maple
+         |- js2mpl
+              |- include
+              |- Makefile
+              |- Makefile.in
+              |- README
+              |- src
+              |- tests
+         |- libjsrt
+         |- maplebe
+         |- mapleir
+         |- Mempool
+         |- mozjs
+              |- Makefile
+              |- mozjs-31.2.0
+              |- README
+
+  2. build Mempool, mapleir, maplebe, libjsrt
+      % cd Mempool/src; make
+      % cd mapleir; make
+      % cd maplebe; make
+      % cd libjsrt; make
+
+  3. build mozjs
+      % cd mozjs; make config; make
+
+  4. build js2mpl
+      % cd js2mpl; make
+
+  5. run regression
+      % cd js2mpl/tests; make regression

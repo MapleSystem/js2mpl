@@ -1,0 +1,20 @@
+#========================MAKEFILE.in=====================================
+# G++ as default compiler
+CC=g++
+ifeq ($(DYNAMICLANG_HOST),1)
+  DYNAMICFLAG = -DDYNAMICLANG
+endif
+
+# Compile time flags
+ifeq ($(DEBUG),1)
+  CXXFLAGS = -O0 -g3 -Wall -DDEBUG  $(DYNAMICFLAG)
+else
+  CXXFLAGS = -O0 -g3 -Wall  $(DYNAMICFLAG)
+endif
+
+# Library paths in addition to /usr/lib
+LFLAGS=-std=c++11
+
+AR=ar rcs
+
+MKDIR_P = mkdir -p
