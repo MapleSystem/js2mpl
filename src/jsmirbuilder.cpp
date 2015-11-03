@@ -6,69 +6,7 @@ namespace mapleir {
 // Create jsvalue_type as the JS::Value from mozjs-31.2.0/js/public/Value.h.
 // We only consider littel_endian and 32-bit architectures here.
 MIRType *JSMIRBuilder::CreateJSValueType() {
-
-  MIRType *voidptr = GetOrCreatePointerType(GetVoid());
-  /*
-        union {
-            int32_t        i32;
-            uint32_t       u32;
-            uint32_t       boo;
-            JSString       *str; // NIY
-            JSObject       *obj; // NIY
-            void           *ptr;
-            JSWhyMagic     why; // NIY
-            size_t         word; // NIY
-            uintptr_t      uintptr; // NIY
-        } payload;
-  */
-  FieldVector payload_fields(module_->mp_allocator_.Adapter());
-  stridx_t i32 = GetOrCreateStringIndex("i32");
-  stridx_t u32 = GetOrCreateStringIndex("u32");
-  stridx_t boo = GetOrCreateStringIndex("boo");
-  stridx_t ptr = GetOrCreateStringIndex("ptr");
-  payload_fields.push_back(FieldPair(i32, GetInt32()->_ty_idx));
-  payload_fields.push_back(FieldPair(u32, GetUInt32()->_ty_idx));
-  payload_fields.push_back(FieldPair(boo, GetUInt32()->_ty_idx));
-  payload_fields.push_back(FieldPair(ptr, GetVoidPtr()->_ty_idx));
-  MIRType *payload_type = GetOrCreateUnionType("payload_type", payload_fields);
-  /*
-    struct {
-        union payload;
-        JSValueTag tag;
-    } s;
-  */
-  FieldVector s_fields(module_->mp_allocator_.Adapter());
-  stridx_t payload = GetOrCreateStringIndex("payload");
-  stridx_t tag = GetOrCreateStringIndex("tag");
-  s_fields.push_back(FieldPair(payload, payload_type->_ty_idx));
-  s_fields.push_back(FieldPair(tag, GetUInt32()->_ty_idx));
-  MIRType *s_type = GetOrCreateStructType("s_type", s_fields);
-  /*
-    typedef union jsval_layout
-    {
-        uint64_t asBits;
-        struct s;
-        double asDouble;
-        void *asPtr;
-    } JSVAL_ALIGNMENT jsval_layout;
-  */
-  FieldVector jsval_layout_fields(module_->mp_allocator_.Adapter());
-  stridx_t asBits = GetOrCreateStringIndex("asBits");
-  stridx_t s = GetOrCreateStringIndex("s");
-  stridx_t asDouble = GetOrCreateStringIndex("asDouble");
-  stridx_t asPtr = GetOrCreateStringIndex("asPtr");
-  jsval_layout_fields.push_back(FieldPair(asBits, GetUInt64()->_ty_idx));
-  jsval_layout_fields.push_back(FieldPair(s, s_type->_ty_idx));
-  jsval_layout_fields.push_back(FieldPair(asDouble, GetDouble()->_ty_idx));
-  jsval_layout_fields.push_back(FieldPair(asPtr, GetVoidPtr()->_ty_idx));
-
-  MIRType *jsval_layout_type = GetOrCreateUnionType(
-    "jsval_layout_type", jsval_layout_fields);
-#ifdef DYNAMICLANG
   return GetDynany();
-#else
-  return jsval_layout_type;
-#endif
 }
 
 JSMIRFunction *JSMIRBuilder::CreateJSMain() {
