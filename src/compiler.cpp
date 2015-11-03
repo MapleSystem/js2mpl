@@ -274,14 +274,14 @@ uint32_t JSCompiler::FindIntrinsicForOp(JSOp opcode) {
 // JSOP_STRICTEQ 72
 // JSOP_STRICTNE 73
 BaseNode *JSCompiler::CompileOpBinary(JSOp opcode,
-                                    BaseNode *op0,
-                                    BaseNode *op1) {
-  MIRIntrinsicId idx = (MIRIntrinsicId)FindIntrinsicForOp(opcode);
-  IntrinDesc *intrindesc = &IntrinDesc::intrintable[idx];
-  MIRType *retty = intrindesc->GetReturnType();
-  return jsbuilder_->CreateExprIntrinsicop2(idx, retty, 
-        CheckConvertToJSValueType(op0), CheckConvertToJSValueType(op1));
-
+                                      BaseNode *op0,
+                                      BaseNode *op1) {
+  Opcode mop;
+  switch (opcode) {
+    case JSOP_ADD: mop = OP_add; break;
+    default: assert(0 && "NIY");
+  }
+  return jsbuilder_->CreateExprBinary(mop, jsbuilder_->GetDynany(), op0, op1);
 }
 
 // JSOP_NOT JSOP_BITNOT JSOP_NEG JSOP_POS 32~35
