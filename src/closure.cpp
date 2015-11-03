@@ -124,6 +124,59 @@ void JSClosure::AddFuncFormalsToEnvType(JSMIRFunction *func) {
 }
 
 #ifdef DYNAMICLANG
+// JSOP_DEFFUN 127
+bool JSClosure::ProcessOpDefFun(jsbytecode *pc) {
+  JSFunction *jsfun = currscr_->getFunction(GET_UINT32_INDEX(pc));
+  JSScript *scr = jsfun->nonLazyScript();
+  MIRType *retuen_type = jsvalue_type_;
+  ArgVector arguments(jsbuilder_->module_->mp_allocator_.Adapter());
+  JSAtom *atom = jsfun->displayAtom();
+  DEBUGPRINT2(atom);
+  char *funcname = Util::GetString(atom, mp_, jscontext_);
+  if (!funcname)
+    return false;
+
+  JSMIRFunction *mfun = jsbuilder_->GetOrCreateFunction(funcname, retuen_type, arguments, false);
+  jsbuilder_->module_->AddFunction(mfun);
+  DEBUGPRINT2(mfun);
+
+  ScopeNode *sn = scope_->GetOrCreateSN(funcname);
+  sn->SetFunc(mfun); 
+
+  funcstack_.push(mfun);
+
+  mfun->initAliasList();
+  for (uint32 i = 0; i < jsfun->nargs(); i++) {
+    // char name[10];
+    MapleString argname("_arg", jsbuilder_->module_->mp_);
+    // sprintf(name, "_arg%d\0", i);
+    argname.append(std::to_string(i));
+    arguments.push_back(ArgPair(argname.c_str(), jsbuilder_->GetDynany()));
+  }
+
+  DEBUGPRINT3((sn->IsWithEnv()));
+  if (sn->IsWithEnv()) {
+    GetOrCreateEnvType(mfun);
+    AddFuncFormalsToEnvType(mfun);
+  }
+
+  if (!sn->IsTopLevel() && (sn->IsWithEnv() || sn->UseAliased())) {
+    if (!mfun->with_env_arg) {
+      JSMIRFunction *parent = sn->GetParentFunc();
+      arguments.push_back(ArgPair("env_arguments", parent->envptr));
+      DEBUGPRINTsv3("env_arguments", funcname);
+      mfun->with_env_arg = true;
+    }
+  }
+
+  jsbuilder_->UpdateFunction(mfun, NULL, arguments);
+
+  std::pair<JSScript *, JSMIRFunction *> P(jsfun->nonLazyScript(), mfun);
+  scriptstack_.push(P);
+
+  return true;
+}
+
 #else
 // JSOP_DEFFUN 127
 bool JSClosure::ProcessOpDefFun(jsbytecode *pc) {

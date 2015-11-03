@@ -140,6 +140,8 @@ uint32_t JSCompiler::DetermineTagFromNode(BaseNode *node) {
   } else if (node->op == OP_iread) {
     IreadNode *iread = static_cast<IreadNode *>(node);
     tyidx = iread->tyidx;
+  } else {
+    tyidx = node->ptyp;
   }
   if (tyidx == jsvalue_type_->_ty_idx)
     return JSVALTAGCLEAR;
@@ -736,6 +738,10 @@ BaseNode *JSCompiler::CompileOpIterNext(BaseNode *iterator)
 BaseNode *JSCompiler::CompileOpGetArg(uint32_t i) {
   DEBUGPRINT2(i);
   JSMIRFunction *fun = jsbuilder_->GetCurrentFunction();
+#ifdef DYNAMICLANG
+  MIRSymbol *arg = jsbuilder_->GetFunctionArgument(fun, i);
+  BaseNode *irn = jsbuilder_->CreateExprDread(jsbuilder_->GetDynany(), arg);
+#else
   MIRSymbol *arg = jsbuilder_->GetFunctionArgument(fun, FORMAL_POSITION_IN_ARGS);
   BaseNode *addr = jsbuilder_->CreateExprDread(jsvalue_ptr_, arg);
   if (i != 0) {
@@ -747,8 +753,9 @@ BaseNode *JSCompiler::CompileOpGetArg(uint32_t i) {
                                         addr,
                                         addr_offset);
   }
-  MIRSymbol *temp = CreateTempJSValueTypeVar();
   BaseNode *irn = jsbuilder_->CreateExprIread(jsvalue_type_, jsvalue_ptr_, 0 , addr);
+#endif
+  MIRSymbol *temp = CreateTempJSValueTypeVar();
   jsbuilder_->CreateStmtDassign(temp, 0, irn);
   return jsbuilder_->CreateExprDread(jsvalue_type_, temp);
 }
