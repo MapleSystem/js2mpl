@@ -123,6 +123,8 @@ void JSClosure::AddFuncFormalsToEnvType(JSMIRFunction *func) {
   return;
 }
 
+#ifdef DYNAMICLANG
+#else
 // JSOP_DEFFUN 127
 bool JSClosure::ProcessOpDefFun(jsbytecode *pc) {
   JSFunction *jsfun = currscr_->getFunction(GET_UINT32_INDEX(pc));
@@ -172,6 +174,7 @@ bool JSClosure::ProcessOpDefFun(jsbytecode *pc) {
 
   return true;
 }
+#endif
 
 // JSOP_LAMBDA 131
 void JSClosure::ProcessOpLambda(jsbytecode *pc) {

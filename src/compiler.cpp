@@ -113,6 +113,9 @@ uint32_t JSCompiler::GetTagFromIntrinId(IntrinArgType intrnargtype) {
       return JSVALTAGBOOLEAN;
     case ArgTy_ptr:
       return JSVALTAGINT32;
+#ifdef DYNAMICLANG
+    case ArgTy_dynany:
+#endif
     case ArgTy_jsvalue:  // a special type for java script
       return JSVALTAGCLEAR;
     default:
@@ -470,6 +473,42 @@ BaseNode *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool need_t
   return jsbuilder_->CreateExprDread(retty, temp);
 }
 
+#ifdef DYNAMICLANG
+BaseNode *JSCompiler::CompileOpCall(uint32_t argc, bool construct) {
+  DEBUGPRINT2(argc);
+  // May be call the method of builtin-object, just emit the corresponding intrinsic call.
+  bool need_this = false;
+  int32_t idx = GetBuiltinMethod(argc, construct, &need_this);
+  if (idx != -1) {
+    return CompileBuiltinMethod(idx, argc, need_this);
+  }
+
+  // to reverse the order of args
+  std::vector<BaseNode *> argsvec;
+  for (uint32_t i = 0; i < argc; i++) {
+    // argsvec.insert(argsvec.begin(), Pop());
+    argsvec.push_back(Pop());
+  }
+
+  MapleVector<BaseNode *> args(jsbuilder_->module_->mp_allocator_.Adapter());
+  
+  MIRSymbol *var;
+
+  // impnode: implicitethis - first arg for closure node if needed
+  // funcnode: it is intervened with arg setup
+  BaseNode *impnode = Pop();
+  BaseNode *funcnode = Pop();
+  args.push_back(impnode);
+  for (int32_t i = argc - 1; i >=0; i--)
+    args.push_back(argsvec[i]);
+  DreadNode *dnode = dynamic_cast<DreadNode *>(funcnode);
+  BaseNode *stmt = jsbuilder_->CreateStmtCall(dnode->stidx, args);
+  jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
+  MIRSymbol *retrunVar = CreateTempVar(jsvalue_type_);
+  jsbuilder_->SaveReturnValue(retrunVar);
+  return jsbuilder_->CreateExprDread(jsvalue_type_, 0, retrunVar);
+}
+#else
 BaseNode *JSCompiler::CompileOpCall(uint32_t argc, bool construct) {
   DEBUGPRINT2(argc);
   // May be call the method of builtin-object, just emit the corresponding intrinsic call.
@@ -538,6 +577,7 @@ BaseNode *JSCompiler::CompileOpCall(uint32_t argc, bool construct) {
 
   return NULL;
 }
+#endif
 
 // JSOP_NAME 59
 BaseNode *JSCompiler::CompileOpName(JSAtom *atom) {
@@ -596,15 +636,19 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom) {
   stridx_t stridx = jsbuilder_->GetStringIndex(name);
   // ??? Generate a dread node to pass the name.
   MIRSymbol *var;
+  bool isfuncname = false;
   if (scope_->IsFunction(name)) {
+#ifndef DYNAMICLANG
     name = Util::GetNameWithSuffix(name, "__obj", mp_);
+#endif
+    isfuncname = true;
     DEBUGPRINT2(name);
   }
   bool create_p = false;
   if (!jsbuilder_->GetStringIndex(name))
     create_p = true;
 
-  if (jsbuilder_->IsGlobalName(name)) {
+  if (jsbuilder_->IsGlobalName(name) || isfuncname) {
     var = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalue_type_);
   } else {
     var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_);
@@ -1065,6 +1109,8 @@ bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
   funcstack_.push(mfun);
 
   jsbuilder_->SetCurrentFunction(jsmain_);
+#ifdef DYNAMICLANG
+#else
   MIRSymbol *func = jsbuilder_->GetOrCreateGlobalDecl(funcname, jsvalue_type_);
   BaseNode *ptr = jsbuilder_->CreateExprAddrof(0, func);
   MapleVector<BaseNode *> arguments(jsbuilder_->module_->mp_allocator_.Adapter());
@@ -1078,6 +1124,7 @@ bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
   MIRSymbol *func_var = jsbuilder_->GetOrCreateGlobalDecl(objname, jsvalue_type_);
   BaseNode *stmt = jsbuilder_->CreateStmtDassign(func_var, 0, bn);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
+#endif
   jsbuilder_->SetCurrentFunction(mfun);
 
   CompileScript(scr);
