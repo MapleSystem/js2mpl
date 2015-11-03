@@ -739,7 +739,7 @@ BaseNode *JSCompiler::CompileOpGetArg(uint32_t i) {
   DEBUGPRINT2(i);
   JSMIRFunction *fun = jsbuilder_->GetCurrentFunction();
 #ifdef DYNAMICLANG
-  MIRSymbol *arg = jsbuilder_->GetFunctionArgument(fun, i);
+  MIRSymbol *arg = jsbuilder_->GetFunctionArgument(fun, i+1);  // skip one for this parameter
   BaseNode *irn = jsbuilder_->CreateExprDread(jsbuilder_->GetDynany(), arg);
 #else
   MIRSymbol *arg = jsbuilder_->GetFunctionArgument(fun, FORMAL_POSITION_IN_ARGS);

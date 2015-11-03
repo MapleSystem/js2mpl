@@ -146,6 +146,7 @@ bool JSClosure::ProcessOpDefFun(jsbytecode *pc) {
   funcstack_.push(mfun);
 
   mfun->initAliasList();
+  arguments.push_back(ArgPair("_this", jsbuilder_->GetDynany()));
   for (uint32 i = 0; i < jsfun->nargs(); i++) {
     // char name[10];
     MapleString argname("_arg", jsbuilder_->module_->mp_);
