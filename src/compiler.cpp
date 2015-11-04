@@ -114,6 +114,17 @@ uint32_t JSCompiler::GetTagFromIntrinId(IntrinArgType intrnargtype) {
     case ArgTy_ptr:
       return JSVALTAGINT32;
 #ifdef DYNAMICLANG
+    case ArgTy_dynu32:
+    case ArgTy_dyni32:
+    case ArgTy_dynundef:
+    case ArgTy_dynnull:
+    case ArgTy_dynhole:
+    case ArgTy_dynbool:
+    case ArgTy_dynptr:
+    case ArgTy_dynf64:
+    case ArgTy_dynf32:
+    case ArgTy_dynstr:
+    case ArgTy_dynobj:
     case ArgTy_dynany:
 #endif
     case ArgTy_jsvalue:  // a special type for java script
