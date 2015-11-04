@@ -16,10 +16,10 @@
 #include "mapleir/include/mirmodule.h"
 #include "mapleir/include/mirpreg.h"
 #include "mapleir/include/printing.h"
-#include "js2mpl/include/jsfunction.h"
-#include "js2mpl/include/jsmirbuilder.h"
-#include "js2mpl/include/scope.h"
-#include "js2mpl/include/operandstack.h"
+#include "js2mpl-vm/include/jsfunction.h"
+#include "js2mpl-vm/include/jsmirbuilder.h"
+#include "js2mpl-vm/include/scope.h"
+#include "js2mpl-vm/include/operandstack.h"
 namespace mapleir {
 
 class JSClosure {
@@ -75,6 +75,7 @@ class JSClosure {
     MIRSymbol *GetSymbolFromEnclosingScope(JSMIRFunction *func, stidx_t stidx);
 
     void ProcessAliasedVar(jsbytecode *pc);
+    JSMIRFunction *ProcessFunc(JSFunction *jsfun, char *funcname);
     void ProcessOpLambda(jsbytecode *pc);
     bool ProcessOpDefFun(jsbytecode *pc);
     void AddFuncFormalsToEnvType(JSMIRFunction *func);

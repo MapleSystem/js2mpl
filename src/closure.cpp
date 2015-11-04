@@ -1,7 +1,7 @@
 /// Copyright [year] <Copyright Owner>
 #include <string>
 #include "js/src/vm/ScopeObject.h"
-#include "js2mpl/include/closure.h"
+#include "js2mpl-vm/include/closure.h"
 
 namespace mapleir {
 
@@ -123,6 +123,58 @@ void JSClosure::AddFuncFormalsToEnvType(JSMIRFunction *func) {
   return;
 }
 
+JSMIRFunction *JSClosure::ProcessFunc(JSFunction *jsfun, char *funcname) {
+  MIRType *retuen_type = jsvalue_type_;
+  ArgVector arguments(jsbuilder_->module_->mp_allocator_.Adapter());
+
+  JSMIRFunction *func = jsbuilder_->GetOrCreateFunction(funcname, retuen_type, arguments, false);
+  jsbuilder_->module_->AddFunction(func);
+  DEBUGPRINT2(func);
+
+  ScopeNode *sn = scope_->GetOrCreateSN(funcname);
+  sn->SetFunc(func);
+
+  func->initAliasList();
+  arguments.push_back(ArgPair("_this", jsbuilder_->GetDynany()));
+
+  DEBUGPRINT3((sn->IsWithEnv()));
+  if (sn->IsWithEnv()) {
+    GetOrCreateEnvType(func);
+    AddFuncFormalsToEnvType(func);
+  }
+
+  if (!sn->IsTopLevel() && (sn->IsWithEnv() || sn->UseAliased())) {
+    if (!func->with_env_arg) {
+      JSMIRFunction *parent = sn->GetParentFunc();
+      arguments.push_back(ArgPair("_env", parent->envptr));
+      DEBUGPRINTsv3("_env", funcname);
+      func->with_env_arg = true;
+    }
+  }
+
+#if 0
+  // set dummy _env
+  if (!func->with_env_arg) {
+    arguments.push_back(ArgPair("_env", jsbuilder_->GetVoidPtr()));
+  }
+#endif
+
+  for (uint32 i = 0; i < jsfun->nargs(); i++) {
+    // char name[10];
+    MapleString argname("_arg", jsbuilder_->module_->mp_);
+    // sprintf(name, "_arg%d\0", i);
+    argname.append(std::to_string(i));
+    arguments.push_back(ArgPair(argname.c_str(), jsbuilder_->GetDynany()));
+  }
+
+  jsbuilder_->UpdateFunction(func, NULL, arguments);
+
+  std::pair<JSScript *, JSMIRFunction *> P(jsfun->nonLazyScript(), func);
+  scriptstack_.push(P);
+
+  return func;
+}
+
 #ifdef DYNAMICLANG
 // JSOP_DEFFUN 127
 bool JSClosure::ProcessOpDefFun(jsbytecode *pc) {
@@ -136,44 +188,9 @@ bool JSClosure::ProcessOpDefFun(jsbytecode *pc) {
   if (!funcname)
     return false;
 
-  JSMIRFunction *mfun = jsbuilder_->GetOrCreateFunction(funcname, retuen_type, arguments, false);
-  jsbuilder_->module_->AddFunction(mfun);
-  DEBUGPRINT2(mfun);
+  JSMIRFunction *func = ProcessFunc(jsfun, funcname);
 
-  ScopeNode *sn = scope_->GetOrCreateSN(funcname);
-  sn->SetFunc(mfun); 
-
-  funcstack_.push(mfun);
-
-  mfun->initAliasList();
-  arguments.push_back(ArgPair("_this", jsbuilder_->GetDynany()));
-  for (uint32 i = 0; i < jsfun->nargs(); i++) {
-    // char name[10];
-    MapleString argname("_arg", jsbuilder_->module_->mp_);
-    // sprintf(name, "_arg%d\0", i);
-    argname.append(std::to_string(i));
-    arguments.push_back(ArgPair(argname.c_str(), jsbuilder_->GetDynany()));
-  }
-
-  DEBUGPRINT3((sn->IsWithEnv()));
-  if (sn->IsWithEnv()) {
-    GetOrCreateEnvType(mfun);
-    AddFuncFormalsToEnvType(mfun);
-  }
-
-  if (!sn->IsTopLevel() && (sn->IsWithEnv() || sn->UseAliased())) {
-    if (!mfun->with_env_arg) {
-      JSMIRFunction *parent = sn->GetParentFunc();
-      arguments.push_back(ArgPair("env_arguments", parent->envptr));
-      DEBUGPRINTsv3("env_arguments", funcname);
-      mfun->with_env_arg = true;
-    }
-  }
-
-  jsbuilder_->UpdateFunction(mfun, NULL, arguments);
-
-  std::pair<JSScript *, JSMIRFunction *> P(jsfun->nonLazyScript(), mfun);
-  scriptstack_.push(P);
+  funcstack_.push(func);
 
   return true;
 }
@@ -230,6 +247,29 @@ bool JSClosure::ProcessOpDefFun(jsbytecode *pc) {
 }
 #endif
 
+#ifdef DYNAMICLANG
+// JSOP_LAMBDA 131
+void JSClosure::ProcessOpLambda(jsbytecode *pc) {
+  JSFunction *jsfun = currscr_->getFunction(GET_UINT32_INDEX(pc));
+  JSAtom *atom = jsfun->displayAtom();
+
+  // isLambda() does not seem reliable
+  DEBUGPRINT3((jsfun->isLambda()));
+  // we already know it is a Lambda so only check other two parts in isNamedLambda()
+  // isLambda() && displayAtom() && !hasGuessedAtom()
+  // if((jsfun->isNamedLambda()))
+  char *funcname;
+  if (atom && !jsfun->hasGuessedAtom())
+    funcname = Util::GetString(atom, mp_, jscontext_);
+  else
+    funcname = scope_->GetAnonyFunctionName(pc);
+
+  ProcessFunc(jsfun, funcname);
+
+  return;
+}
+
+#else
 // JSOP_LAMBDA 131
 void JSClosure::ProcessOpLambda(jsbytecode *pc) {
   JSFunction *jsfun = currscr_->getFunction(GET_UINT32_INDEX(pc));
@@ -284,6 +324,7 @@ void JSClosure::ProcessOpLambda(jsbytecode *pc) {
 
   return;
 }
+#endif
 
 bool JSClosure::IsLocalVar(JSMIRFunction *func, char *name) {
   typedef std::pair<JSFunction *, std::vector<JSAtom *>> funcVarVec;
@@ -330,6 +371,7 @@ void JSClosure::ProcessAliasedVar(jsbytecode *pc) {
   char *name = Util::GetString(atom, mp_, jscontext_);
   if (!name)
     return;
+  DEBUGPRINT3(name);
   ScopeNode *sn = scope_->GetOrCreateSN(func);
   ScopeNode *psn = sn->GetParent();
   JSMIRFunction *parent = psn->GetFunc();
@@ -421,6 +463,7 @@ bool JSClosure::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *
   while (pc < pcend) {
     JSOp op = JSOp(*pc);
     JSScript *scr;
+    DEBUGPRINT3((Util::getOpcodeName[op]));
 
     Util::SetIndent(4);
 

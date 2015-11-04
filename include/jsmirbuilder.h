@@ -2,7 +2,7 @@
 #ifndef JS2MPL_INCLUDE_JSMIRBUILDER_H_
 #define JS2MPL_INCLUDE_JSMIRBUILDER_H_
 #include "mapleir/include/mirbuilder.h"
-#include "js2mpl/include/scope.h"
+#include "js2mpl-vm/include/scope.h"
 namespace mapleir {
 
 class JSMIRBuilder : public MIRBuilder {

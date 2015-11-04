@@ -7,8 +7,8 @@
 #include "js/src/jscntxt.h"
 #include "js/src/jsatominlines.h"
 #include "mapleir/include/mirnodes.h"
-#include "js2mpl/include/jsfunction.h"
-#include "js2mpl/include/util.h"
+#include "js2mpl-vm/include/jsfunction.h"
+#include "js2mpl-vm/include/util.h"
 
 int js2mplDebug = 0;
 int js2mplDebugIndent = 0;

@@ -8,8 +8,8 @@
 #include "js/src/jsfun.h"
 #include "js/src/jsatom.h"
 #include "mapleir/include/mirnodes.h"
-#include "js2mpl/include/jsfunction.h"
-#include "js2mpl/include/util.h"
+#include "js2mpl-vm/include/jsfunction.h"
+#include "js2mpl-vm/include/util.h"
 
 namespace mapleir {
 class ScopeNode {

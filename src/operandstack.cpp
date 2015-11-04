@@ -1,6 +1,6 @@
 /// Copyright [year] <Copyright Owner>
-#include "js2mpl/include/operandstack.h"
-#include "js2mpl/include/compiler.h"
+#include "js2mpl-vm/include/operandstack.h"
+#include "js2mpl-vm/include/compiler.h"
 
 namespace mapleir {
 

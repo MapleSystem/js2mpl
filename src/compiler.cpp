@@ -11,7 +11,7 @@
 #include "js/src/jscntxt.h"
 #include "js/src/jsatominlines.h"
 #include "js/src/vm/ScopeObject.h"
-#include "js2mpl/include/compiler.h"
+#include "js2mpl-vm/include/compiler.h"
 
 namespace mapleir {
 

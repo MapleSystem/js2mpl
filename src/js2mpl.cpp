@@ -7,8 +7,8 @@
 #include <sstream>
 #include "js/src/jsapi.h"
 #include "js/src/jscntxt.h"
-#include "js2mpl/include/js2mpl.h"
-#include "js2mpl/include/compiler.h"
+#include "js2mpl-vm/include/js2mpl.h"
+#include "js2mpl-vm/include/compiler.h"
 
 maplemp::MemPoolCtrler Mpc;
 mapleir::MIRModule mapleir::themodule(Mpc);
@@ -27,6 +27,10 @@ int main(int argc, const char *argv[]) {
   // use OPT_DUMPJSOPONLY to only dump JSOP code
   if (js2mplDebug == OPT_DUMPJSOPONLY)
     return 0;
+
+  if (js2mplDebug > 0)
+    mapleir::themodule.dump();
+
   // form output file name
   std::string file_name(fn);
   unsigned lastdot = file_name.find_last_of(".");

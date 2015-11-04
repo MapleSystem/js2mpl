@@ -3,7 +3,7 @@
 #define JS2MPL_INCLUDE_OPERANDSTACK_H_
 #include <assert.h>
 #include <vector>
-#include "../../mapleir/include/mirbuilder.h"
+#include "mapleir/include/mirbuilder.h"
 #include "util.h"
 
 namespace mapleir {

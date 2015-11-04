@@ -11,9 +11,9 @@ extern int js2mplDebugIndent;
 #define DEADBEEF 0xdeadbeef
 
 #define THIS_POSITION_IN_ARGS 0
-#define FORMAL_POSITION_IN_ARGS 1
-#define LENGTH_POSITION_IN_ARGS 2
-#define ENV_POSITION_IN_ARGS 3
+#define ENV_POSITION_IN_ARGS 1
+#define FORMAL_POSITION_IN_ARGS 2
+//#define LENGTH_POSITION_IN_ARGS 3
 
 // js2mpl options, using neg numbers
 #define OPT_DUMPJSOPONLY -100

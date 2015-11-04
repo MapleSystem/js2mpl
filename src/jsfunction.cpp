@@ -1,6 +1,6 @@
 /// Copyright [year] <Copyright Owner>
 #include <string>
-#include "js2mpl/include/jsfunction.h"
+#include "js2mpl-vm/include/jsfunction.h"
 
 namespace mapleir {
 

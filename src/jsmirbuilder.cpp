@@ -1,6 +1,6 @@
 /// Copyright [year] <Copyright Owner>
 #include <string>
-#include "js2mpl/include/jsmirbuilder.h"
+#include "js2mpl-vm/include/jsmirbuilder.h"
 
 namespace mapleir {
 // Create jsvalue_type as the JS::Value from mozjs-31.2.0/js/public/Value.h.
