@@ -27,8 +27,22 @@ int main(int argc, const char *argv[]) {
   // use OPT_DUMPJSOPONLY to only dump JSOP code
   if (js2mplDebug == OPT_DUMPJSOPONLY)
     return 0;
+  // form output file name
+  std::string file_name(fn);
+  unsigned lastdot = file_name.find_last_of(".");
+  std::string out_file_name;
+  if (lastdot == std::string::npos)
+    out_file_name = file_name.append(".mpl");
+  else out_file_name = file_name.substr(0, lastdot).append(".mpl");
+  std::ofstream mplfile;
+  mplfile.open(out_file_name.c_str(), std::ios::trunc);
+  // save and then change cout's buffer to that of mplfile
+  std::streambuf *backup = std::cout.rdbuf();
+  std::cout.rdbuf(mplfile.rdbuf());
   mapleir::themodule.flavor_ = mapleir::FEproduced;
-  mapleir::themodule.dump();
+  mapleir::themodule.dump();  // write out generated Maple IR
+  std::cout.rdbuf(backup);  // restore cout's buffer
+  mplfile.close();
   return 0;
 }
 
