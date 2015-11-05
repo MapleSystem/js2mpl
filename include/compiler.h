@@ -160,13 +160,14 @@ class JSCompiler{
   BaseNode *CompileOpName(JSAtom *atom);
   BaseNode *CompileOpIfJump(JSOp op, BaseNode *cond, jsbytecode *pcend);
   
-  MIRLabel *GetorCreateLabelofPc(jsbytecode *pc);
+  MIRLabel *GetorCreateLabelofPc(jsbytecode *pc, char *pref = NULL);
   int64_t GetIntValue(jsbytecode *pc);
   BaseNode *CompileOpCondSwitch(BaseNode *opnd, JSScript *script,
                                 jsbytecode *pcstart, jsbytecode *pcend);
   BaseNode *CompileOpTableSwitch(BaseNode *opnd, int32_t len,
                                  JSScript *script, jsbytecode *pc);
   BaseNode *CompileOpGoto(jsbytecode *pc, MIRSymbol *tempvar);
+  BaseNode *CompileOpGosub(jsbytecode *pc);
   BaseNode *CompileOpLoopHead(jsbytecode *pc);
   BaseNode *CheckConvertToJSValueType(BaseNode *node);
   BaseNode *CheckConvertToBoolean(BaseNode *node);

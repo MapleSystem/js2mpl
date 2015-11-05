@@ -1492,12 +1492,12 @@ BaseNode *JSCompiler::CompileOpTableSwitch(BaseNode *opnd, int32_t len,
   return stmt;
 }
 
-MIRLabel *JSCompiler::GetorCreateLabelofPc(jsbytecode *pc) {
+MIRLabel *JSCompiler::GetorCreateLabelofPc(jsbytecode *pc, char *pref) {
   MIRLabel *mirlabel = NULL;
   if (label_map_[pc] != 0) {
     mirlabel = label_map_[pc];
   } else {
-    const char *temp_name = Util::GetSequentialName("label", temp_var_no_, mp_);
+    const char *temp_name = Util::GetSequentialName(pref ? pref : "label", temp_var_no_, mp_);
     mirlabel = jsbuilder_->GetorCreateMIRLabel(temp_name);
     label_map_[pc] = mirlabel;
   }
@@ -1506,11 +1506,18 @@ MIRLabel *JSCompiler::GetorCreateLabelofPc(jsbytecode *pc) {
 
 BaseNode *JSCompiler::CompileOpGoto(jsbytecode *pc, MIRSymbol *tempvar) {
   MIRLabel *mirlabel = GetorCreateLabelofPc(pc);
-  BaseNode* gotonode = jsbuilder_->CreateStmtGoto(mirlabel->lab_idx);
+  BaseNode* gotonode = jsbuilder_->CreateStmtGoto(OP_goto, mirlabel->lab_idx);
   jsbuilder_->AddStmtInCurrentFunctionBody(gotonode);
   if (tempvar)  // the label will be the merge point of a conditional expression
     label_tempvar_map_[mirlabel] = tempvar;
   return gotonode;
+}
+
+BaseNode *JSCompiler::CompileOpGosub(jsbytecode *pc) {
+  MIRLabel *mirlabel = GetorCreateLabelofPc(pc, "h@");
+  BaseNode* gosubnode = jsbuilder_->CreateStmtGoto(OP_gosub, mirlabel->lab_idx);
+  jsbuilder_->AddStmtInCurrentFunctionBody(gosubnode);
+  return gosubnode;
 }
 
 BaseNode *JSCompiler::CompileOpLoopHead(jsbytecode *pc) {
@@ -2482,7 +2489,11 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         Push(newid);
         break;
       }
-      case JSOP_GOSUB: /*116, 5, 0, 0*/  { NOTHANDLED; break; }
+      case JSOP_GOSUB: /*116, 5, 0, 0*/  {
+        int offset = GET_JUMP_OFFSET(pc);
+        CompileOpGosub(pc + offset);
+        break;
+      }
       case JSOP_RETSUB: /*117, 1, 2, 0*/  { SIMULATESTACK(2, 0); break; }
       case JSOP_EXCEPTION: /*118, 1, 0, 1*/  { SIMULATESTACK(0, 1); break; }
       case JSOP_FINALLY: /*135, 1, 0, 2*/  { SIMULATESTACK(0, 2); break; }
