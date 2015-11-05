@@ -1219,10 +1219,7 @@ BaseNode *JSCompiler::CompileOpLambda(jsbytecode *pc) {
 
   MapleVector<BaseNode *> arguments(jsbuilder_->module_->mp_allocator_.Adapter());
   arguments.push_back(ptr);
-#ifdef JS_NEW_FUNCTION
-#else
   arguments.push_back(jsbuilder_->GetConstInt(-1-jsfun->nargs()));
-#endif
   arguments.push_back(node);
   arguments.push_back(jsbuilder_->GetConstUInt32(jsfun->strict()));
   arguments.push_back(jsbuilder_->GetConstInt(0));
