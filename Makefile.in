@@ -1,9 +1,8 @@
 #========================MAKEFILE.in=====================================
 # G++ as default compiler
 CC=g++
-ifeq ($(DYNAMICLANG),1)
-  DYNAMICFLAG = -DDYNAMICLANG -m32
-endif
+#DYNAMICFLAG = -DDYNAMICLANG -m32
+DYNAMICFLAG = -DDYNAMICLANG
 
 ifeq ($(DYNAMICLANG_HOST),1)
   DYNAMICFLAG = -DDYNAMICLANG

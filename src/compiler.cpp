@@ -291,7 +291,16 @@ BaseNode *JSCompiler::CompileOpBinary(JSOp opcode,
                                       BaseNode *op1) {
   Opcode mop;
   switch (opcode) {
+    case JSOP_EQ: mop = OP_eq; break;
+    case JSOP_NE: mop = OP_ne; break;
+    case JSOP_LT: mop = OP_lt; break;
+    case JSOP_LE: mop = OP_le; break;
+    case JSOP_GT: mop = OP_gt; break;
+    case JSOP_GE: mop = OP_ge; break;
     case JSOP_ADD: mop = OP_add; break;
+    case JSOP_SUB: mop = OP_sub; break;
+    case JSOP_MUL: mop = OP_mul; break;
+    case JSOP_DIV: mop = OP_div; break;
     default: assert(0 && "NIY");
   }
   return jsbuilder_->CreateExprBinary(mop, jsbuilder_->GetDynany(), op0, op1);
@@ -1210,7 +1219,10 @@ BaseNode *JSCompiler::CompileOpLambda(jsbytecode *pc) {
 
   MapleVector<BaseNode *> arguments(jsbuilder_->module_->mp_allocator_.Adapter());
   arguments.push_back(ptr);
+#ifdef JS_NEW_FUNCTION
+#else
   arguments.push_back(jsbuilder_->GetConstInt(-1-jsfun->nargs()));
+#endif
   arguments.push_back(node);
   arguments.push_back(jsbuilder_->GetConstUInt32(jsfun->strict()));
   arguments.push_back(jsbuilder_->GetConstInt(0));
@@ -1665,6 +1677,27 @@ void JSCompiler::EnvInit(JSMIRFunction *func) {
     jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   }
 
+#ifdef DYNAMICLANG
+  // set up arguments in env
+  BaseNode *env = jsbuilder_->CreateExprDread(env_ptr, 0, env_var);
+
+  std::vector<funcArgPair>::iterator I;
+  for (I = funcFormals.begin(); I != funcFormals.end(); I++) {
+    if (func == (*I).first) {
+      std::vector<char *>::iterator IN;
+      int i = (func->with_env_arg) ? 2 : 1;
+      for (IN = (*I).second.begin(); IN != (*I).second.end(); IN++, i++) {
+        MIRSymbol *arg = jsbuilder_->GetFunctionArgument(func, i);
+        BaseNode *addr = jsbuilder_->CreateExprDread(jsvalue_ptr_, 0, arg);
+        bn = jsbuilder_->CreateExprIread(jsvalue_type_, jsvalue_ptr_, 0, addr);
+        uint32_t id = jsbuilder_->GetStructFieldIdFromFieldName(env_type, *IN);
+        stmt = jsbuilder_->CreateStmtIassign(env_ptr, id, env, bn);
+        jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
+      }
+      break;
+    }
+  }
+#else
   // set up arguments in env
   MIRSymbol *formal = jsbuilder_->GetFunctionArgument(func, FORMAL_POSITION_IN_ARGS);
   BaseNode *base = jsbuilder_->CreateExprDread(jsvalue_ptr_, 0, formal);
@@ -1696,6 +1729,7 @@ void JSCompiler::EnvInit(JSMIRFunction *func) {
       break;
     }
   }
+#endif
 
   return;
 }

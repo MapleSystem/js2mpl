@@ -16,7 +16,8 @@ DEPS :=$(foreach dep, $(DEP), $(BUILD)/$(dep))
 MOZSRC=$(JS2MPLDIR)/../mozjs/mozjs-31.2.0
 MOZBUILD=$(JS2MPLDIR)/../mozjs/mozjs-build
 MAPLELIB=$(JS2MPLDIR)/../mapleir/build/IRBuild/libmpl.a
-LIBS=-L $(MOZBUILD)/dist/lib -ljs_static -lpthread -ldl
+#LIBS=-L $(MOZBUILD)/dist/lib -ljs_static -lpthread -ldl
+LIBS=-L $(MOZBUILD)/dist/lib -ljs_static -lz -lpthread -ldl
 
 INCLUDES = -I $(MAPLEROOT) \
            -I $(MOZBUILD)/dist/include \
@@ -44,7 +45,8 @@ DIRECTORIES:
 	$(MKDIR_P) $(BUILD)
 
 $(EXE): $(OBJ) $(MAPLELIB)
-	$(CC) $(CXXFLAGS) -o $(BUILD)/$(EXE) $(OBJS) $(MAPLELIB) $(LIBS)
+	#$(CC) $(CXXFLAGS) -o $(BUILD)/$(EXE) $(OBJS) $(MAPLELIB) $(LIBS)
+	$(CC) -o $(BUILD)/$(EXE) $(OBJS) $(MAPLELIB) $(LIBS)
 
 .cpp.o: $(BUILD)/$*.d
 	$(CC) $(CXXFLAGS) $(LFLAGS) $(INCLUDES) -w -c $(CURDIR)/$*.cpp -o $(BUILD)/$*.o
