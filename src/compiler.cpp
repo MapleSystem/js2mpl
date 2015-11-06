@@ -758,8 +758,9 @@ BaseNode *JSCompiler::CompileOpIterNext(BaseNode *iterator)
 BaseNode *JSCompiler::CompileOpGetArg(uint32_t i) {
   DEBUGPRINT2(i);
   JSMIRFunction *fun = jsbuilder_->GetCurrentFunction();
+  int start = (fun->with_env_arg) ? 2 : 1;
 #ifdef DYNAMICLANG
-  MIRSymbol *arg = jsbuilder_->GetFunctionArgument(fun, i+1);  // skip one for this parameter
+  MIRSymbol *arg = jsbuilder_->GetFunctionArgument(fun, i+start);  // skip this and env parameters
   BaseNode *irn = jsbuilder_->CreateExprDread(jsbuilder_->GetDynany(), arg);
 #else
   MIRSymbol *arg = jsbuilder_->GetFunctionArgument(fun, FORMAL_POSITION_IN_ARGS);
@@ -784,6 +785,11 @@ BaseNode *JSCompiler::CompileOpGetArg(uint32_t i) {
 void JSCompiler::CompileOpSetArg(uint32_t i, BaseNode *val) {
   DEBUGPRINT2(i);
   JSMIRFunction *fun = jsbuilder_->GetCurrentFunction();
+  int start = (fun->with_env_arg) ? 2 : 1;
+#ifdef DYNAMICLANG
+  MIRSymbol *arg = jsbuilder_->GetFunctionArgument(fun, i+start);  // skip this and env parameters
+  BaseNode *addr = jsbuilder_->CreateExprDread(jsbuilder_->GetDynany(), arg);
+#else
   MIRSymbol *arg = jsbuilder_->GetFunctionArgument(fun, FORMAL_POSITION_IN_ARGS);
   BaseNode *addr = jsbuilder_->CreateExprDread(jsvalue_ptr_, arg);
   if (i != 0) {
@@ -795,6 +801,7 @@ void JSCompiler::CompileOpSetArg(uint32_t i, BaseNode *val) {
                                         addr,
                                         addr_offset);
   }
+#endif
   BaseNode *stmt = jsbuilder_->CreateStmtIassign(jsvalue_ptr_, 0, addr, val);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return;
