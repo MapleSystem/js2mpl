@@ -4,6 +4,7 @@ EXE=js2mpl
 
 JS2MPLDIR = $(CURDIR)/..
 MAPLEROOT = $(JS2MPLDIR)/..
+MAPLEALL = $(JS2MPLDIR)/../mapleall
 BUILD=$(JS2MPLDIR)/build
 
 SRC=$(wildcard *.cpp)
@@ -20,6 +21,7 @@ MAPLELIB=$(JS2MPLDIR)/../mapleir/build/IRBuild/libmpl.a
 LIBS=-L $(MOZBUILD)/dist/lib -ljs_static -lz -lpthread -ldl
 
 INCLUDES = -I $(MAPLEROOT) \
+           -I $(MAPLEALL) \
            -I $(MOZBUILD)/dist/include \
            -I $(MOZBUILD)/dist/system_wrappers \
            -include $(MOZSRC)/config/gcc_hidden.h  \
