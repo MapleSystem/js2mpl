@@ -1,12 +1,7 @@
 #========================MAKEFILE.in=====================================
 # G++ as default compiler
 CC=g++
-#DYNAMICFLAG = -DDYNAMICLANG -m32
-DYNAMICFLAG = -DDYNAMICLANG
-
-ifeq ($(DYNAMICLANG_HOST),1)
-  DYNAMICFLAG = -DDYNAMICLANG
-endif
+DYNAMICFLAG = -DDYNAMICLANG -m32
 
 # Compile time flags
 ifeq ($(DEBUG),1)
