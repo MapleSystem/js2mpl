@@ -4,7 +4,7 @@ EXE=js2mpl
 
 JS2MPLDIR = $(CURDIR)/..
 MAPLEROOT = $(JS2MPLDIR)/..
-MAPLEALL = $(JS2MPLDIR)/../mapleall
+MAPLEALL = $(MAPLEROOT)/mapleall
 BUILD=$(JS2MPLDIR)/build
 
 SRC=$(wildcard *.cpp)
@@ -14,9 +14,9 @@ DEP=$(SRC:.cpp=.d)
 OBJS :=$(foreach obj, $(OBJ), $(BUILD)/$(obj))
 DEPS :=$(foreach dep, $(DEP), $(BUILD)/$(dep))
 
-MOZSRC=$(JS2MPLDIR)/../mozjs/mozjs-31.2.0
-MOZBUILD=$(JS2MPLDIR)/../mozjs/mozjs-build
-MAPLELIB=$(JS2MPLDIR)/../mapleir/build/IRBuild/libmpl.a
+MOZSRC=$(MAPLEROOT)/mozjs/mozjs-31.2.0
+MOZBUILD=$(MAPLEROOT)/mozjs/mozjs-build
+MAPLELIB=$(MAPLEALL)/mapleir/build/IRBuild/libmpl.a
 #LIBS=-L $(MOZBUILD)/dist/lib -ljs_static -lpthread -ldl
 LIBS=-L $(MOZBUILD)/dist/lib -ljs_static -lz -lpthread -ldl
 
