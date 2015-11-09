@@ -4,11 +4,17 @@ ifndef OPT
 	OPT = 0
 endif
 
-TARGS = src tests
+TARGS = mapleall mozjs src tests
 
 all: $(TARGS)
 build: src
 test: tests
+
+mapleall:
+	$(MAKE) -C ../mapleall
+
+mozjs:
+	$(MAKE) -C ../mozjs
 
 src:
 	$(MAKE) -C $@
