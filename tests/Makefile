@@ -21,17 +21,9 @@ MMPL=$(SRC:.js=.mmpl)
 CASE=$(SRC:.js=)
 
 all: DIRECTORIES
-	@echo "=================== usage ====================="
-	@echo "= test single case:     make case-name"
-	#@echo "= checkin test:         make checkin"
-	#@echo "= regression test:      make regression"
-	@echo "==============================================="
-	#echo SUBDIR=$(SUBDIR)
-	#echo MODULES=$(MODULES)
-	#echo SRCDIR=$(SRCDIR)
-	#echo SRC0=$(SRC0)
-	#echo SRC=$(SRC)
-	#echo CASE=$(CASE)
+	@echo "=================== usage ========================="
+	@echo "= test single case:     make foo will test foo.js ="
+	@echo "==================================================="
 
 genmpl: $(MPL)
 genmmpl: $(MMPL)
