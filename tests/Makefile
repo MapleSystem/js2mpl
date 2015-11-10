@@ -44,15 +44,18 @@ DIRECTORIES:
 	$(MAPLEINTERPRETER) $(BUILD)/$*.mmpl
 	@echo ""
 
-#todo: run
+src:
+	$(MAKE) -C ../$@
 
-#run:
-#	@./todo-tests.pl
+todo: run
 
-#checkin: regression
+run:
+	@./todo-tests.pl
 
-#regression:
-#	@./regression-tests.pl $(OPT)
+checkin: regression
+
+regression:
+	@./regression-tests.pl $(OPT)
 
 clean:
 	rm -f $(BUILD)/*
