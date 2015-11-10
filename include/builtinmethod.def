@@ -1,0 +1,9 @@
+/// Copyright [year] <Copyright Owner>
+DEFBUILTINMETHOD(__js_builtin_StringConstructor, INTRN_JS_STRING, false)
+DEFBUILTINMETHOD(__js_builtin_BooleanConstructor, INTRN_JS_BOOLEAN, false)
+DEFBUILTINMETHOD(__js_builtin_NumberConstructor, INTRN_JS_NUMBER, false)
+DEFBUILTINMETHOD(eval, INTRN_JS_EVAL, false)
+DEFBUILTINMETHOD($ERROR, INTRN_JS_ERROR, false)
+DEFBUILTINMETHOD($PRINT, INTRN_JS_PRINT, false)
+DEFBUILTINMETHOD(print, INTRN_JS_PRINT, false)
+DEFBUILTINMETHOD(isNaN, INTRN_JS_ISNAN, false)
