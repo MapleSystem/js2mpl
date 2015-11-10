@@ -16,10 +16,10 @@
 #include "mapleir/include/mirmodule.h"
 #include "mapleir/include/mirpreg.h"
 #include "mapleir/include/printing.h"
-#include "js2mpl-vm/include/jsfunction.h"
-#include "js2mpl-vm/include/jsmirbuilder.h"
-#include "js2mpl-vm/include/scope.h"
-#include "js2mpl-vm/include/operandstack.h"
+#include "../include/jsfunction.h"
+#include "../include/jsmirbuilder.h"
+#include "../include/scope.h"
+#include "../include/operandstack.h"
 namespace mapleir {
 
 class JSClosure {

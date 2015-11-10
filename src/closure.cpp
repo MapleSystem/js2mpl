@@ -1,7 +1,7 @@
 /// Copyright [year] <Copyright Owner>
 #include <string>
 #include "js/src/vm/ScopeObject.h"
-#include "js2mpl-vm/include/closure.h"
+#include "../include/closure.h"
 
 namespace mapleir {
 

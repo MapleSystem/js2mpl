@@ -4,12 +4,12 @@
 #include <list>
 
 #include "mapleir/include/mirbuilder.h"
-#include "js2mpl-vm/include/jsvalue.h"
-#include "js2mpl-vm/include/jsmirbuilder.h"
-#include "js2mpl-vm/include/closure.h"
-#include "js2mpl-vm/include/operandstack.h"
-#include "js2mpl-vm/include/scope.h"
-#include "js2mpl-vm/include/util.h"
+#include "../include/jsvalue.h"
+#include "../include/jsmirbuilder.h"
+#include "../include/closure.h"
+#include "../include/operandstack.h"
+#include "../include/scope.h"
+#include "../include/util.h"
 
 namespace mapleir {
 class JSCompiler{

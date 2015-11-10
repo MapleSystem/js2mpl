@@ -7,8 +7,8 @@
 #include <sstream>
 #include "js/src/jsapi.h"
 #include "js/src/jscntxt.h"
-#include "js2mpl-vm/include/js2mpl.h"
-#include "js2mpl-vm/include/compiler.h"
+#include "../include/js2mpl.h"
+#include "../include/compiler.h"
 
 maplemp::MemPoolCtrler Mpc;
 mapleir::MIRModule mapleir::themodule(Mpc);

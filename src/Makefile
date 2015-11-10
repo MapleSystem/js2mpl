@@ -20,8 +20,7 @@ MAPLELIB=$(MAPLEALL)/mapleir/build/IRBuild/libmpldev.a
 LIBS=-L $(MOZBUILD)/dist/lib -ljs_static -lpthread -ldl
 #LIBS=-L $(MOZBUILD)/dist/lib -ljs_static -lz -lpthread -ldl
 
-INCLUDES = -I $(MAPLEROOT) \
-           -I $(MAPLEALL) \
+INCLUDES = -I $(MAPLEALL) \
            -I $(MOZBUILD)/dist/include \
            -I $(MOZBUILD)/dist/system_wrappers \
            -include $(MOZSRC)/config/gcc_hidden.h  \

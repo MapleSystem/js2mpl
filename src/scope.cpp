@@ -1,5 +1,5 @@
 /// Copyright [year] <Copyright Owner>
-#include "js2mpl-vm/include/scope.h"
+#include "../include/scope.h"
 
 namespace mapleir {
 
