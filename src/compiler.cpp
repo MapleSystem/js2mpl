@@ -2460,11 +2460,24 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         CompileOpGosub(pc + offset);
         break;
       }
-      case JSOP_RETSUB: /*117, 1, 2, 0*/  { SIMULATESTACK(2, 0); break; }
+      case JSOP_RETSUB: /*117, 1, 2, 0*/  { 
+        BaseNode* retsub = MP_NEW(jsbuilder_->module_->mp_, StmtNode(OP_retsub));
+        jsbuilder_->AddStmtInCurrentFunctionBody(retsub);
+        break;
+        }
       case JSOP_EXCEPTION: /*118, 1, 0, 1*/  { SIMULATESTACK(0, 1); break; }
-      case JSOP_FINALLY: /*135, 1, 0, 2*/  { SIMULATESTACK(0, 2); break; }
-      case JSOP_THROWING: /*151, 1, 1, 0*/  { SIMULATESTACK(1, 0); break; }
-      case JSOP_THROW: /*112, 1, 1, 0*/  { SIMULATESTACK(1, 0); break; }
+      case JSOP_FINALLY: /*135, 1, 0, 2*/  {
+        BaseNode* finally = MP_NEW(jsbuilder_->module_->mp_, StmtNode(OP_finally));
+        jsbuilder_->AddStmtInCurrentFunctionBody(finally);
+        break;
+        }
+      case JSOP_THROWING: /*151, 1, 1, 0*/  
+      case JSOP_THROW: /*112, 1, 1, 0*/  { 
+        BaseNode *rval = Pop();
+        BaseNode *throwstmt = jsbuilder_->CreateStmtThrow(rval);
+        jsbuilder_->AddStmtInCurrentFunctionBody(throwstmt);
+        break;
+        }
       case JSOP_DEBUGGER: /*115, 1, 0, 0*/  { NOTHANDLED; break; }
       case JSOP_PUSHBLOCKSCOPE: /*198, 5, 0, 0*/  { NOTHANDLED; break; }
       case JSOP_POPBLOCKSCOPE: /*199, 1, 0, 0*/  { NOTHANDLED; break; }
