@@ -191,7 +191,6 @@ BaseNode *JSCompiler::NodeFromSavingInATemp(BaseNode *expr) {
 // JSOP_INT32 216
 BaseNode *JSCompiler::CompileOpConstValue(uint32_t jsvalue_tag,
                                           uint32_t payload) {
-#ifdef DYNAMICLANG
   switch (jsvalue_tag) {
    case JSVALTAGINT32:
      return jsbuilder_->GetConstDynu32(payload);
@@ -205,19 +204,6 @@ BaseNode *JSCompiler::CompileOpConstValue(uint32_t jsvalue_tag,
      assert(false && "NIY");
      return NULL;
   }
-#else
-  BaseNode *jsvalue_tag_node = jsbuilder_->GetConstUInt32(jsvalue_tag);
-  BaseNode *payload_node = jsbuilder_->GetConstUInt32(payload);
-  uint32_t jsvalue_tag_id = jsbuilder_->GetStructFieldIdFromFieldName(jsvalue_type_, "tag");
-  uint32_t payload_id = jsbuilder_->GetStructFieldIdFromFieldName(jsvalue_type_, "u32");
-  MIRSymbol *var = CreateTempJSValueTypeVar();
-  if (payload != DEADBEEF) {
-    jsbuilder_->CreateStmtDassign(var, jsvalue_tag_id, jsvalue_tag_node);
-    jsbuilder_->CreateStmtDassign(var, payload_id, payload_node);
-  }
-  BaseNode *bn = jsbuilder_->CreateExprDread(jsvalue_type_, var);
-  return bn;
-#endif
 }
 
 BaseNode *JSCompiler::CompileOpDoubleConstValue(double dval) {
@@ -289,7 +275,7 @@ uint32_t JSCompiler::FindIntrinsicForOp(JSOp opcode) {
 BaseNode *JSCompiler::CompileOpBinary(JSOp opcode,
                                       BaseNode *op0,
                                       BaseNode *op1) {
-  Opcode mop;
+  Opcode mop = (Opcode)0;
   switch (opcode) {
     case JSOP_EQ: mop = OP_eq; break;
     case JSOP_NE: mop = OP_ne; break;
@@ -303,7 +289,14 @@ BaseNode *JSCompiler::CompileOpBinary(JSOp opcode,
     case JSOP_DIV: mop = OP_div; break;
     default: assert(0 && "NIY");
   }
-  return jsbuilder_->CreateExprBinary(mop, jsbuilder_->GetDynany(), op0, op1);
+  if (mop != 0)
+    return jsbuilder_->CreateExprBinary(mop, jsbuilder_->GetDynany(), op0, op1);
+
+  MIRIntrinsicId idx = (MIRIntrinsicId)FindIntrinsicForOp(opcode);
+  IntrinDesc *intrindesc = &IntrinDesc::intrintable[idx];
+  MIRType *retty = intrindesc->GetReturnType();
+  return jsbuilder_->CreateExprIntrinsicop2(idx, retty, 
+        CheckConvertToJSValueType(op0), CheckConvertToJSValueType(op1));
 }
 
 // JSOP_NOT JSOP_BITNOT JSOP_NEG JSOP_POS 32~35
@@ -312,17 +305,6 @@ BaseNode *JSCompiler::CompileOpUnary(JSOp opcode, BaseNode *op) {
   IntrinDesc *intrindesc = &IntrinDesc::intrintable[idx];
   MIRType *retty = intrindesc->GetReturnType();
   return jsbuilder_->CreateExprIntrinsicop1(idx, retty, CheckConvertToJSValueType(op));
-}
-
-// JSOP_GETPROP 53
-BaseNode *JSCompiler::CompileOpGetProp(BaseNode *obj, JSString *str) {
-  BaseNode *name = CompileOpString(str);
-  BaseNode *stmt = jsbuilder_->CreateStmtIntrinsicCall2(INTRN_JSOP_GETPROP, obj,
-                                                        name);
-  jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
-  MIRSymbol *temp = CreateTempJSValueTypeVar();
-  jsbuilder_->SaveReturnValue(temp);
-  return jsbuilder_->CreateExprDread(jsvalue_type_, temp);
 }
 
 int32_t JSCompiler::GetBuiltinMethod(uint32_t argc, bool construct, bool *need_this) {
@@ -709,14 +691,11 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
   init->const_vec.push_back(int_const);
   var->value_.const_ = init;
   BaseNode *ptr = jsbuilder_->CreateExprAddrof(0, var);
-  BaseNode *stmt = jsbuilder_->CreateStmtIntrinsicCall2((MIRIntrinsicId)INTRN_JSOP_NEW_STRING,
+  BaseNode *expr = jsbuilder_->CreateExprIntrinsicop2((MIRIntrinsicId)INTRN_JSOP_NEW_STRING, jsvalue_type_, 
                                                         ptr, jsbuilder_->GetConstUInt32(length));
-  jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
-  var = CreateTempJSValueTypeVar();
-  jsbuilder_->SaveReturnValue(var);
-  BaseNode *dread = jsbuilder_->CreateExprDread(jsvalue_type_, var);
-  return dread;
+  return expr;
 }
+
 //JSOP_ITER 75
 BaseNode *JSCompiler::CompileOpNewIterator(BaseNode *bn, uint8_t flags) 
 {
@@ -842,7 +821,7 @@ BaseNode *JSCompiler::CompileOpNewInit(uint32_t kind) {
     assert(false && "NIY");
   } else {
     assert(kind == JSProto_Object);
-    return CompileGeneric0(INTRN_JS_NEW_OBJECT_0, true);
+    return CompileGeneric0(INTRN_JS_NEW_OBJECT_0, false);
   }
   return NULL;
 }
@@ -862,10 +841,8 @@ BaseNode *JSCompiler::CompileGenericN(int32_t intrin_id,
     jsbuilder_->SaveReturnValue(var);
     return jsbuilder_->CreateExprDread(retty, var);
   } else {
-    assert(false && "NYI");
-    return NULL;
-    //jsbuilder_->CreateExprIntrinsicOpN(
-    //       (MIRIntrinsicId)intrin_id, retty, arguments);
+    return jsbuilder_->CreateExprIntrinsicopN(
+             (MIRIntrinsicId)intrin_id, retty, arguments);
   }
 }
 
@@ -896,26 +873,6 @@ BaseNode *JSCompiler::CompileGeneric3(int32_t intrin_id, BaseNode *arg1,
   arguments.push_back(arg2);
   arguments.push_back(arg3);
   return CompileGenericN(intrin_id, arguments, is_call);
-}
-
-
-BaseNode *JSCompiler::CompileOpLength(BaseNode *array) {
-  BaseNode *stmt = jsbuilder_->CreateStmtIntrinsicCall1(INTRN_JSOP_LENGTH, array);
-  jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
-  MIRSymbol *var = CreateTempVar(jsbuilder_->GetUInt32());
-  jsbuilder_->SaveReturnValue(var);
-  return jsbuilder_->CreateExprDread(jsbuilder_->GetUInt32(), var);
-}
-
-BaseNode *JSCompiler::CompileOpGetElem(BaseNode *obj, BaseNode *index) {
-  index = CheckConvertToInt32(index);
-  BaseNode *stmt = jsbuilder_->CreateStmtIntrinsicCall2(
-                     INTRN_JSOP_GETELEM,
-                     obj, index);
-  jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
-  MIRSymbol *var = CreateTempJSValueTypeVar();
-  jsbuilder_->SaveReturnValue(var);
-  return jsbuilder_->CreateExprDread(jsvalue_type_, var);
 }
 
 bool JSCompiler::CompileOpSetElem(BaseNode *obj, BaseNode *index, BaseNode *val) {
@@ -2153,7 +2110,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       }
       case JSOP_VOID: /*40, 1, 1, 1*/  {
         BaseNode *opnd = Pop();
-        BaseNode *bn = CompileGeneric1(INTRN_JSOP_VOID, opnd, true);
+        BaseNode *bn = CompileGeneric1(INTRN_JSOP_VOID, opnd, false);
         Push(bn);
         break;
       }
@@ -2166,7 +2123,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_CALLPROP: /*184, 5, 1, 1*/  {
         JSString *str = script->getAtom(pc);
         BaseNode *obj = Pop();
-        BaseNode *val = CompileOpGetProp(obj, str);
+        BaseNode *name = CompileOpString(str);
+        BaseNode *val = CompileGeneric2(INTRN_JSOP_GETPROP, obj, name, false);
         Push(val);
         break;
       }
@@ -2179,7 +2137,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       }
       case JSOP_LENGTH: /*217, 5, 1, 1*/  {
         BaseNode *array = Pop();
-        BaseNode *length = CompileOpLength(array);
+        BaseNode *length = CompileGeneric1(INTRN_JSOP_LENGTH, array, false);
         Push(length);
         break;
       }
@@ -2197,7 +2155,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_GETELEM: /*55, 1, 2, 1*/  {
         BaseNode *index = Pop();
         BaseNode *obj = Pop();
-        BaseNode *elem = CompileOpGetElem(obj, index);
+        index = CheckConvertToInt32(index);
+        BaseNode *elem = CompileGeneric2(INTRN_JSOP_GETELEM, obj, index, false);
         Push(elem);
         break;
       }
@@ -2372,7 +2331,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_NEWARRAY: /*90, 4, 0, 1*/  {
         uint32_t length = GET_UINT24(pc);
         BaseNode *op = jsbuilder_->GetConstUInt32(length);
-        BaseNode *ret = CompileGeneric1(INTRN_JS_NEW_ARR, op, true);
+        BaseNode *ret = CompileGeneric1(INTRN_JS_NEW_ARR, op, false);
         Push(ret);
         break;
       }
@@ -2490,7 +2449,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         BaseNode *id = Pop();
         BaseNode *obj = Pop();
         BaseNode *newobj = CompileGeneric3(INTRN_JSOP_ARR_SPREAD, obj, id, val, true);
-        BaseNode *length = CompileOpLength(val);
+        BaseNode *length = CompileGeneric1(INTRN_JSOP_LENGTH, val, false);
         BaseNode *newid = CompileOpBinary(JSOP_ADD, id, length);
         Push(newobj);
         Push(newid);
