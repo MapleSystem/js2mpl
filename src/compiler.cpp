@@ -675,8 +675,8 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
   init->const_vec.push_back(int_const);
   var->value_.const_ = init;
   BaseNode *ptr = jsbuilder_->CreateExprAddrof(0, var);
-  BaseNode *expr = jsbuilder_->CreateExprIntrinsicop2((MIRIntrinsicId)INTRN_JSOP_NEW_STRING, jsvalue_type_, 
-                                                        ptr, jsbuilder_->GetConstUInt32(length));
+  BaseNode *expr = CompileGeneric2((MIRIntrinsicId)INTRN_JSOP_NEW_STRING,
+                                                ptr, jsbuilder_->GetConstUInt32(length), false);
   return expr;
 }
 
@@ -764,7 +764,7 @@ BaseNode *JSCompiler::CompileOpNewInit(uint32_t kind) {
     assert(false && "NIY");
   } else {
     assert(kind == JSProto_Object);
-    return CompileGeneric0(INTRN_JS_NEW_OBJECT_0, false);
+    return CompileGeneric0(INTRN_JS_NEW_OBJECT_0, true);
   }
   return NULL;
 }
@@ -785,7 +785,12 @@ BaseNode *JSCompiler::CompileGenericN(int32_t intrin_id,
     return jsbuilder_->CreateExprDread(retty, var);
   } else {
     return jsbuilder_->CreateExprIntrinsicopN(
-             (MIRIntrinsicId)intrin_id, retty, arguments);
+                      (MIRIntrinsicId)intrin_id, retty, arguments);
+#if 0
+    MIRSymbol *var = CreateTempVar(retty);
+    jsbuilder_->CreateStmtDassign(var, 0, bn);
+    return jsbuilder_->CreateExprDread(retty, var);
+#endif
   }
 }
 
