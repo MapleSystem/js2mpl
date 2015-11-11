@@ -277,16 +277,23 @@ BaseNode *JSCompiler::CompileOpBinary(JSOp opcode,
                                       BaseNode *op1) {
   Opcode mop = (Opcode)0;
   switch (opcode) {
+    case JSOP_BITOR: mop = OP_bior; break;
+    case JSOP_BITXOR: mop = OP_bxor; break;
+    case JSOP_BITAND: mop = OP_band; break;
     case JSOP_EQ: mop = OP_eq; break;
     case JSOP_NE: mop = OP_ne; break;
     case JSOP_LT: mop = OP_lt; break;
     case JSOP_LE: mop = OP_le; break;
     case JSOP_GT: mop = OP_gt; break;
     case JSOP_GE: mop = OP_ge; break;
+    case JSOP_LSH: mop = OP_shl; break;
+    case JSOP_RSH: mop = OP_ashr; break;
+    case JSOP_URSH: mop = OP_lshr; break;
     case JSOP_ADD: mop = OP_add; break;
     case JSOP_SUB: mop = OP_sub; break;
     case JSOP_MUL: mop = OP_mul; break;
     case JSOP_DIV: mop = OP_div; break;
+    case JSOP_MOD: mop = OP_rem; break;
     default: assert(0 && "NIY");
   }
   if (mop != 0)
@@ -811,18 +818,8 @@ BaseNode *JSCompiler::CompileOpSetLocal(uint32_t local_no,
   const char *name = Util::GetSequentialName("local_var_", local_no, mp_);
   uint32_t curtag = DetermineTagFromNode(src);
   MIRSymbol *var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_);
-  BaseNode *bn;
-  if (curtag == JSVALTAGCLEAR) {
-    bn = jsbuilder_->CreateStmtDassign(var, 0, src);
-  } else {
-    uint32_t jsvalue_tag_fieldid = jsbuilder_->GetStructFieldIdFromFieldName(jsvalue_type_, "tag");
-    BaseNode *jsvalue_tag_node = jsbuilder_->GetConstUInt32(curtag);
-    bn = jsbuilder_->CreateStmtDassign(var, jsvalue_tag_fieldid, jsvalue_tag_node);
-    uint32_t payload_fieldid = GetFieldidFromTag(curtag);
-    bn = jsbuilder_->CreateStmtDassign(var, payload_fieldid, src);
-  }
-
-  return bn;
+  BaseNode *bn = CheckConvertToJSValueType(src);
+  return jsbuilder_->CreateStmtDassign(var, 0, bn);
 }
 
 // JSOP_NEWINIT 89
