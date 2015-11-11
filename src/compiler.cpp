@@ -1840,6 +1840,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       }
       case JSOP_POP: /*81, 1, 1, 0*/  {
         Pop();
+        opstack_->flag_after_throwing = false;
         break;
       }
       case JSOP_POPN: /*11, 3, -1, 0*/  {
@@ -1891,7 +1892,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       }
       case JSOP_GOTO: /*6, 5, 0, 0*/  {
         int offset = GET_JUMP_OFFSET(pc);
-        if (! opstack_->flag_has_iter && ! opstack_->Empty()) {
+        if (! opstack_->flag_has_iter && ! opstack_->Empty() && 
+            ! opstack_->flag_after_throwing) {
           // in middle of conditional expression; save in a temp and associate
           // the temp with the goto label
           BaseNode *expr = Pop();
@@ -2431,13 +2433,22 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         jsbuilder_->AddStmtInCurrentFunctionBody(retsub);
         break;
         }
-      case JSOP_EXCEPTION: /*118, 1, 0, 1*/  { SIMULATESTACK(0, 1); break; }
+      case JSOP_EXCEPTION: /*118, 1, 0, 1*/  {
+        BaseNode* handler = MP_NEW(jsbuilder_->module_->mp_, StmtNode(OP_handler));
+        jsbuilder_->AddStmtInCurrentFunctionBody(handler);
+          
+        BaseNode *rr = jsbuilder_->CreateExprRegread(PTY_dynany, -SREG_thrownval);
+        Push(rr);
+        break; 
+        }
       case JSOP_FINALLY: /*135, 1, 0, 2*/  {
         BaseNode* finally = MP_NEW(jsbuilder_->module_->mp_, StmtNode(OP_finally));
         jsbuilder_->AddStmtInCurrentFunctionBody(finally);
         break;
         }
-      case JSOP_THROWING: /*151, 1, 1, 0*/  
+      case JSOP_THROWING: /*151, 1, 1, 0*/
+        opstack_->flag_after_throwing = true;
+        break; 
       case JSOP_THROW: /*112, 1, 1, 0*/  { 
         BaseNode *rval = Pop();
         BaseNode *throwstmt = jsbuilder_->CreateStmtThrow(rval);
