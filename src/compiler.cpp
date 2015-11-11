@@ -505,9 +505,19 @@ BaseNode *JSCompiler::CompileOpCall(uint32_t argc, bool construct) {
   args.push_back(impnode);
   for (int32_t i = argc - 1; i >=0; i--)
     args.push_back(argsvec[i]);
-  DreadNode *dnode = dynamic_cast<DreadNode *>(funcnode);
-  BaseNode *stmt = jsbuilder_->CreateStmtCall(dnode->stidx, args);
-  jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
+
+  BaseNode *stmt = NULL;
+  if (funcnode->op == OP_dread) {
+    DreadNode *dread = dynamic_cast<DreadNode *>(funcnode);
+    stmt = jsbuilder_->CreateStmtCall(dread->stidx, args);
+  } else if (funcnode->op == OP_iread) {
+    IreadNode *iread = dynamic_cast<IreadNode *>(funcnode);
+    // TODO:
+    //stmt =
+  } else {
+  }
+  if (stmt)
+    jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   MIRSymbol *retrunVar = CreateTempVar(jsvalue_type_);
   jsbuilder_->SaveReturnValue(retrunVar);
   return jsbuilder_->CreateExprDread(jsvalue_type_, 0, retrunVar);
