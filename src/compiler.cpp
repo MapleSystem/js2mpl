@@ -722,23 +722,8 @@ BaseNode *JSCompiler::CompileOpGetArg(uint32_t i) {
   DEBUGPRINT2(i);
   JSMIRFunction *fun = jsbuilder_->GetCurrentFunction();
   int start = (fun->with_env_arg) ? 2 : 1;
-#ifdef DYNAMICLANG
-  MIRSymbol *arg = jsbuilder_->GetFunctionArgument(fun, i+start);  // skip this and env parameters
+  MIRSymbol *arg = jsbuilder_->GetFunctionArgument(fun, i+start); 
   BaseNode *irn = jsbuilder_->CreateExprDread(jsbuilder_->GetDynany(), arg);
-#else
-  MIRSymbol *arg = jsbuilder_->GetFunctionArgument(fun, FORMAL_POSITION_IN_ARGS);
-  BaseNode *addr = jsbuilder_->CreateExprDread(jsvalue_ptr_, arg);
-  if (i != 0) {
-    BaseNode *size = jsbuilder_->CreateExprSizeoftype(jsvalue_type_);
-    BaseNode *addr_offset = jsbuilder_->CreateExprBinary(OP_mul, jsbuilder_->GetVoidPtr(),
-                                                         jsbuilder_->GetConstInt(i), size);
-    addr = jsbuilder_->CreateExprBinary(OP_add,
-                                        jsbuilder_->GetVoidPtr(),
-                                        addr,
-                                        addr_offset);
-  }
-  BaseNode *irn = jsbuilder_->CreateExprIread(jsvalue_type_, jsvalue_ptr_, 0 , addr);
-#endif
   MIRSymbol *temp = CreateTempJSValueTypeVar();
   jsbuilder_->CreateStmtDassign(temp, 0, irn);
   return jsbuilder_->CreateExprDread(jsvalue_type_, temp);
@@ -749,24 +734,8 @@ void JSCompiler::CompileOpSetArg(uint32_t i, BaseNode *val) {
   DEBUGPRINT2(i);
   JSMIRFunction *fun = jsbuilder_->GetCurrentFunction();
   int start = (fun->with_env_arg) ? 2 : 1;
-#ifdef DYNAMICLANG
   MIRSymbol *arg = jsbuilder_->GetFunctionArgument(fun, i+start);  // skip this and env parameters
-  BaseNode *addr = jsbuilder_->CreateExprDread(jsbuilder_->GetDynany(), arg);
-#else
-  MIRSymbol *arg = jsbuilder_->GetFunctionArgument(fun, FORMAL_POSITION_IN_ARGS);
-  BaseNode *addr = jsbuilder_->CreateExprDread(jsvalue_ptr_, arg);
-  if (i != 0) {
-    BaseNode *size = jsbuilder_->CreateExprSizeoftype(jsvalue_type_);
-    BaseNode *addr_offset = jsbuilder_->CreateExprBinary(OP_mul, jsbuilder_->GetVoidPtr(),
-                                                         jsbuilder_->GetConstInt(i), size);
-    addr = jsbuilder_->CreateExprBinary(OP_add,
-                                        jsbuilder_->GetVoidPtr(),
-                                        addr,
-                                        addr_offset);
-  }
-#endif
-  BaseNode *stmt = jsbuilder_->CreateStmtIassign(jsvalue_ptr_, 0, addr, val);
-  jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
+  jsbuilder_->CreateStmtDassign(arg, 0, val);
   return;
 }
 
@@ -781,7 +750,7 @@ BaseNode *JSCompiler::CompileOpGetLocal(uint32_t local_no) {
 
 // JSOP_SETLOCAL 87
 BaseNode *JSCompiler::CompileOpSetLocal(uint32_t local_no,
-                                      BaseNode *src) {
+                                        BaseNode *src) {
   const char *name = Util::GetSequentialName("local_var_", local_no, mp_);
   uint32_t curtag = DetermineTagFromNode(src);
   MIRSymbol *var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_);
