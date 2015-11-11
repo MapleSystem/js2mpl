@@ -208,30 +208,9 @@ BaseNode *JSCompiler::CompileOpConstValue(uint32_t jsvalue_tag,
   }
 }
 
-BaseNode *JSCompiler::CompileOpDoubleConstValue(double dval) {
-  return jsbuilder_->GetConstDynf64(dval);
-}
-
 // Return the corresponding intrinsic code for JSop binary or unary opcode.
 uint32_t JSCompiler::FindIntrinsicForOp(JSOp opcode) {
   static const uint32_t op_to_intrinsic[][2] = {
-    {JSOP_BITOR, INTRN_JSOP_BITOR},
-    {JSOP_BITXOR, INTRN_JSOP_BITXOR},
-    {JSOP_BITAND, INTRN_JSOP_BITAND},
-    {JSOP_EQ, INTRN_JSOP_EQ},
-    {JSOP_NE, INTRN_JSOP_NE},
-    {JSOP_LT, INTRN_JSOP_LT},
-    {JSOP_LE, INTRN_JSOP_LE},
-    {JSOP_GT, INTRN_JSOP_GT},
-    {JSOP_GE, INTRN_JSOP_GE},
-    {JSOP_LSH, INTRN_JSOP_LSH},
-    {JSOP_RSH, INTRN_JSOP_RSH},
-    {JSOP_URSH, INTRN_JSOP_URSH},
-    {JSOP_ADD, INTRN_JSOP_ADD},
-    {JSOP_SUB, INTRN_JSOP_SUB},
-    {JSOP_MUL, INTRN_JSOP_MUL},
-    {JSOP_DIV, INTRN_JSOP_DIV},
-    {JSOP_MOD, INTRN_JSOP_MOD},
     {JSOP_STRICTEQ, INTRN_JSOP_STRICTEQ},
     {JSOP_STRICTNE, INTRN_JSOP_STRICTNE},
     {JSOP_INSTANCEOF, INTRN_JSOP_INSTANCEOF},
@@ -282,7 +261,7 @@ BaseNode *JSCompiler::CompileOpBinary(JSOp opcode,
     case JSOP_MUL: mop = OP_mul; break;
     case JSOP_DIV: mop = OP_div; break;
     case JSOP_MOD: mop = OP_rem; break;
-    default: assert(0 && "NIY");
+    default: break;
   }
   if (mop != 0)
     return jsbuilder_->CreateExprBinary(mop, jsbuilder_->GetDynany(), op0, op1);
@@ -603,7 +582,7 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom) {
         double to;
     } u;
     u.from = 0x8000000000000ULL | 0x7ff0000000000000ULL;
-    BaseNode *nan = CompileOpDoubleConstValue(u.to);
+    BaseNode *nan = jsbuilder_->GetConstDynf64(u.to);
     return nan;
   }
   if (!strcmp(name, "Infinity")) {
@@ -612,7 +591,7 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom) {
         double to;
     } u;
     u.from = 0x7ff0000000000000ULL;
-    BaseNode *posinfinity = CompileOpDoubleConstValue(u.to);
+    BaseNode *posinfinity = jsbuilder_->GetConstDynf64(u.to);
     return posinfinity;
   }
   if (!strcmp(name, "-Infinity")) {
@@ -621,7 +600,7 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom) {
         double to;
     } u;
     u.from = 0xfff0000000000000ULL;
-    BaseNode *neginfinity = CompileOpDoubleConstValue(u.to);
+    BaseNode *neginfinity = jsbuilder_->GetConstDynf64(u.to);
     return neginfinity;
   }
   if (!strcmp(name, "Object")) {
@@ -955,7 +934,7 @@ BaseNode *JSCompiler::CompileOpBindName(JSAtom *atom) {
         double to;
     } u;
     u.from = 0x8000000000000ULL | 0x7ff0000000000000ULL;
-    BaseNode *nan = CompileOpDoubleConstValue(u.to);
+    BaseNode *nan = jsbuilder_->GetConstDynf64(u.to);
     return nan;
   }
   if (!strcmp(name, "Infinity")) {
@@ -964,7 +943,7 @@ BaseNode *JSCompiler::CompileOpBindName(JSAtom *atom) {
         double to;
     } u;
     u.from = 0x7ff0000000000000ULL;
-    BaseNode *infinity = CompileOpDoubleConstValue(u.to);
+    BaseNode *infinity = jsbuilder_->GetConstDynf64(u.to);
     return infinity;
   }
   if (!strcmp(name, "-Infinity")) {
@@ -973,7 +952,7 @@ BaseNode *JSCompiler::CompileOpBindName(JSAtom *atom) {
         double to;
     } u;
     u.from = 0xfff0000000000000ULL;
-    BaseNode *neginfinity = CompileOpDoubleConstValue(u.to);
+    BaseNode *neginfinity = jsbuilder_->GetConstDynf64(u.to);
     return neginfinity;
   }
   if (!strcmp(name, "Object")) {
@@ -2241,7 +2220,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       }
       case JSOP_DOUBLE: /*60, 5, 0, 1*/  {
         double dval = script->getConst(GET_UINT32_INDEX(pc)).toDouble();
-        BaseNode *bn = CompileOpDoubleConstValue(dval);
+        BaseNode *bn = jsbuilder_->GetConstDynf64(dval);
         DEBUGPRINT2(dval);
         Push(bn);
         break;
