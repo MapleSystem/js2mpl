@@ -1478,10 +1478,17 @@ BaseNode *JSCompiler::CompileOpGoto(jsbytecode *pc, MIRSymbol *tempvar) {
 }
 
 BaseNode *JSCompiler::CompileOpGosub(jsbytecode *pc) {
-  MIRLabel *mirlabel = GetorCreateLabelofPc(pc, "h@");
+  MIRLabel *mirlabel = GetorCreateLabelofPc(pc, "f@");
   BaseNode* gosubnode = jsbuilder_->CreateStmtGoto(OP_gosub, mirlabel->lab_idx);
   jsbuilder_->AddStmtInCurrentFunctionBody(gosubnode);
   return gosubnode;
+}
+
+BaseNode *JSCompiler::CompileOpTry(jsbytecode *pc) {
+  MIRLabel *mirlabel = GetorCreateLabelofPc(pc, "h@");
+  BaseNode* trynode = jsbuilder_->CreateStmtGoto(OP_try, mirlabel->lab_idx);
+  jsbuilder_->AddStmtInCurrentFunctionBody(trynode);
+  return trynode;
 }
 
 BaseNode *JSCompiler::CompileOpLoopHead(jsbytecode *pc) {
@@ -1856,7 +1863,18 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         pc= js::GetNextPc(pc);
         continue;
       }
-      case JSOP_TRY: /*134, 1, 0, 0*/  { NOTHANDLED; break; }
+      case JSOP_TRY: /*134, 1, 0, 0*/  { 
+        JSTryNote *tn = script->trynotes()->vector;
+        JSTryNote *tnlimit = tn + script->trynotes()->length;
+        for (; tn < tnlimit; tn++) {
+          if ((tn->start + script->mainOffset()) == (pc - script->code() + 1)) {
+            jsbytecode *catchpc = pc + 1 + tn->length;
+            CompileOpTry(catchpc);
+            break;
+          }
+        }
+        break; 
+      }
       case JSOP_LOOPHEAD: /*109, 1, 0, 0*/  {
         jsbytecode *headpc = pc;
         CompileOpLoopHead(headpc);
