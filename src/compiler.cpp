@@ -193,11 +193,13 @@ BaseNode *JSCompiler::CompileOpConstValue(uint32_t jsvalue_tag,
                                           uint32_t payload) {
   switch (jsvalue_tag) {
    case JSVALTAGINT32:
-     return jsbuilder_->GetConstDynu32(payload);
+     return jsbuilder_->GetConstDyni32(payload);
    case JSVALTAGUNDEFINED:
      return jsbuilder_->GetConstDynundef();
    case JSVALTAGNULL:
      return jsbuilder_->GetConstDynnull();
+   case JSVALTAGBOOLEAN:
+     return jsbuilder_->GetConstDynbool(payload);
    case JSVALTAGELEMHOLE:
      return jsbuilder_->GetConstDynhole();
    default:
@@ -207,22 +209,8 @@ BaseNode *JSCompiler::CompileOpConstValue(uint32_t jsvalue_tag,
 }
 
 BaseNode *JSCompiler::CompileOpDoubleConstValue(double dval) {
-  union{
-    double dv;
-    uint32 uv[2];
-  }dvalbits;
-  dvalbits.dv = dval;
-  BaseNode *jsvalue_tag_node = jsbuilder_->GetConstUInt32(dvalbits.uv[1]);
-  BaseNode *payload_node = jsbuilder_->GetConstUInt32(dvalbits.uv[0]);
-  uint32_t jsvalue_tag_id = jsbuilder_->GetStructFieldIdFromFieldName(jsvalue_type_, "tag");
-  uint32_t payload_id = jsbuilder_->GetStructFieldIdFromFieldName(jsvalue_type_, "u32");
-  MIRSymbol *var = CreateTempJSValueTypeVar();
-  jsbuilder_->CreateStmtDassign(var, jsvalue_tag_id, jsvalue_tag_node);
-  jsbuilder_->CreateStmtDassign(var, payload_id, payload_node);
-  BaseNode *bn = jsbuilder_->CreateExprDread(jsvalue_type_, var);
-  return bn;
+  return jsbuilder_->GetConstDynf64(dval);
 }
-
 
 // Return the corresponding intrinsic code for JSop binary or unary opcode.
 uint32_t JSCompiler::FindIntrinsicForOp(JSOp opcode) {
