@@ -243,19 +243,20 @@ BaseNode *JSCompiler::CompileOpBinary(JSOp opcode,
                                       BaseNode *op0,
                                       BaseNode *op1) {
   Opcode mop = (Opcode)0;
+  MIRType *restype = jsbuilder_->GetDynany();
   switch (opcode) {
-    case JSOP_BITOR: mop = OP_bior; break;
-    case JSOP_BITXOR: mop = OP_bxor; break;
-    case JSOP_BITAND: mop = OP_band; break;
-    case JSOP_EQ: mop = OP_eq; break;
-    case JSOP_NE: mop = OP_ne; break;
-    case JSOP_LT: mop = OP_lt; break;
-    case JSOP_LE: mop = OP_le; break;
-    case JSOP_GT: mop = OP_gt; break;
-    case JSOP_GE: mop = OP_ge; break;
-    case JSOP_LSH: mop = OP_shl; break;
-    case JSOP_RSH: mop = OP_ashr; break;
-    case JSOP_URSH: mop = OP_lshr; break;
+    case JSOP_BITOR: mop = OP_bior; restype = jsbuilder_->GetUInt32(); break;
+    case JSOP_BITXOR: mop = OP_bxor; restype = jsbuilder_->GetUInt32(); break;
+    case JSOP_BITAND: mop = OP_band; restype = jsbuilder_->GetUInt32(); break;
+    case JSOP_EQ: mop = OP_eq; restype = jsbuilder_->GetUInt32(); break;
+    case JSOP_NE: mop = OP_ne; restype = jsbuilder_->GetUInt32(); break;
+    case JSOP_LT: mop = OP_lt; restype = jsbuilder_->GetUInt32(); break;
+    case JSOP_LE: mop = OP_le; restype = jsbuilder_->GetUInt32(); break;
+    case JSOP_GT: mop = OP_gt; restype = jsbuilder_->GetUInt32(); break;
+    case JSOP_GE: mop = OP_ge; restype = jsbuilder_->GetUInt32(); break;
+    case JSOP_LSH: mop = OP_shl; restype = jsbuilder_->GetUInt32(); break;
+    case JSOP_RSH: mop = OP_ashr; restype = jsbuilder_->GetUInt32(); break;
+    case JSOP_URSH: mop = OP_lshr; restype = jsbuilder_->GetUInt32(); break;
     case JSOP_ADD: mop = OP_add; break;
     case JSOP_SUB: mop = OP_sub; break;
     case JSOP_MUL: mop = OP_mul; break;
@@ -264,7 +265,7 @@ BaseNode *JSCompiler::CompileOpBinary(JSOp opcode,
     default: break;
   }
   if (mop != 0)
-    return jsbuilder_->CreateExprBinary(mop, jsbuilder_->GetDynany(), op0, op1);
+    return jsbuilder_->CreateExprBinary(mop, restype, op0, op1);
 
   MIRIntrinsicId idx = (MIRIntrinsicId)FindIntrinsicForOp(opcode);
   IntrinDesc *intrindesc = &IntrinDesc::intrintable[idx];
@@ -1520,14 +1521,7 @@ BaseNode *JSCompiler::CheckConvertToBoolean(BaseNode *node)
 {
   if (IsPrimitiveInteger(node->ptyp))
     return node;
-#if 0  // TODO: make cg accept this
   return jsbuilder_->CreateExprIntrinsicop1(INTRN_JS_BOOLEAN, jsbuilder_->GetUInt32(), node);
-#else
-  BaseNode *expr = jsbuilder_->CreateExprIntrinsicop1(INTRN_JS_BOOLEAN, jsbuilder_->GetUInt32(), node);
-  MIRSymbol *var = CreateTempVar(jsbuilder_->GetUInt32());
-  jsbuilder_->CreateStmtDassign(var, 0, expr);
-  return jsbuilder_->CreateExprDread(jsbuilder_->GetUInt32(), var);
-#endif
 }
 
 BaseNode *JSCompiler::CheckConvertToInt32(BaseNode *node)
