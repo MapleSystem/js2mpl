@@ -482,14 +482,34 @@ BaseNode *JSCompiler::CompileOpCall(uint32_t argc, bool construct) {
     args.push_back(argsvec[i]);
 
   BaseNode *stmt = NULL;
-  if (funcnode->op == OP_dread) {
+  MIRSymbol *symbol;
+  char *name;
+  if (js2mplDebug > 2) funcnode->dump();
+  if (funcnode->op == OP_addrof) {
+    AddrofNode *addrof = dynamic_cast<AddrofNode *>(funcnode);
+    symbol = jsbuilder_->module_->symtab->GetSymbolFromStidx(addrof->stidx);
+    name = (char *)(symbol->GetName().c_str());
+    if (scope_->IsFunction(name)) {
+      DEBUGPRINT2("call: function name without env");
+      stmt = jsbuilder_->CreateStmtCall(addrof->stidx, args);
+    }
+  } else if (funcnode->op == OP_dread) {
     DreadNode *dread = dynamic_cast<DreadNode *>(funcnode);
-    stmt = jsbuilder_->CreateStmtCall(dread->stidx, args);
+    symbol = jsbuilder_->module_->symtab->GetSymbolFromStidx(dread->stidx);
+    name = (char *)(symbol->GetName().c_str());
+    ScopeNode *sn = scope_->GetOrCreateSN(name);
+    if (sn->IsWithEnv()) {
+      DEBUGPRINT2("call: not function name with env");
+      assert(false && "NYI - not function name call with env");
+    } else {
+      DEBUGPRINT2("call: not function name without env");
+      stmt = jsbuilder_->CreateStmtIcall(funcnode, args);
+    }
   } else if (funcnode->op == OP_iread) {
-    IreadNode *iread = dynamic_cast<IreadNode *>(funcnode);
-    // TODO:
-    //stmt =
+    DEBUGPRINT2("call: iread");
+    assert(false && "NYI - call iread");
   } else {
+    DEBUGPRINT2("call: not dread iread");
   }
   if (stmt)
     jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
@@ -648,7 +668,12 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom) {
   }
   stidx_t stidx = var->GetStIdx();
   DEBUGPRINT3(stidx);
-  BaseNode *bn = jsbuilder_->CreateExprDread(jsvalue_type_, var);
+  BaseNode *bn;
+  if (isfuncname) {
+    bn = jsbuilder_->CreateAddrof(var, false, PTY_ptr);
+  } else {
+    bn = jsbuilder_->CreateExprDread(jsvalue_type_, var);
+  }
 
   return bn;
 }

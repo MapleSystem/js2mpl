@@ -39,7 +39,7 @@ DIRECTORIES:
 
 % : %.js $(JS2MPL) $(BE) $(MAPLEINTERPRETER) DIRECTORIES
 	cp $< $(BUILD)/$*.js
-	$(JS2MPL) $(BUILD)/$*.js
+	$(JS2MPL) $(BUILD)/$*.js $(OPT)
 	$(BE) $(BUILD)/$*.mpl > $(BUILD)/$*.log
 	$(MAPLEINTERPRETER) $(BUILD)/$*.mmpl
 	@echo ""
