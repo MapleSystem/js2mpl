@@ -670,7 +670,7 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom) {
   DEBUGPRINT3(stidx);
   BaseNode *bn;
   if (isfuncname) {
-    bn = jsbuilder_->CreateAddrof(var, false, PTY_ptr);
+    bn = jsbuilder_->CreateAddrof(var, false, PTY_dynany);
   } else {
     bn = jsbuilder_->CreateExprDread(jsvalue_type_, var);
   }
