@@ -746,7 +746,9 @@ BaseNode *JSCompiler::CompileOpGetLocal(uint32_t local_no) {
   MIRSymbol *var = jsbuilder_->GetOrCreateLocalDecl(name,
                                                   jsvalue_type_);
   BaseNode *bn = jsbuilder_->CreateExprDread(jsvalue_type_, var);
-  return bn;
+  MIRSymbol *temp = CreateTempJSValueTypeVar();
+  jsbuilder_->CreateStmtDassign(temp, 0, bn);
+  return jsbuilder_->CreateExprDread(jsvalue_type_, temp);
 }
 
 // JSOP_SETLOCAL 87
