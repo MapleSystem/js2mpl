@@ -265,7 +265,8 @@ BaseNode *JSCompiler::CompileOpBinary(JSOp opcode,
     default: break;
   }
   if (mop != 0)
-    return jsbuilder_->CreateExprBinary(mop, restype, op0, op1);
+    return jsbuilder_->CreateExprBinary(mop, restype,
+           CheckConvertToJSValueType(op0), CheckConvertToJSValueType(op1));
 
   MIRIntrinsicId idx = (MIRIntrinsicId)FindIntrinsicForOp(opcode);
   IntrinDesc *intrindesc = &IntrinDesc::intrintable[idx];
@@ -1495,6 +1496,17 @@ BaseNode *JSCompiler::CompileOpLoopHead(jsbytecode *pc) {
 BaseNode *JSCompiler::CheckConvertToJSValueType(BaseNode *node)
 {
 #ifdef DYNAMICLANG
+  bool needconvert = false;
+  if (node->ptyp != PTY_dynany) {
+    needconvert = jsbuilder_->module_->type_table_[node->ptyp] != jsvalue_type_;
+    MIRSymbol *temp = CreateTempJSValueTypeVar();
+    jsbuilder_->CreateStmtDassign(temp, 0, node);
+    BaseNode *addrof_node = jsbuilder_->CreateAddrof(temp, true, PTY_u32);
+    BaseNode *constval = jsbuilder_->GetConstUInt32(JSVALTAGINT32);
+    BaseNode *stmt = jsbuilder_->CreateStmtIassignoff(4, addrof_node, constval);
+    jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
+    return jsbuilder_->CreateExprDread(jsvalue_type_, temp);
+  }
   return node;
 #else
   bool needconvert = false;
