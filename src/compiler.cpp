@@ -276,6 +276,17 @@ BaseNode *JSCompiler::CompileOpBinary(JSOp opcode,
 
 // JSOP_NOT JSOP_BITNOT JSOP_NEG JSOP_POS 32~35
 BaseNode *JSCompiler::CompileOpUnary(JSOp opcode, BaseNode *op) {
+  Opcode mop = (Opcode)0;
+  MIRType *restype = jsbuilder_->GetDynany();
+  switch (opcode) {
+    case JSOP_NOT: mop = OP_lnot; restype = jsbuilder_->GetUInt32(); break;
+    case JSOP_BITNOT: mop = OP_bnot; restype = jsbuilder_->GetUInt32(); break;
+    case JSOP_NEG: mop = OP_neg; break;
+    default: break;
+  }
+  if (mop != 0)
+    return jsbuilder_->CreateExprUnary(mop, restype, op);
+
   MIRIntrinsicId idx = (MIRIntrinsicId)FindIntrinsicForOp(opcode);
   IntrinDesc *intrindesc = &IntrinDesc::intrintable[idx];
   MIRType *retty = intrindesc->GetReturnType();
