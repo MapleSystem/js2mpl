@@ -762,9 +762,13 @@ BaseNode *JSCompiler::CompileOpGetArg(uint32_t i) {
   int start = (fun->with_env_arg) ? 2 : 1;
   MIRSymbol *arg = jsbuilder_->GetFunctionArgument(fun, i+start); 
   BaseNode *irn = jsbuilder_->CreateExprDread(jsbuilder_->GetDynany(), arg);
+#if 1
+  return irn;
+#else
   MIRSymbol *temp = CreateTempJSValueTypeVar();
   jsbuilder_->CreateStmtDassign(temp, 0, irn);
   return jsbuilder_->CreateExprDread(jsvalue_type_, temp);
+#endif
 }
 
 // JSOP_SETARG 85
@@ -782,10 +786,14 @@ BaseNode *JSCompiler::CompileOpGetLocal(uint32_t local_no) {
   const char *name = Util::GetSequentialName("local_var_", local_no, mp_);
   MIRSymbol *var = jsbuilder_->GetOrCreateLocalDecl(name,
                                                   jsvalue_type_);
+#if 1
+  return jsbuilder_->CreateExprDread(jsvalue_type_, var);
+#else
   BaseNode *bn = jsbuilder_->CreateExprDread(jsvalue_type_, var);
   MIRSymbol *temp = CreateTempJSValueTypeVar();
   jsbuilder_->CreateStmtDassign(temp, 0, bn);
   return jsbuilder_->CreateExprDread(jsvalue_type_, temp);
+#endif
 }
 
 // JSOP_SETLOCAL 87
@@ -794,6 +802,12 @@ BaseNode *JSCompiler::CompileOpSetLocal(uint32_t local_no,
   const char *name = Util::GetSequentialName("local_var_", local_no, mp_);
   uint32_t curtag = DetermineTagFromNode(src);
   MIRSymbol *var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_);
+
+  // if the stack is not empty, for each stack item that contains the 
+  // variable being set, evaluate and store the result in a new temp and replace
+  // the stack items by the temp
+  opstack_->ReplaceStackItemsWithTemps(this, var);
+
   BaseNode *bn = CheckConvertToJSValueType(src);
   return jsbuilder_->CreateStmtDassign(var, 0, bn);
 }
@@ -1497,7 +1511,10 @@ BaseNode *JSCompiler::CheckConvertToJSValueType(BaseNode *node)
 {
 #ifdef DYNAMICLANG
   bool needconvert = false;
-  if (node->ptyp != PTY_dynany) {
+  if (! IsPrimitiveDynType(node->ptyp)) {
+#if 0
+    return jsbuilder_->CreateExprTypeCvt(OP_cvt, jsbuilder_->GetDynany(), jsbuilder_->GetPrimType(node->ptyp), node);
+#else
     needconvert = jsbuilder_->module_->type_table_[node->ptyp] != jsvalue_type_;
     MIRSymbol *temp = CreateTempJSValueTypeVar();
     jsbuilder_->CreateStmtDassign(temp, 0, node);
@@ -1506,6 +1523,7 @@ BaseNode *JSCompiler::CheckConvertToJSValueType(BaseNode *node)
     BaseNode *stmt = jsbuilder_->CreateStmtIassignoff(4, addrof_node, constval);
     jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
     return jsbuilder_->CreateExprDread(jsvalue_type_, temp);
+#endif
   }
   return node;
 #else
