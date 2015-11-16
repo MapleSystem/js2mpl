@@ -20,23 +20,6 @@ void JSCompiler::Init() {
   jsvalue_type_ = jsbuilder_->jsvalue_type_;
   jsvalue_ptr_ = jsbuilder_->jsvalue_ptr_;
 
-  js_ThisBinding_ = jsbuilder_->GetOrCreateGlobalDecl("__js_ThisBinding", jsvalue_type_);
-  js_builtin_GlobalObject_ = jsbuilder_->GetOrCreateGlobalDecl("__js_builtin_GlobalObject", jsvalue_type_);
-  js_builtin_ObjectConstructor_ = jsbuilder_->GetOrCreateGlobalDecl("__js_builtin_ObjectConstructor", jsvalue_type_);
-  js_builtin_ObjectPrototype_ = jsbuilder_->GetOrCreateGlobalDecl("__js_builtin_ObjectPrototype", jsvalue_type_);
-  js_builtin_ArrayConstructor_ = jsbuilder_->GetOrCreateGlobalDecl("__js_builtin_ArrayConstructor", jsvalue_type_);
-  js_builtin_ArrayPrototype_ = jsbuilder_->GetOrCreateGlobalDecl("__js_builtin_ArrayPrototype", jsvalue_type_);
-  js_builtin_FunctionConstructor_ = jsbuilder_->GetOrCreateGlobalDecl("__js_builtin_FunctionConstructor", jsvalue_type_);
-  js_builtin_FunctionPrototype_ = jsbuilder_->GetOrCreateGlobalDecl("__js_builtin_FunctionPrototype", jsvalue_type_);
-  js_builtin_StringConstructor_ = jsbuilder_->GetOrCreateGlobalDecl("__js_builtin_ArrayConstructor", jsvalue_type_);
-  js_builtin_StringPrototype_ = jsbuilder_->GetOrCreateGlobalDecl("__js_builtin_ArrayPrototype", jsvalue_type_);
-  js_builtin_StringConstructor_ = jsbuilder_->GetOrCreateGlobalDecl("__js_builtin_StringConstructor", jsvalue_type_);
-  js_builtin_StringPrototype_ = jsbuilder_->GetOrCreateGlobalDecl("__js_builtin_StringPrototype", jsvalue_type_);
-  js_builtin_BooleanConstructor_ = jsbuilder_->GetOrCreateGlobalDecl("__js_builtin_BooleanConstructor", jsvalue_type_);
-  js_builtin_BooleanPrototype_ = jsbuilder_->GetOrCreateGlobalDecl("__js_builtin_BooleanPrototype", jsvalue_type_);
-  js_builtin_NumberConstructor_ = jsbuilder_->GetOrCreateGlobalDecl("__js_builtin_NumberConstructor", jsvalue_type_);
-  js_builtin_NumberPrototype_ = jsbuilder_->GetOrCreateGlobalDecl("__js_builtin_NumberPrototype", jsvalue_type_);
-
   // push main() on funcstack_
   scope_->GetOrCreateSN("main")->SetFunc(jsmain_);
   funcstack_.push(jsmain_);
@@ -520,9 +503,10 @@ BaseNode *JSCompiler::CompileOpCall(uint32_t argc, bool construct) {
   } else if (funcnode->op == OP_iread) {
     DEBUGPRINT2("call: iread");
     assert(false && "NYI - call iread");
-  } else {
+   } else {
     DEBUGPRINT2("call: not dread iread");
-  }
+   }
+
   if (stmt)
     jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   MIRSymbol *retrunVar = CreateTempVar(jsvalue_type_);
@@ -600,6 +584,24 @@ BaseNode *JSCompiler::CompileOpCall(uint32_t argc, bool construct) {
 }
 #endif
 
+ecma_name_id JSCompiler::EcmaNameToId(char *name) {
+  if (!strcmp(name, "Object")) return ECMA_BUILTIN_OBJECT;
+  else if (!strcmp(name, "Array"))  return ECMA_BUILTIN_ARRAY;
+  else if (!strcmp(name, "String")) return ECMA_BUILTIN_STRING;
+  else if (!strcmp(name, "Boolean")) return ECMA_BUILTIN_BOOLEAN;
+  else if (!strcmp(name, "Number")) return ECMA_BUILTIN_NUMBER;
+  else if (!strcmp(name, "Function")) return ECMA_BUILTIN_FUNCTION;
+  else return NOT_ECMA_BUILTIN_NAME;
+}
+
+BaseNode *JSCompiler::CompileBuiltinName(char *name) {
+  ecma_name_id id = EcmaNameToId(name);
+  if (id == NOT_ECMA_BUILTIN_NAME)
+    return NULL;
+  BaseNode *id_node = jsbuilder_->GetConstUInt32((uint32_t) id);
+  return CompileGeneric1(INTRN_JS_GET_BUILTIN_VAR, id_node, false);
+}
+
 // JSOP_NAME 59
 BaseNode *JSCompiler::CompileOpName(JSAtom *atom) {
   char *name = Util::GetString(atom, mp_, jscontext_);
@@ -609,51 +611,10 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom) {
     BaseNode *undefined = CompileOpConstValue(JSVALTAGUNDEFINED, 0);
     return undefined;
   }
-  if (!strcmp(name, "NaN")) {
-    union {
-        uint64_t from;
-        double to;
-    } u;
-    u.from = 0x8000000000000ULL | 0x7ff0000000000000ULL;
-    BaseNode *nan = jsbuilder_->GetConstDynf64(u.to);
-    return nan;
-  }
-  if (!strcmp(name, "Infinity")) {
-    union {
-        uint64_t from;
-        double to;
-    } u;
-    u.from = 0x7ff0000000000000ULL;
-    BaseNode *posinfinity = jsbuilder_->GetConstDynf64(u.to);
-    return posinfinity;
-  }
-  if (!strcmp(name, "-Infinity")) {
-    union {
-        uint64_t from;
-        double to;
-    } u;
-    u.from = 0xfff0000000000000ULL;
-    BaseNode *neginfinity = jsbuilder_->GetConstDynf64(u.to);
-    return neginfinity;
-  }
-  if (!strcmp(name, "Object")) {
-    return jsbuilder_->CreateExprDread(jsvalue_type_, 0, js_builtin_ObjectConstructor_);
-  }
-  if (!strcmp(name, "Array")) {
-    return jsbuilder_->CreateExprDread(jsvalue_type_, 0, js_builtin_ArrayConstructor_);
-  }
-  if (!strcmp(name, "String")) {
-    return jsbuilder_->CreateExprDread(jsvalue_type_, 0, js_builtin_StringConstructor_);
-  }
-  if (!strcmp(name, "Boolean")) {
-    return jsbuilder_->CreateExprDread(jsvalue_type_, 0, js_builtin_BooleanConstructor_);
-  }
-  if (!strcmp(name, "Number")) {
-    return jsbuilder_->CreateExprDread(jsvalue_type_, 0, js_builtin_NumberConstructor_);
-  }
-  if (!strcmp(name, "Function")) {
-    return jsbuilder_->CreateExprDread(jsvalue_type_, 0, js_builtin_FunctionConstructor_);
-  }
+  BaseNode *builtin_var = CompileBuiltinName(name);
+  if (builtin_var)
+    return builtin_var;
+
   stridx_t stridx = jsbuilder_->GetStringIndex(name);
   // ??? Generate a dread node to pass the name.
   MIRSymbol *var;
@@ -931,76 +892,12 @@ bool JSCompiler::CompileOpSetProp(BaseNode *obj, JSString *str,
 
 // JSOP_BINDNAME 110
 BaseNode *JSCompiler::CompileOpBindName(JSAtom *atom) {
-#if 0
-  char *name = Util::GetString(atom, mp_, jscontext_);
-  if (!name) {
-    assert(false&&"why null?");
-    return NULL;
-  }
-  
-  MIRSymbol *var = jsbuilder_->GetGlobalDecl(name, jsvalue_type_);  // TODO: search the scope chain, but did we define scope chain?
-  if (var)
-    return NULL;
-  else {
-    var = jsbuilder_->CreateGlobalDecl(name, jsvalue_type_);
-    BaseNode *basenode = jsbuilder_->CreateExprAddrof(0, var);
-    Push(basenode);
-    return NULL;
-  }
-#endif;
-
   char *name = Util::GetString(atom, mp_, jscontext_);
   if (!name)
     return NULL;
-  if (!strcmp(name, "undefined")) {
-    BaseNode *undefined = CompileOpConstValue(JSVALTAGUNDEFINED, 0);
-    return undefined;
-  }
-  if (!strcmp(name, "NaN")) {
-    union {
-        uint64_t from;
-        double to;
-    } u;
-    u.from = 0x8000000000000ULL | 0x7ff0000000000000ULL;
-    BaseNode *nan = jsbuilder_->GetConstDynf64(u.to);
-    return nan;
-  }
-  if (!strcmp(name, "Infinity")) {
-    union {
-        uint64_t from;
-        double to;
-    } u;
-    u.from = 0x7ff0000000000000ULL;
-    BaseNode *infinity = jsbuilder_->GetConstDynf64(u.to);
-    return infinity;
-  }
-  if (!strcmp(name, "-Infinity")) {
-    union {
-        uint64_t from;
-        double to;
-    } u;
-    u.from = 0xfff0000000000000ULL;
-    BaseNode *neginfinity = jsbuilder_->GetConstDynf64(u.to);
-    return neginfinity;
-  }
-  if (!strcmp(name, "Object")) {
-    return jsbuilder_->CreateExprDread(jsvalue_type_, 0, js_builtin_ObjectConstructor_);
-  }
-  if (!strcmp(name, "Array")) {
-    return jsbuilder_->CreateExprDread(jsvalue_type_, 0, js_builtin_ArrayConstructor_);
-  }
-  if (!strcmp(name, "String")) {
-    return jsbuilder_->CreateExprDread(jsvalue_type_, 0, js_builtin_StringConstructor_);
-  }
-  if (!strcmp(name, "Boolean")) {
-    return jsbuilder_->CreateExprDread(jsvalue_type_, 0, js_builtin_BooleanConstructor_);
-  }
-  if (!strcmp(name, "Number")) {
-    return jsbuilder_->CreateExprDread(jsvalue_type_, 0, js_builtin_NumberConstructor_);
-  }
-  if (!strcmp(name, "Function")) {
-    return jsbuilder_->CreateExprDread(jsvalue_type_, 0, js_builtin_FunctionConstructor_);
-  }
+  BaseNode *builtin_var = CompileBuiltinName(name);
+  if (builtin_var)
+    return builtin_var;
 
   MIRSymbol *var;
   JSMIRFunction *func = funcstack_.top();
@@ -2145,8 +2042,9 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         break;
       }
       case JSOP_THIS: /*65, 1, 0, 1*/  {
-        BaseNode *bn = jsbuilder_->CreateExprDread(jsvalue_type_, js_ThisBinding_);
-        Push(bn);
+        // BaseNode *bn = jsbuilder_->CreateExprDread(jsvalue_type_, js_ThisBinding_);
+        // Push(bn);
+        SIMULATESTACK(0, 1);
         break;
       }
       case JSOP_GETPROP: /*53, 5, 1, 1*/

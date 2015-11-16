@@ -25,20 +25,6 @@ class JSCompiler{
 
   JSScript *currscr_;
 
-  MIRSymbol *js_ThisBinding_;
-  MIRSymbol *js_builtin_GlobalObject_;
-  MIRSymbol *js_builtin_ObjectConstructor_;
-  MIRSymbol *js_builtin_ObjectPrototype_;
-  MIRSymbol *js_builtin_FunctionConstructor_;
-  MIRSymbol *js_builtin_FunctionPrototype_;
-  MIRSymbol *js_builtin_ArrayConstructor_;
-  MIRSymbol *js_builtin_ArrayPrototype_;
-  MIRSymbol *js_builtin_StringConstructor_;
-  MIRSymbol *js_builtin_StringPrototype_;
-  MIRSymbol *js_builtin_BooleanConstructor_;
-  MIRSymbol *js_builtin_BooleanPrototype_;
-  MIRSymbol *js_builtin_NumberConstructor_;
-  MIRSymbol *js_builtin_NumberPrototype_;
   JSMIRFunction *jsmain_;
   OperandStack *opstack_;
   std::stack<JSMIRFunction *> funcstack_;
@@ -112,10 +98,11 @@ class JSCompiler{
   uint32_t DetermineTagFromNode(BaseNode *node);
   MIRSymbol *SymbolFromSavingInATemp(BaseNode *expr);
   BaseNode *NodeFromSavingInATemp(BaseNode *expr);
-
   // Compile Functions.
   BaseNode *CompileOpConstValue(uint32_t jsvalue_tag, uint32_t payload);
   BaseNode *CompileOpDoubleConstValue(double dval);
+  ecma_name_id EcmaNameToId(char *name);
+  BaseNode *CompileBuiltinName(char *name);
   BaseNode *CompileBuiltinMethod(int32_t idx, int arg_num, bool need_this);
   uint32_t FindIntrinsicForOp(JSOp opcode);
   BaseNode *CompileOpBinary(JSOp op, BaseNode *opnd0, BaseNode *opnd1);
