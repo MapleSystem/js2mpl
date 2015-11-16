@@ -2167,7 +2167,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       }
       case JSOP_LENGTH: /*217, 5, 1, 1*/  {
         BaseNode *array = Pop();
-        BaseNode *length = CompileGeneric1(INTRN_JSOP_LENGTH, array, false);
+        BaseNode *length = CheckConvertToJSValueType(CompileGeneric1(INTRN_JSOP_LENGTH, array, false));
         Push(length);
         break;
       }
