@@ -22,7 +22,13 @@ function foo(a)
 
 var name = foo("SUN");
 print(name);
+if (name !== "Sunday")
+  $ERROR('expect "Sunday" but get:' + name);
 name = foo("3");
 print(name);
+if (name !== "Wrong day")
+  $ERROR('expect "Wrong day" but get:' + name);
 name = foo(3);
 print(name);
+if (name !== 3)
+  $ERROR('expect 3 but get:' + name);

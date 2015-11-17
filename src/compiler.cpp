@@ -2240,7 +2240,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_NEWARRAY: /*90, 4, 0, 1*/  {
         uint32_t length = GET_UINT24(pc);
         BaseNode *op = jsbuilder_->GetConstUInt32(length);
-        BaseNode *ret = CompileGeneric1(INTRN_JS_NEW_ARR, op, false);
+        BaseNode *ret = CompileGeneric1(INTRN_JS_NEW_ARR, op, true);
         Push(ret);
         break;
       }
