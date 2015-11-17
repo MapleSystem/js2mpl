@@ -447,7 +447,6 @@ BaseNode *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool need_t
   return jsbuilder_->CreateExprDread(retty, temp);
 }
 
-#ifdef DYNAMICLANG
 BaseNode *JSCompiler::CompileOpCall(uint32_t argc, bool construct) {
   DEBUGPRINT2(argc);
   // May be call the method of builtin-object, just emit the corresponding intrinsic call.
@@ -513,17 +512,9 @@ BaseNode *JSCompiler::CompileOpCall(uint32_t argc, bool construct) {
   jsbuilder_->SaveReturnValue(retrunVar);
   return jsbuilder_->CreateExprDread(jsvalue_type_, 0, retrunVar);
 }
-#else
-BaseNode *JSCompiler::CompileOpCall(uint32_t argc, bool construct) {
-  DEBUGPRINT2(argc);
-  // May be call the method of builtin-object, just emit the corresponding intrinsic call.
-  bool need_this = false;
-  int32_t idx = GetBuiltinMethod(argc, construct, &need_this);
-  if (idx != -1) {
-    return CompileBuiltinMethod(idx, argc, need_this);
-  }
 
-  // to reverse the order of args
+BaseNode *JSCompiler::CompileOpNew(uint32_t argc) {
+  // Reverse the order of args.
   std::stack<BaseNode *> tmpStack;
   for (uint32_t i = 0; i < argc; i++) {
     tmpStack.push(Pop());
@@ -537,52 +528,27 @@ BaseNode *JSCompiler::CompileOpCall(uint32_t argc, bool construct) {
   BaseNode *impnode = Pop();
   BaseNode *funcnode = Pop();
 
-  // ??? If the impnode is not a dummynode or addrof node,
-  // and it's type is jsvalue, it's a property call, need call the
-  // jsop_call runtime.
-
-  DreadNode *dn = static_cast <DreadNode *>(impnode);
-  stidx_t stidx = dn->stidx;
-  MIRSymbol *symbol;
-  if (dn->islocal)
-    symbol = jsbuilder_->module_->curfunction->symtab->GetSymbolFromStidx(stidx);
-  else
-    symbol = jsbuilder_->module_->symtab->GetSymbolFromStidx(stidx);
-  if (symbol->GetType() == jsvalue_type_) {
-    uint32_t size_array[1];
-    size_array[0] = argc;
-    MIRType *array_type = jsbuilder_->GetOrCreateArrayType(jsvalue_type_, 1, size_array);
-    MIRType *array_ptr_type = jsbuilder_->GetOrCreatePointerType(array_type);
-    MIRSymbol *arguments = CreateTempVar(array_type);
-    BaseNode *addr_base = jsbuilder_->CreateExprAddrof(0, arguments);
-    for (uint32_t i = 0; i < size_array[0]; i++) {
-      BaseNode *bn = CheckConvertToJSValueType(tmpStack.top());
-      DEBUGPRINT3(bn->op);
-      tmpStack.pop();
-      MapleVector<BaseNode *> opnds(themodule.mp_allocator_.Adapter());
-      opnds.push_back(addr_base);
-      BaseNode *addr_offset = jsbuilder_->GetConstInt(i);
-      opnds.push_back(addr_offset);
-      BaseNode *array_expr = jsbuilder_->CreateExprArray(array_type, opnds);
-      BaseNode *stmt = jsbuilder_->CreateStmtIassign(array_ptr_type, 0, array_expr, bn);
-      jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
-    }
-    MIRIntrinsicId idx = INTRN_JSOP_CALL;
-    if (construct)
-      idx = INTRN_JSOP_NEW;
-    BaseNode *stmt = jsbuilder_->CreateStmtIntrinsicCall4(idx, funcnode, impnode,
-        addr_base, jsbuilder_->GetConstUInt32(argc));
+  uint32_t size_array[1];
+  size_array[0] = argc;
+  MIRType *array_type = jsbuilder_->GetOrCreateArrayType(jsvalue_type_, 1, size_array);
+  MIRType *array_ptr_type = jsbuilder_->GetOrCreatePointerType(array_type);
+  MIRSymbol *arguments = CreateTempVar(array_type);
+  BaseNode *addr_base = jsbuilder_->CreateExprAddrof(0, arguments);
+  for (uint32_t i = 0; i < size_array[0]; i++) {
+    BaseNode *bn = CheckConvertToJSValueType(tmpStack.top());
+    DEBUGPRINT3(bn->op);
+    tmpStack.pop();
+    MapleVector<BaseNode *> opnds(themodule.mp_allocator_.Adapter());
+    opnds.push_back(addr_base);
+    BaseNode *addr_offset = jsbuilder_->GetConstInt(i);
+    opnds.push_back(addr_offset);
+    BaseNode *array_expr = jsbuilder_->CreateExprArray(array_type, opnds);
+    BaseNode *stmt = jsbuilder_->CreateStmtIassign(array_ptr_type, 0, array_expr, bn);
     jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
-    MIRSymbol *retrunVar = CreateTempVar(jsvalue_type_);
-    jsbuilder_->SaveReturnValue(retrunVar);
-    return jsbuilder_->CreateExprDread(jsvalue_type_, 0, retrunVar);
-  } else {
-    assert(false && "symbol is not jsvalue_type_");
   }
-
-  return NULL;
+  return CompileGeneric4(INTRN_JSOP_NEW, funcnode, impnode,
+                         addr_base, jsbuilder_->GetConstUInt32(argc), true);
 }
-#endif
 
 ecma_name_id JSCompiler::EcmaNameToId(char *name) {
   if (!strcmp(name, "Object")) return ECMA_BUILTIN_OBJECT;
@@ -835,6 +801,16 @@ BaseNode *JSCompiler::CompileGeneric3(int32_t intrin_id, BaseNode *arg1,
   arguments.push_back(arg1);
   arguments.push_back(arg2);
   arguments.push_back(arg3);
+  return CompileGenericN(intrin_id, arguments, is_call);
+}
+
+BaseNode *JSCompiler::CompileGeneric4(int32_t intrin_id, BaseNode *arg1,
+                                      BaseNode *arg2, BaseNode *arg3, BaseNode *arg4, bool is_call) {
+  MapleVector<BaseNode *> arguments(jsbuilder_->module_->mp_allocator_.Adapter());
+  arguments.push_back(arg1);
+  arguments.push_back(arg2);
+  arguments.push_back(arg3);
+  arguments.push_back(arg4);
   return CompileGenericN(intrin_id, arguments, is_call);
 }
 
@@ -2105,7 +2081,12 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_SPREADEVAL: /*43, 1, 3, 1*/  { SIMULATESTACK(3, 1); break; }
       case JSOP_FUNAPPLY: /*79, 3, -1, 1*/
       case JSOP_FUNCALL: /*108, 3, -1, 1*/
-      case JSOP_NEW: /*82, 3, -1, 1*/
+      case JSOP_NEW: /*82, 3, -1, 1*/ {
+        uint32_t argc = GET_ARGC(pc);
+        BaseNode *bn = CompileOpNew(argc);
+        Push(bn);
+        break;
+      }
       case JSOP_CALL: /*58, 3, -1, 1*/  {
         uint32_t argc = GET_ARGC(pc);
         BaseNode *bn = CompileOpCall(argc, op == JSOP_NEW);

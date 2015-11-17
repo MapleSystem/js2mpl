@@ -118,6 +118,8 @@ class JSCompiler{
                             BaseNode *arg1, bool is_call);
   BaseNode *CompileGeneric3(int32_t intrin_id, BaseNode *arg0,
                             BaseNode *arg1, BaseNode *arg2, bool is_call);
+  BaseNode *CompileGeneric4(int32_t intrin_id, BaseNode *arg0,
+                            BaseNode *arg1, BaseNode *arg2, BaseNode *arg3, bool is_call);
   BaseNode *CompileOpGetProp(BaseNode *obj, JSString *name);
   BaseNode *CompileOpCallprop(BaseNode *obj, JSAtom *atom);
   BaseNode *CompileOpString(JSString *str);
@@ -144,6 +146,7 @@ class JSCompiler{
   BaseNode *CompileOpLambda(jsbytecode *pc);
   BaseNode *CompileOpBindName(JSAtom *atom);
   BaseNode *CompileOpCall(uint32_t argc, bool construct);
+  BaseNode *CompileOpNew(uint32_t argc);
   BaseNode *CompileOpName(JSAtom *atom);
   BaseNode *CompileOpIfJump(JSOp op, BaseNode *cond, jsbytecode *pcend);
   
