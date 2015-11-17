@@ -1035,7 +1035,7 @@ BaseNode *JSCompiler::CompileOpLambda(jsbytecode *pc) {
   JSMIRFunction *parentFunc = funcstack_.top();
 
   MIRSymbol *funcsymbol = jsbuilder_->GetOrCreateGlobalDecl(funcname, jsvalue_type_);
-  BaseNode *ptr = jsbuilder_->CreateExprAddrof(0, funcsymbol);
+  BaseNode *ptr = jsbuilder_->CreateAddrof(funcsymbol, false, PTY_dynany);
   MIRSymbol * env_var = NULL;
   BaseNode *bn;
   BaseNode *node;
