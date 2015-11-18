@@ -25,6 +25,7 @@ tests:
 clean: 
 	$(MAKE) clean -C src
 	$(MAKE) clean -C tests
+	$(MAKE) clean -C ../mapleall
 
 .PHONY: $(TARGS)
 

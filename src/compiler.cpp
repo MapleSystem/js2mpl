@@ -487,7 +487,7 @@ BaseNode *JSCompiler::CompileOpCall(uint32_t argc, bool construct) {
       DEBUGPRINT2("call: function name without env");
       stmt = jsbuilder_->CreateStmtCall(addrof->stidx, args);
     }
-  } else if (funcnode->op == OP_dread) {
+  } else if (funcnode->op == OP_dread || funcnode->op == OP_intrinsicop) {
     MapleVector<BaseNode *> allargs(jsbuilder_->module_->mp_allocator_.Adapter());
     allargs.push_back(funcnode);
     allargs.push_back(impnode);
