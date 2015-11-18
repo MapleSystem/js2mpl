@@ -1380,7 +1380,7 @@ BaseNode *JSCompiler::CheckConvertToJSValueType(BaseNode *node)
 #ifdef DYNAMICLANG
   bool needconvert = false;
   if (! IsPrimitiveDynType(node->ptyp)) {
-#if 0
+#if 1
     return jsbuilder_->CreateExprTypeCvt(OP_cvt, jsbuilder_->GetDynany(), jsbuilder_->GetPrimType(node->ptyp), node);
 #else
     needconvert = jsbuilder_->module_->type_table_[node->ptyp] != jsvalue_type_;
