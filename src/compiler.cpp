@@ -545,19 +545,19 @@ BaseNode *JSCompiler::CompileOpNew(uint32_t argc) {
                          addr_base, jsbuilder_->GetConstUInt32(argc), true);
 }
 
-ecma_name_id JSCompiler::EcmaNameToId(char *name) {
-  if (!strcmp(name, "Object")) return ECMA_BUILTIN_OBJECT;
-  else if (!strcmp(name, "Array"))  return ECMA_BUILTIN_ARRAY;
-  else if (!strcmp(name, "String")) return ECMA_BUILTIN_STRING;
-  else if (!strcmp(name, "Boolean")) return ECMA_BUILTIN_BOOLEAN;
-  else if (!strcmp(name, "Number")) return ECMA_BUILTIN_NUMBER;
-  else if (!strcmp(name, "Function")) return ECMA_BUILTIN_FUNCTION;
-  else return NOT_ECMA_BUILTIN_NAME;
+js_builtin_id JSCompiler::EcmaNameToId(char *name) {
+  if (!strcmp(name, "Object")) return JS_BUILTIN_OBJECT;
+  else if (!strcmp(name, "Array"))  return JS_BUILTIN_ARRAY;
+  else if (!strcmp(name, "String")) return JS_BUILTIN_STRING;
+  else if (!strcmp(name, "Boolean")) return JS_BUILTIN_BOOLEAN;
+  else if (!strcmp(name, "Number")) return JS_BUILTIN_NUMBER;
+  else if (!strcmp(name, "Function")) return JS_BUILTIN_FUNCTION;
+  else return JS_BUILTIN_COUNT;
 }
 
 BaseNode *JSCompiler::CompileBuiltinName(char *name) {
-  ecma_name_id id = EcmaNameToId(name);
-  if (id == NOT_ECMA_BUILTIN_NAME)
+  js_builtin_id id = EcmaNameToId(name);
+  if (id == JS_BUILTIN_COUNT)
     return NULL;
   BaseNode *id_node = jsbuilder_->GetConstUInt32((uint32_t) id);
   return CompileGeneric1(INTRN_JS_GET_BUILTIN_VAR, id_node, false);
