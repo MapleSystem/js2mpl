@@ -159,12 +159,21 @@ JSMIRFunction *JSClosure::ProcessFunc(JSFunction *jsfun, char *funcname) {
   }
 #endif
 
-  for (uint32 i = 0; i < jsfun->nargs(); i++) {
-    // char name[10];
-    MapleString argname("_arg", jsbuilder_->module_->mp_);
-    // sprintf(name, "_arg%d\0", i);
-    argname.append(std::to_string(i));
-    arguments.push_back(ArgPair(argname.c_str(), jsbuilder_->GetDynany()));
+  typedef std::pair<JSFunction *, std::vector<JSAtom *>> funcVarVecPair;
+  std::vector<funcVarVecPair> formals = jsscript_->funcFormals;
+
+  for (int j=0; j<formals.size(); j++) {
+    JSFunction *fun = formals[j].first;
+    if (fun == jsfun) {
+      std::vector<JSAtom *> args = formals[j].second;
+      for (uint32 i = 0; i < jsfun->nargs(); i++) {
+        char *name = Util::GetString(args[i], mp_, jscontext_);
+        DEBUGPRINT3(name);
+        MapleString argname(name, jsbuilder_->module_->mp_);
+        arguments.push_back(ArgPair(argname.c_str(), jsbuilder_->GetDynany()));
+      }
+      break;
+    }
   }
 
   jsbuilder_->UpdateFunction(func, NULL, arguments);
