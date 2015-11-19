@@ -487,20 +487,14 @@ BaseNode *JSCompiler::CompileOpCall(uint32_t argc, bool construct) {
       DEBUGPRINT2("call: function name without env");
       stmt = jsbuilder_->CreateStmtCall(addrof->stidx, args);
     }
-  } else if (funcnode->op == OP_dread || funcnode->op == OP_intrinsicop) {
+  } else {
     MapleVector<BaseNode *> allargs(jsbuilder_->module_->mp_allocator_.Adapter());
     allargs.push_back(funcnode);
     allargs.push_back(impnode);
     for (int32_t i = argc - 1; i >=0; i--)
       allargs.push_back(argsvec[i]);
     stmt = jsbuilder_->CreateStmtIntrinsicCallN(INTRN_JSOP_CALL, allargs);
-  } else if (funcnode->op == OP_iread) {
-    DEBUGPRINT2("call: iread");
-    assert(false && "NYI - call iread");
-  } else {
-    DEBUGPRINT2("call: not dread iread");
   }
-
   if (stmt)
     jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   MIRSymbol *retrunVar = CreateTempVar(jsvalue_type_);
