@@ -705,9 +705,9 @@ void JSCompiler::CompileOpSetArg(uint32_t i, BaseNode *val) {
 
 // JSOP_GETLOCAL 86
 BaseNode *JSCompiler::CompileOpGetLocal(uint32_t local_no) {
-  const char *name = Util::GetSequentialName("local_var_", local_no, mp_);
-  MIRSymbol *var = jsbuilder_->GetOrCreateLocalDecl(name,
-                                                  jsvalue_type_);
+  JSMIRFunction *func = jsbuilder_->GetCurrentFunction();
+  char *name = closure_->GetLocalVar(func, local_no);
+  MIRSymbol *var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_);
 #if 1
   return jsbuilder_->CreateExprDread(jsvalue_type_, var);
 #else
@@ -719,9 +719,9 @@ BaseNode *JSCompiler::CompileOpGetLocal(uint32_t local_no) {
 }
 
 // JSOP_SETLOCAL 87
-BaseNode *JSCompiler::CompileOpSetLocal(uint32_t local_no,
-                                        BaseNode *src) {
-  const char *name = Util::GetSequentialName("local_var_", local_no, mp_);
+BaseNode *JSCompiler::CompileOpSetLocal(uint32_t local_no, BaseNode *src) {
+  JSMIRFunction *func = jsbuilder_->GetCurrentFunction();
+  char *name = closure_->GetLocalVar(func, local_no);
   uint32_t curtag = DetermineTagFromNode(src);
   MIRSymbol *var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_);
 

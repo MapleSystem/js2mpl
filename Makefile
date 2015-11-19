@@ -5,6 +5,7 @@ ifndef OPT
 endif
 
 TARGS = mapleall mozjs src tests
+TARGS = mapleall src tests
 
 all: $(TARGS)
 build: src
@@ -26,6 +27,8 @@ clean:
 	$(MAKE) clean -C src
 	$(MAKE) clean -C tests
 	$(MAKE) clean -C ../mapleall
+
+rebuild: clean all
 
 .PHONY: $(TARGS)
 

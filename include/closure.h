@@ -80,6 +80,7 @@ class JSClosure {
     bool ProcessOpDefFun(jsbytecode *pc);
     void AddFuncFormalsToEnvType(JSMIRFunction *func);
     bool IsLocalVar(JSMIRFunction *func, char *name);
+    char *GetLocalVar(JSMIRFunction *func, int sn);
 };
 }   // namespace mapleir
 #endif  // JS2MPL_INCLUDE_JSCLOSURE_H_

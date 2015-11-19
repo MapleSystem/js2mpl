@@ -371,6 +371,34 @@ bool JSClosure::IsLocalVar(JSMIRFunction *func, char *name) {
   return false;
 }
 
+char *JSClosure::GetLocalVar(JSMIRFunction *func, int sn) {
+  typedef std::pair<JSFunction *, std::vector<JSAtom *>> funcVarVecPair;
+  std::vector<funcVarVecPair> locals = jsscript_->funcLocals;
+
+  char *name = NULL;
+  char *funcname;
+  JSFunction *jsfun;
+  int i;
+  for (i=0; i<locals.size(); i++) {
+    jsfun = locals[i].first;
+    funcname = Util::GetString(jsfun->name(), mp_, jscontext_);
+    DEBUGPRINT2(jsfun);
+    DEBUGPRINT2(funcname);
+    // anonymous function.
+    if (!funcname) {
+      funcname = (char*)Util::GetSequentialName0("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_);
+      DEBUGPRINT2(funcname);
+    }
+    if (strcmp(funcname, func->_name.c_str()) == 0) {
+      std::vector<JSAtom *> args = locals[i].second;
+      assert(sn < args.size());
+      name = Util::GetString(args[sn], mp_, jscontext_);
+      break;
+    }
+  }
+  return name;
+}
+
 // JSOP_GETALIASEDVAR 136
 void JSClosure::ProcessAliasedVar(jsbytecode *pc) {
   JSAtom * atom = ScopeCoordinateName(
