@@ -91,7 +91,7 @@ class JSCompiler{
   void EnvInit(JSMIRFunction *func);
   void SetupMainFuncRet(BaseNode *rval);
   void CloseFuncBookKeeping();
-  int32_t GetBuiltinMethod(uint32_t argc, bool construct, bool *need_this);
+  int32_t GetBuiltinMethod(uint32_t argc, bool *need_this);
   MIRSymbol *CreateTempVar(MIRType *);
   MIRSymbol *CreateTempJSValueTypeVar();
   uint32_t GetFieldidFromTag(uint32_t tag);
@@ -145,7 +145,7 @@ class JSCompiler{
   BaseNode *CompileOpSetAliasedVar(JSAtom *atom, BaseNode *val);
   BaseNode *CompileOpLambda(jsbytecode *pc);
   BaseNode *CompileOpBindName(JSAtom *atom);
-  BaseNode *CompileOpCall(uint32_t argc, bool construct);
+  BaseNode *CompileOpCall(uint32_t argc);
   BaseNode *CompileOpNew(uint32_t argc);
   BaseNode *CompileOpName(JSAtom *atom);
   BaseNode *CompileOpIfJump(JSOp op, BaseNode *cond, jsbytecode *pcend);
