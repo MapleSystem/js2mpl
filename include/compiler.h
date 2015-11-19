@@ -91,7 +91,7 @@ class JSCompiler{
   void EnvInit(JSMIRFunction *func);
   void SetupMainFuncRet(BaseNode *rval);
   void CloseFuncBookKeeping();
-  int32_t GetBuiltinMethod(uint32_t argc, bool construct, bool *need_this);
+  int32_t GetBuiltinMethod(uint32_t argc, bool *need_this);
   MIRSymbol *CreateTempVar(MIRType *);
   MIRSymbol *CreateTempJSValueTypeVar();
   uint32_t GetFieldidFromTag(uint32_t tag);
@@ -101,7 +101,7 @@ class JSCompiler{
   // Compile Functions.
   BaseNode *CompileOpConstValue(uint32_t jsvalue_tag, uint32_t payload);
   BaseNode *CompileOpDoubleConstValue(double dval);
-  ecma_name_id EcmaNameToId(char *name);
+  js_builtin_id EcmaNameToId(char *name);
   BaseNode *CompileBuiltinName(char *name);
   BaseNode *CompileBuiltinMethod(int32_t idx, int arg_num, bool need_this);
   uint32_t FindIntrinsicForOp(JSOp opcode);
@@ -145,7 +145,7 @@ class JSCompiler{
   BaseNode *CompileOpSetAliasedVar(JSAtom *atom, BaseNode *val);
   BaseNode *CompileOpLambda(jsbytecode *pc);
   BaseNode *CompileOpBindName(JSAtom *atom);
-  BaseNode *CompileOpCall(uint32_t argc, bool construct);
+  BaseNode *CompileOpCall(uint32_t argc);
   BaseNode *CompileOpNew(uint32_t argc);
   BaseNode *CompileOpName(JSAtom *atom);
   BaseNode *CompileOpIfJump(JSOp op, BaseNode *cond, jsbytecode *pcend);

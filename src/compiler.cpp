@@ -277,8 +277,32 @@ BaseNode *JSCompiler::CompileOpUnary(JSOp opcode, BaseNode *op) {
   return jsbuilder_->CreateExprIntrinsicop1(idx, retty, CheckConvertToJSValueType(op));
 }
 
-int32_t JSCompiler::GetBuiltinMethod(uint32_t argc, bool construct, bool *need_this) {
+int32_t JSCompiler::GetBuiltinMethod(uint32_t argc, bool *need_this) {
   BaseNode *bn = GetOpAt(argc + 1);
+  IntrinsicopNode *ion = static_cast<IntrinsicopNode *> (bn);
+  if (ion && ion->intrinsic == INTRN_JS_GET_BUILTIN_VAR) {
+    ConstvalNode *cval = static_cast<ConstvalNode *>(ion->Opnd(0));
+    MIRIntConst *intconst = static_cast<MIRIntConst *>(cval->constval);
+    switch (intconst->value_) {
+      case JS_BUILTIN_STRING:
+        return INTRN_JS_STRING;
+      case JS_BUILTIN_BOOLEAN:
+        return INTRN_JS_BOOLEAN;
+        break;
+      case JS_BUILTIN_NUMBER:
+        return INTRN_JS_NUMBER;
+        break;
+      case JS_BUILTIN_ARRAY:
+        if(argc == 1)
+          return INTRN_JS_NEW_ARR_LENGTH;
+        else
+          return INTRN_JS_NEW_ARR_ELEMS;
+        break;
+      default:
+        break;
+    }
+  }
+
   if (bn->op != OP_dread)
     return -1;
   DreadNode *drn = static_cast<DreadNode *> (bn);
@@ -288,38 +312,6 @@ int32_t JSCompiler::GetBuiltinMethod(uint32_t argc, bool construct, bool *need_t
   const MapleString &name = var->GetName();
   DEBUGPRINT3(name);
 
-  if(!strcmp(name, "__js_builtin_ArrayConstructor"))
-  if(argc == 1)
-    return INTRN_JS_NEW_ARR_LENGTH;
-  else
-    return INTRN_JS_NEW_ARR_ELEMS;
-
-  if (construct) {
-    if (!strcmp(name, "__js_builtin_ObjectConstructor")) {
-     if(argc == 0)
-       return INTRN_JS_NEW_OBJECT_0;
-     if(argc == 1)
-       return INTRN_JS_NEW_OBJECT_1;
-    }
-    if (!strcmp(name, "__js_builtin_StringConstructor")) {
-     if(argc == 0)
-       return INTRN_JS_NEW_STRING_0;
-     if(argc == 1)
-       return INTRN_JS_NEW_STRING_1;
-    }
-    if(!strcmp(name, "__js_builtin_BooleanConstructor")) {
-      if(argc == 0)
-        return INTRN_JS_NEW_BOOLEAN_0;
-      else
-        return INTRN_JS_NEW_BOOLEAN_1;
-    }
-    if(!strcmp(name, "__js_builtin_NumberConstructor")) {
-      if(argc == 0)
-        return INTRN_JS_NEW_NUMBER_0;
-      else
-        return INTRN_JS_NEW_NUMBER_1;
-    }
-  }
 #define DEFBUILTINMETHOD(name, intrn_code, need_this)  \
 {#name, intrn_code, need_this},
   typedef struct builtin_method_map {
@@ -447,11 +439,11 @@ BaseNode *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool need_t
   return jsbuilder_->CreateExprDread(retty, temp);
 }
 
-BaseNode *JSCompiler::CompileOpCall(uint32_t argc, bool construct) {
+BaseNode *JSCompiler::CompileOpCall(uint32_t argc) {
   DEBUGPRINT2(argc);
   // May be call the method of builtin-object, just emit the corresponding intrinsic call.
   bool need_this = false;
-  int32_t idx = GetBuiltinMethod(argc, construct, &need_this);
+  int32_t idx = GetBuiltinMethod(argc, &need_this);
   if (idx != -1) {
     return CompileBuiltinMethod(idx, argc, need_this);
   }
@@ -487,20 +479,14 @@ BaseNode *JSCompiler::CompileOpCall(uint32_t argc, bool construct) {
       DEBUGPRINT2("call: function name without env");
       stmt = jsbuilder_->CreateStmtCall(addrof->stidx, args);
     }
-  } else if (funcnode->op == OP_dread || funcnode->op == OP_intrinsicop) {
+  } else {
     MapleVector<BaseNode *> allargs(jsbuilder_->module_->mp_allocator_.Adapter());
     allargs.push_back(funcnode);
     allargs.push_back(impnode);
     for (int32_t i = argc - 1; i >=0; i--)
       allargs.push_back(argsvec[i]);
     stmt = jsbuilder_->CreateStmtIntrinsicCallN(INTRN_JSOP_CALL, allargs);
-  } else if (funcnode->op == OP_iread) {
-    DEBUGPRINT2("call: iread");
-    assert(false && "NYI - call iread");
-  } else {
-    DEBUGPRINT2("call: not dread iread");
   }
-
   if (stmt)
     jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
 #if 1
@@ -549,19 +535,19 @@ BaseNode *JSCompiler::CompileOpNew(uint32_t argc) {
                          addr_base, jsbuilder_->GetConstUInt32(argc), true);
 }
 
-ecma_name_id JSCompiler::EcmaNameToId(char *name) {
-  if (!strcmp(name, "Object")) return ECMA_BUILTIN_OBJECT;
-  else if (!strcmp(name, "Array"))  return ECMA_BUILTIN_ARRAY;
-  else if (!strcmp(name, "String")) return ECMA_BUILTIN_STRING;
-  else if (!strcmp(name, "Boolean")) return ECMA_BUILTIN_BOOLEAN;
-  else if (!strcmp(name, "Number")) return ECMA_BUILTIN_NUMBER;
-  else if (!strcmp(name, "Function")) return ECMA_BUILTIN_FUNCTION;
-  else return NOT_ECMA_BUILTIN_NAME;
+js_builtin_id JSCompiler::EcmaNameToId(char *name) {
+  if (!strcmp(name, "Object")) return JS_BUILTIN_OBJECT;
+  else if (!strcmp(name, "Array"))  return JS_BUILTIN_ARRAY;
+  else if (!strcmp(name, "String")) return JS_BUILTIN_STRING;
+  else if (!strcmp(name, "Boolean")) return JS_BUILTIN_BOOLEAN;
+  else if (!strcmp(name, "Number")) return JS_BUILTIN_NUMBER;
+  else if (!strcmp(name, "Function")) return JS_BUILTIN_FUNCTION;
+  else return JS_BUILTIN_COUNT;
 }
 
 BaseNode *JSCompiler::CompileBuiltinName(char *name) {
-  ecma_name_id id = EcmaNameToId(name);
-  if (id == NOT_ECMA_BUILTIN_NAME)
+  js_builtin_id id = EcmaNameToId(name);
+  if (id == JS_BUILTIN_COUNT)
     return NULL;
   BaseNode *id_node = jsbuilder_->GetConstUInt32((uint32_t) id);
   return CompileGeneric1(INTRN_JS_GET_BUILTIN_VAR, id_node, false);
@@ -2092,7 +2078,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       }
       case JSOP_CALL: /*58, 3, -1, 1*/  {
         uint32_t argc = GET_ARGC(pc);
-        BaseNode *bn = CompileOpCall(argc, op == JSOP_NEW);
+        BaseNode *bn = CompileOpCall(argc);
         Push(bn);
         break;
       }
