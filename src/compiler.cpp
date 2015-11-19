@@ -2374,7 +2374,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         }
       case JSOP_THROWING: /*151, 1, 1, 0*/
         opstack_->flag_after_throwing = true;
-        // fall thru
+        break;
       case JSOP_THROW: /*112, 1, 1, 0*/  { 
         BaseNode *rval = Pop();
         BaseNode *throwstmt = jsbuilder_->CreateStmtThrow(rval);
