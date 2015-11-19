@@ -503,9 +503,13 @@ BaseNode *JSCompiler::CompileOpCall(uint32_t argc, bool construct) {
 
   if (stmt)
     jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
+#if 1
+  return jsbuilder_->CreateExprRegread(jsvalue_type_->GetPrimType(), -SREG_retval0);
+#else
   MIRSymbol *retrunVar = CreateTempVar(jsvalue_type_);
   jsbuilder_->SaveReturnValue(retrunVar);
   return jsbuilder_->CreateExprDread(jsvalue_type_, 0, retrunVar);
+#endif
 }
 
 BaseNode *JSCompiler::CompileOpNew(uint32_t argc) {
@@ -2384,7 +2388,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         }
       case JSOP_THROWING: /*151, 1, 1, 0*/
         opstack_->flag_after_throwing = true;
-        break; 
+        // fall thru
       case JSOP_THROW: /*112, 1, 1, 0*/  { 
         BaseNode *rval = Pop();
         BaseNode *throwstmt = jsbuilder_->CreateStmtThrow(rval);
