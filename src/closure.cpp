@@ -371,7 +371,7 @@ bool JSClosure::IsLocalVar(JSMIRFunction *func, char *name) {
   return false;
 }
 
-char *JSClosure::GetLocalVar(JSMIRFunction *func, int sn) {
+char *JSClosure::GetLocalVar(JSMIRFunction *func, uint32_t local_no) {
   typedef std::pair<JSFunction *, std::vector<JSAtom *>> funcVarVecPair;
   std::vector<funcVarVecPair> locals = jsscript_->funcLocals;
 
@@ -384,18 +384,21 @@ char *JSClosure::GetLocalVar(JSMIRFunction *func, int sn) {
     funcname = Util::GetString(jsfun->name(), mp_, jscontext_);
     DEBUGPRINT2(jsfun);
     DEBUGPRINT2(funcname);
-    // anonymous function.
+    // set name for anonymous functions same as in jsscript_->funcLocals.
     if (!funcname) {
       funcname = (char*)Util::GetSequentialName0("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_);
       DEBUGPRINT2(funcname);
     }
+    // found the function
     if (strcmp(funcname, func->_name.c_str()) == 0) {
       std::vector<JSAtom *> args = locals[i].second;
-      assert(sn < args.size());
-      name = Util::GetString(args[sn], mp_, jscontext_);
+      if (local_no < args.size())
+        name = Util::GetString(args[local_no], mp_, jscontext_);
       break;
     }
   }
+  if (!name)
+    name = Util::GetSequentialName("local_var_", local_no, mp_);
   return name;
 }
 
