@@ -46,7 +46,6 @@ DIRECTORIES:
 	$(MKDIR_P) $(BUILD)
 
 $(EXE): $(OBJ) $(MAPLELIB)
-	#$(CC) $(CXXFLAGS) -o $(BUILD)/$(EXE) $(OBJS) $(MAPLELIB) $(LIBS)
 	$(CC) $(CXXFLAGS) -o $(BUILD)/$(EXE) $(OBJS) $(MAPLELIB) $(LIBS)
 
 .cpp.o: $(BUILD)/$*.d
