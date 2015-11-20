@@ -1531,8 +1531,7 @@ void JSCompiler::EnvInit(JSMIRFunction *func) {
       int i = (func->with_env_arg) ? 2 : 1;
       for (IN = (*I).second.begin(); IN != (*I).second.end(); IN++, i++) {
         MIRSymbol *arg = jsbuilder_->GetFunctionArgument(func, i);
-        BaseNode *addr = jsbuilder_->CreateExprDread(jsvalue_ptr_, 0, arg);
-        bn = jsbuilder_->CreateExprIread(jsvalue_type_, jsvalue_ptr_, 0, addr);
+        bn = jsbuilder_->CreateExprDread(arg->GetType(), 0, arg);
         uint32_t id = jsbuilder_->GetStructFieldIdFromFieldName(env_type, *IN);
         stmt = jsbuilder_->CreateStmtIassign(env_ptr, id, env, bn);
         jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
