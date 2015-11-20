@@ -50,12 +50,12 @@ src:
 todo: run
 
 run:
-	@./todo-tests.pl
+	@./runtests.pl todo-tests
 
 checkin: regression
 
 regression:
-	@./regression-tests.pl $(OPT)
+	@./runtests.pl regression-tests
 
 clean:
 	rm -f $(BUILD)/*
