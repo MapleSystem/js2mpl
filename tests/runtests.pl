@@ -5,7 +5,7 @@ my $pwd = getcwd;
 if(!(defined $ARGV[0])) {
   print "------------------------------------------------\n";
   print "usage: testing.pl test_dir [pattern]\n";
-  print "to test all closure.*js in regression-tests:\n";
+  print "to test all *closure*.js in regression-tests:\n";
   print "       testing.pl regression-tests closure\n";
   print "------------------------------------------------\n";
   exit;
@@ -31,7 +31,7 @@ while( ($filename = readdir(DIR))){
     chdir $filename;
     my @files = <*.js>;
     if(defined $ARGV[1]) {
-      @files = <$ARGV[1]*.js>;
+      @files = <*$ARGV[1]*.js>;
     }
 
     foreach $fullname (@files) {
