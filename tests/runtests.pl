@@ -54,13 +54,13 @@ while( ($filename = readdir(DIR))){
         $flag ++;
         next;
       }
-      $res = system("$pwd/../../mapleall/maplebe/build/be/mplbe $tempdir/$mpl_file >> $tempdir/$log_file");
+      $res = system("$pwd/../../mapleall/build/maplebe/be/mplbe $tempdir/$mpl_file >> $tempdir/$log_file");
       if ($res > 0) {
         push(@failed_mmpl_file, $file);
         $flag ++;
         next;
       }
-      $res = system("$pwd/../../mapleall/maplevm/build/interpreter32 $tempdir/$mmpl_file >> $tempdir/$log_file");
+      $res = system("$pwd/../../mapleall/build/maplevm/interpreter32 $tempdir/$mmpl_file >> $tempdir/$log_file");
       if ($res > 0) {
         push(@failed_int_file, $file);
         $flag ++;

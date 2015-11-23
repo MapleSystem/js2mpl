@@ -7,8 +7,8 @@ MAPLEALL = $(MAPLEROOT)/mapleall
 BUILD = $(CURDIR)/output
 
 JS2MPL=$(JS2MPLDIR)/build/js2mpl
-BE = $(MAPLEALL)/maplebe/build/be/mplbe
-MAPLEINTERPRETER=$(MAPLEALL)/maplevm/build/interpreter32
+BE = $(MAPLEALL)/build/maplebe/be/mplbe
+MAPLEINTERPRETER=$(MAPLEALL)/build/maplevm/interpreter32
 
 SUBDIR:=$(wildcard regression-tests/*)
 MODULES=$(subst temp,,$(SUBDIR))
