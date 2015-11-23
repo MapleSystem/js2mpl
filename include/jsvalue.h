@@ -10,9 +10,6 @@ namespace mapleir {
 #define JSVALTYPESTRING            ((uint8_t)0x05)
 #define JSVALTYPENULL              ((uint8_t)0x06)
 #define JSVALTYPEOBJECT            ((uint8_t)0x10)
-#define JSVALTYPEFUNCTION          ((uint8_t)0x11)
-#define JSVALTYPECLOSURE           ((uint8_t)0x12)
-#define JSVALTYPEAYYAY             ((uint8_t)0x13)
 #define JSVALTYPEELEMHOLE          ((uint8_t)0x14)
 #define JSVALTYPEUNKNOWN           ((uint8_t)0x20)
 
@@ -24,9 +21,6 @@ namespace mapleir {
 #define JSVALTAGMAGIC              ((uint32_t)(JSVALTAGCLEAR | JSVALTYPEMAGIC))
 #define JSVALTAGNULL               ((uint32_t)(JSVALTAGCLEAR | JSVALTYPENULL))
 #define JSVALTAGOBJECT             ((uint32_t)(JSVALTAGCLEAR | JSVALTYPEOBJECT))
-#define JSVALTAGFUNCTION           ((uint32_t)(JSVALTAGCLEAR | JSVALTYPEFUNCTION))
-#define JSVALTAGCLOSURE            ((uint32_t)(JSVALTAGCLEAR | JSVALTYPECLOSURE))
-#define JSVALTAGARRAY              ((uint32_t)(JSVALTAGCLEAR | JSVALTYPEARRAY))
 #define JSVALTAGELEMHOLE           ((uint32_t)(JSVALTAGCLEAR | JSVALTYPEELEMHOLE))
 
 typedef enum {
