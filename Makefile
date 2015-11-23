@@ -23,12 +23,17 @@ src:
 tests:
 	$(MAKE) -C $@ regression OPT=$(OPT)
 
+todo:
+	$(MAKE) -C tests todo
+
 clean: 
 	$(MAKE) clean -C src
 	$(MAKE) clean -C tests
+
+cleanall: clean
 	$(MAKE) clean -C ../mapleall
 
-rebuild: clean all
+rebuild: cleanall all
 
 .PHONY: $(TARGS)
 
