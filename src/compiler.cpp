@@ -73,8 +73,6 @@ uint32_t JSCompiler::GetFieldidFromTag(uint32_t tag) {
   switch (tag) {
   case JSVALTAGBOOLEAN: tagname = "boo"; break;
   case JSVALTAGSTRING: tagname = "str"; break;
-  case JSVALTAGFUNCTION:
-  case JSVALTAGCLOSURE: tagname = "ptr"; break;
   case JSVALTAGOBJECT: tagname = "prop_list"; break;
   default: tagname = "i32"; break;
   }
@@ -900,41 +898,7 @@ bool JSCompiler::CompileOpSetName(JSAtom *atom, BaseNode *val) {
   // variable being set, evaluate and store the result in a new temp and replace
   // the stack items by the temp
   opstack_->ReplaceStackItemsWithTemps(this, var);
-
-#ifdef DYNAMICLANG
   BaseNode *bn = jsbuilder_->CreateStmtDassign(var, 0, val);
-#else
-  BaseNode *bn;
-  uint32_t jsvalue_tag_fieldid = jsbuilder_->GetStructFieldIdFromFieldName(jsvalue_type_, "tag");
-  uint32_t payload_fieldid;
-  BaseNode *jsvalue_tag_node;
-  bool isfuncptr = false;
-  if (val->op == OP_dread) {
-    DreadNode *dread = static_cast<DreadNode *>(val);
-    MIRSymbol *st = jsbuilder_->module_->GetSymbolFromStidx(dread->stidx, dread->islocal);
-    const char * valname = st->GetName().c_str();
-    isfuncptr = (st->skind == ST_func) && jsbuilder_->GetNameFunc(valname);
-  }
-  if (isfuncptr) {
-    DreadNode *funcdrn = static_cast<DreadNode *>(val);
-    payload_fieldid = jsbuilder_->GetStructFieldIdFromFieldName(jsvalue_type_, "ptr");
-    jsvalue_tag_node = jsbuilder_->GetConstUInt32(JSVALTAGFUNCTION);
-    bn = jsbuilder_->CreateStmtDassign(var, jsvalue_tag_fieldid, jsvalue_tag_node);
-    BaseNode *addrof_node = jsbuilder_->CreateAddrof(jsbuilder_->module_->GetSymbolFromStidx(funcdrn->stidx, false), false, PTY_ptr);
-    bn = jsbuilder_->CreateStmtDassign(var, payload_fieldid, addrof_node);
-  }
-  else {
-    uint32_t curtag = DetermineTagFromNode(val);
-    if (curtag == JSVALTAGCLEAR)
-      bn = jsbuilder_->CreateStmtDassign(var, 0, val);
-    else {
-      jsvalue_tag_node = jsbuilder_->GetConstUInt32(curtag);
-      bn = jsbuilder_->CreateStmtDassign(var, jsvalue_tag_fieldid, jsvalue_tag_node);
-      payload_fieldid = GetFieldidFromTag(curtag);
-      bn = jsbuilder_->CreateStmtDassign(var, payload_fieldid, val);
-    }
-  }
-#endif
   return true;
 }
 
