@@ -45,6 +45,8 @@ while( ($filename = readdir(DIR))){
       my $mpl_file = $file.'.mpl';
       my $mmpl_file = $file.".mmpl";
       my $log_file = $file.'.log';
+      my $out_file = $file.'.out';
+      my $err_file = $file.'.err';
       #my $option = $ARGV[0];
       my $option = 0;
       system("cp $js_file $tempdir/$js_file");
@@ -60,7 +62,15 @@ while( ($filename = readdir(DIR))){
         $flag ++;
         next;
       }
-      $res = system("$pwd/../../mapleall/build/maplevm/interpreter32 $tempdir/$mmpl_file >> $tempdir/$log_file");
+      $res = system("$pwd/../../mapleall/build/maplevm/interpreter32 $tempdir/$mmpl_file > $tempdir/$out_file");
+      system("grep failed $tempdir/$out_file > $tempdir/$err_file");
+      my $errfile = "$tempdir/$err_file.1";
+      my $size = -s $errfile;
+      #print "res=$res\n";
+      #print "size=$size\n";
+      if ($res == 0 && $size > 0) {
+        print "\n!!warning: string \"failed\" is emited from interpreter. please check the test case $js_file.\n";
+      }
       if ($res > 0) {
         push(@failed_int_file, $file);
         $flag ++;
@@ -72,6 +82,8 @@ while( ($filename = readdir(DIR))){
         system("rm -f $tempdir/$mpl_file");
         system("rm -f $tempdir/$mmpl_file");
         system("rm -f $tempdir/$log_file");
+        system("rm -f $tempdir/$out_file");
+        system("rm -f $tempdir/$err_file");
         next;
       }
     }
