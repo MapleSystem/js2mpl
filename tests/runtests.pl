@@ -64,7 +64,7 @@ while( ($filename = readdir(DIR))){
       }
       $res = system("$pwd/../../mapleall/build/maplevm/interpreter32 $tempdir/$mmpl_file > $tempdir/$out_file");
       system("grep failed $tempdir/$out_file > $tempdir/$err_file");
-      my $errfile = "$tempdir/$err_file.1";
+      my $errfile = "$tempdir/$err_file";
       my $size = -s $errfile;
       #print "res=$res\n";
       #print "size=$size\n";
