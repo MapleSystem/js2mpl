@@ -1966,9 +1966,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         break;
       }
       case JSOP_THIS: /*65, 1, 0, 1*/  {
-        // BaseNode *bn = jsbuilder_->CreateExprDread(jsvalue_type_, js_ThisBinding_);
-        // Push(bn);
-        SIMULATESTACK(0, 1);
+        BaseNode *bn = CompileGeneric0(INTRN_JSOP_THIS, true);
+        Push(bn);
         break;
       }
       case JSOP_GETPROP: /*53, 5, 1, 1*/
