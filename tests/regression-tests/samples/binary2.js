@@ -129,9 +129,8 @@ function Binary(par1, par2)
 
   sum = par1 / par2;
   print(sum);
-  //print(" expect 0.5\n");
-  print(" expect 0\n");
-  if (sum == 0){
+  print(" expect 0.5\n");
+  if (sum == 0.5){
     print(" pass\n");
   } else {
     $ERROR("/ failed\n",  sum, "\n");
