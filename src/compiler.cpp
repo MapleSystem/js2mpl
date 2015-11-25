@@ -560,6 +560,33 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom) {
     BaseNode *undefined = CompileOpConstValue(JSVALTAGUNDEFINED, 0);
     return undefined;
   }
+  if (!strcmp(name, "NaN")) {
+    union {
+        uint64_t from;
+        double to;
+    } u;
+    u.from = 0x8000000000000ULL | 0x7ff0000000000000ULL;
+    BaseNode *nan = jsbuilder_->GetConstDynf64(u.to);
+    return nan;
+  }
+  if (!strcmp(name, "Infinity")) {
+    union {
+        uint64_t from;
+        double to;
+    } u;
+    u.from = 0x7ff0000000000000ULL;
+    BaseNode *infinity = jsbuilder_->GetConstDynf64(u.to);
+    return infinity;
+  }
+  if (!strcmp(name, "-Infinity")) {
+    union {
+        uint64_t from;
+        double to;
+    } u;
+    u.from = 0xfff0000000000000ULL;
+    BaseNode *neginfinity = jsbuilder_->GetConstDynf64(u.to);
+    return neginfinity;
+  }
   BaseNode *builtin_var = CompileBuiltinName(name);
   if (builtin_var)
     return builtin_var;
