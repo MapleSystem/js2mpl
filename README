@@ -1,44 +1,45 @@
 
-How to build and use js2mpl
+How to build and use js2mpl-vm
 
   1. cd to your work area and get source code from the following git repositories
      note all the steps assume you are in the work directory
-      % git clone http://name:passwd@12.234.36.18/Mempool.git
-      % git clone http://name:passwd@12.234.36.18/mapleir.git
-      % git clone http://name:passwd@12.234.36.18/maplebe.git
-      % git clone http://name:passwd@12.234.36.18/libjsrt.git
-      % git clone http://name:passwd@12.234.36.18/mozjs.git
-      % git clone http://name:passwd@12.234.36.18/js2mpl.git
+      % git clone wenhu@10.213.64.15:/opt/git/maple/mapleall.git
+      % git clone wenhu@10.213.64.15:/opt/git/maple/mozjs.git
+      % git clone wenhu@10.213.64.15:/opt/git/maple/js2mpl-vm.git
 
      at this point, the directory structure should look like
        maple
-         |- js2mpl
+         |- mapleall
+              |- Makefile
+              |- maplebe
+              |- mapleir
+              |- maplevm
+              |- Mempool
+         |- js2mpl-vm
               |- include
               |- Makefile
               |- Makefile.in
               |- README
               |- src
               |- tests
-         |- libjsrt
-         |- maplebe
-         |- mapleir
-         |- Mempool
          |- mozjs
               |- Makefile
               |- mozjs-31.2.0
               |- README
 
-  2. build Mempool, mapleir, maplebe, libjsrt
-      % cd Mempool/src; make
-      % cd mapleir; make
-      % cd maplebe; make
-      % cd libjsrt; make
+  2. build mapleall (Mempool, mapleir, maplebe, maplevm)
+      % cd mapleall; make
 
   3. build mozjs
-      % cd mozjs; make config; make
+      % cd mozjs; make config; make -j4
 
-  4. build js2mpl
-      % cd js2mpl; make
+  4. build js2mpl-vm
+      // this will acturally build mapleall as well as run regression tests
+      % cd js2mpl-vm; make 
+
+      // rebuild mapleall and js2mpl-vm
+      % cd js2mpl-vm; make rebuild 
 
   5. run regression
-      % cd js2mpl/tests; make regression
+      % cd js2mpl-vm/tests; make regression
+      % cd js2mpl-vm/tests; make todo
