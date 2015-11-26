@@ -102,6 +102,7 @@ class JSCompiler{
   BaseNode *CompileOpConstValue(uint32_t jsvalue_tag, uint32_t payload);
   BaseNode *CompileOpDoubleConstValue(double dval);
   js_builtin_id EcmaNameToId(char *name);
+  int32_t GetBuiltinStringId(const jschar *chars, uint32_t length);
   BaseNode *CompileBuiltinName(char *name);
   BaseNode *CompileBuiltinMethod(int32_t idx, int arg_num, bool need_this);
   uint32_t FindIntrinsicForOp(JSOp opcode);

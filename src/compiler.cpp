@@ -627,14 +627,50 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom) {
   return bn;
 }
 
+int32_t JSCompiler::GetBuiltinStringId(const jschar *chars, size_t length) {
+  typedef enum {
+#define JSBUILTIN_STRING_DEF(id, length, str)  id,
+#include "../include/jsbuiltinstrings.inc.h"
+#undef JSBUILTIN_STRING_DEF
+    JSBUILTIN_STRING_ID_COUNT
+  } js_builtin_string_id;
+
+  static const struct {
+    uint16_t *chars;
+    uint32_t length;
+  } builtin_strings[JSBUILTIN_STRING_ID_COUNT] = {
+#define JSBUILTIN_STRING_DEF(id, length, str) {(uint16_t *)(const char *)str, length},
+#include "../include/jsbuiltinstrings.inc.h"
+#undef JSBUILTIN_STRING_DEF
+  };
+  uint32_t i;
+  for (i = 0; i < JSBUILTIN_STRING_ID_COUNT; i++) {
+    if (builtin_strings[i].length != length)
+      continue;
+    uint32_t j;
+    for (j = 0; j < length; j++) {
+      if (builtin_strings[i].chars[j] != chars[j])
+        break;
+    }
+    if (j == length)
+      break;
+  }
+  if (i == JSBUILTIN_STRING_ID_COUNT) return -1;
+  return (int32_t)i;
+}
+
 // JSOP_STRING 61
 BaseNode *JSCompiler::CompileOpString(JSString *str) {
   size_t length = 0;
   const jschar *chars = JS_GetInternedStringCharsAndLength(str, &length);
-  uint32_t len = length + 1;
 
+  int32_t id = GetBuiltinStringId(chars, length);
+  if (id != -1) {
+    return CompileGeneric1((MIRIntrinsicId)INTRN_JS_GET_BUILTIN_STRING,
+                           jsbuilder_->GetConstUInt32(id), false);
+  }
   MIRType *type = jsbuilder_->GetOrCreateArrayType(jsbuilder_->GetUInt16(),
-                                                 1, &len);
+                                                 1, &length);
   const char *temp_name = Util::GetSequentialName("op_string_", temp_var_no_, mp_);
   MIRSymbol *var = jsbuilder_->GetOrCreateGlobalDecl(temp_name, type);
 
@@ -645,9 +681,6 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
                                     MIRIntConst(val, jsbuilder_->GetUInt16()));
     init->const_vec.push_back(int_const);
   }
-  MIRIntConst *int_const = MP_NEW(jsbuilder_->module_->mp_,
-                                  MIRIntConst((uint64_t)0, jsbuilder_->GetUInt16()));
-  init->const_vec.push_back(int_const);
   var->value_.const_ = init;
   BaseNode *ptr = jsbuilder_->CreateExprAddrof(0, var);
   BaseNode *expr = CompileGeneric2((MIRIntrinsicId)INTRN_JSOP_NEW_STRING,
