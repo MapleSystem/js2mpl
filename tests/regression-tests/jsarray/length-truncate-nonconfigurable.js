@@ -32,9 +32,13 @@ Object.defineProperty(arr, "length", { value: 0, writable: false });
 assertEq("#1: length is highest remaining index plus one", arr.length, 2);
 
 var desc = Object.getOwnPropertyDescriptor(arr, "length");
-assertEq(6, desc !== undefined, true);
+//assertEq(6, desc !== undefined, true);
 
 assertEq(2, desc.value, 2);
 assertEq(3, desc.writable, false);
 assertEq(4, desc.enumerable, false);
 assertEq(5, desc.configurable, false);
+
+if (!(desc !== undefined)){
+    $ERROR('CHECK #6: ' + 'Expected: ' + "desc !== undefined" +'. Actual: ' + (desc !== undefined));
+  }
