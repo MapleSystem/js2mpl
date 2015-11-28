@@ -31,3 +31,10 @@ actual = [].concat(x).toString();
 expect = x.toString();
 if(actual !== expect)
   $ERROR(status, expect, actual);
+
+status = '#10';
+x={length:2, 0:0, 1:1};
+actual = [].concat(x).toString();
+expect = x.toString();
+if(actual !== expect)
+  $ERROR(status, expect, actual);
