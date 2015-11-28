@@ -487,7 +487,7 @@ BaseNode *JSCompiler::CompileOpCall(uint32_t argc) {
   }
   if (stmt)
     jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
-#if 1
+#if 0
   return jsbuilder_->CreateExprRegread(jsvalue_type_->GetPrimType(), -SREG_retval0);
 #else
   MIRSymbol *retrunVar = CreateTempVar(jsvalue_type_);
