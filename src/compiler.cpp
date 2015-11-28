@@ -663,7 +663,6 @@ int32_t JSCompiler::GetBuiltinStringId(const jschar *chars, size_t length) {
 BaseNode *JSCompiler::CompileOpString(JSString *str) {
   size_t length = 0;
   const jschar *chars = JS_GetInternedStringCharsAndLength(str, &length);
-  printf("%d", (uint32_t) chars);
   int32_t id = GetBuiltinStringId(chars, length);
   if (id != -1) {
     return CompileGeneric1((MIRIntrinsicId)INTRN_JS_GET_BUILTIN_STRING,
