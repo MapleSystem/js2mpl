@@ -32,6 +32,8 @@ class JSCompiler{
   std::map<jsbytecode *, MIRLabel *> label_map_;
   std::map<MIRLabel *, MIRSymbol *> label_tempvar_map_;
 
+  std::map<const jschar *, BaseNode *> jschar_symble_map_;
+
   std::stack<std::pair<JSScript *, JSMIRFunction *>> scriptstack_;
 
   MemPool *mp_;

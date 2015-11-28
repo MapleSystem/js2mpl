@@ -24,6 +24,15 @@ namespace mapleir {
 #define JSVALTAGELEMHOLE           ((uint32_t)(JSVALTAGCLEAR | JSVALTYPEELEMHOLE))
 
 typedef enum {
+  // Include sequences of 16-bit code units.
+  JSSTRING_UNICODE_CHARS = 0,
+  // Include sequences of 8-bit code units.
+  JSSTRING_ASCII_CHARS,
+  // Include sequences of 16-bit code units, which is longer than 2^14.
+  JSSTRING_LONG,
+}__jsstring_class;
+
+typedef enum {
   JS_BUILTIN_GLOBAL = 0,
   JS_BUILTIN_OBJECT,
   JS_BUILTIN_OBJECT_PROTOTYPE,

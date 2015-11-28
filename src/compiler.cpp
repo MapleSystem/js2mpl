@@ -636,10 +636,10 @@ int32_t JSCompiler::GetBuiltinStringId(const jschar *chars, size_t length) {
   } js_builtin_string_id;
 
   static const struct {
-    uint16_t *chars;
+    const char *chars;
     uint32_t length;
   } builtin_strings[JSBUILTIN_STRING_ID_COUNT] = {
-#define JSBUILTIN_STRING_DEF(id, length, str) {(uint16_t *)(const char *)str, length},
+#define JSBUILTIN_STRING_DEF(id, length, str) {(const char *)str, length},
 #include "../include/jsbuiltinstrings.inc.h"
 #undef JSBUILTIN_STRING_DEF
   };
@@ -649,7 +649,7 @@ int32_t JSCompiler::GetBuiltinStringId(const jschar *chars, size_t length) {
       continue;
     uint32_t j;
     for (j = 0; j < length; j++) {
-      if (builtin_strings[i].chars[j] != chars[j])
+      if (builtin_strings[i].chars[j+2] != chars[j])
         break;
     }
     if (j == length)
@@ -663,18 +663,31 @@ int32_t JSCompiler::GetBuiltinStringId(const jschar *chars, size_t length) {
 BaseNode *JSCompiler::CompileOpString(JSString *str) {
   size_t length = 0;
   const jschar *chars = JS_GetInternedStringCharsAndLength(str, &length);
-
+  printf("%d", (uint32_t) chars);
   int32_t id = GetBuiltinStringId(chars, length);
   if (id != -1) {
     return CompileGeneric1((MIRIntrinsicId)INTRN_JS_GET_BUILTIN_STRING,
                            jsbuilder_->GetConstUInt32(id), false);
   }
-  MIRType *type = jsbuilder_->GetOrCreateArrayType(jsbuilder_->GetUInt16(),
-                                                 1, &length);
-  const char *temp_name = Util::GetSequentialName("op_string_", temp_var_no_, mp_);
-  MIRSymbol *var = jsbuilder_->GetOrCreateGlobalDecl(temp_name, type);
 
+  if (jschar_symble_map_[chars])
+    return jschar_symble_map_[chars];
+
+  size_t pad_length = length + 1;
+  MIRType *type = jsbuilder_->GetOrCreateArrayType(jsbuilder_->GetUInt16(),
+                                                   1, &(pad_length));
+  const char *temp_name = Util::GetSequentialName("const_jschars_", temp_var_no_, mp_);
+  MIRSymbol *var = jsbuilder_->GetOrCreateGlobalDecl(temp_name, type);
   MIRAggConst *init =  MP_NEW(jsbuilder_->module_->mp_, MIRAggConst(type));
+
+  if ((length & 0xffff6000) != 0) assert (false && "NIY");
+  uint8_t cl[2];
+  cl[0] = (JSSTRING_UNICODE_CHARS << 6) | (length >> 8);
+  cl[1] = (length & 0xff);
+  uint64_t val = (uint64_t)(*((uint16_t *)cl));
+  MIRIntConst *int_const = MP_NEW(jsbuilder_->module_->mp_,
+                                  MIRIntConst(val, jsbuilder_->GetUInt16()));
+  init->const_vec.push_back(int_const);
   for (uint32_t i = 0; i < length; i++) {
     uint64_t val = chars[i];
     MIRIntConst *int_const = MP_NEW(jsbuilder_->module_->mp_,
@@ -683,8 +696,9 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
   }
   var->value_.const_ = init;
   BaseNode *ptr = jsbuilder_->CreateExprAddrof(0, var);
-  BaseNode *expr = CompileGeneric2((MIRIntrinsicId)INTRN_JSOP_NEW_STRING,
-                                                ptr, jsbuilder_->GetConstUInt32(length), false);
+  BaseNode *expr = CompileGeneric1((MIRIntrinsicId)INTRN_JSOP_NEW_STRING,
+                                    ptr, false);
+  jschar_symble_map_[chars] = expr;
   return expr;
 }
 
