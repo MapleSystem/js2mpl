@@ -2,6 +2,8 @@
 #ifndef JS2MPL_INCLUDE_MACROS_H_
 #define JS2MPL_INCLUDE_MACROS_H_
 
+#include <iostream>
+
 #define _LOCATION  __func__ << "() at "<< __FILE__ << ":" << __LINE__
 
 // print empty line
