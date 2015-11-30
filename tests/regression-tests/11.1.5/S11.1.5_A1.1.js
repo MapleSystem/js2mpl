@@ -27,6 +27,6 @@ if (object.toString !== Object.prototype.toString) {
 
 //CHECK#4
 if (object.toString() !== "[object Object]") {
-  $ERROR('#4: var object = {}; object.toString === "[object Object]". Actual: ' + (object.toString));
+  $ERROR('#4: var object = {}; object.toString === "[object Object]". Actual: ' + (object.toString()));
 }
 

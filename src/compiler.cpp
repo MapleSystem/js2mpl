@@ -681,11 +681,11 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
 
   MIRType *unit_type = jsbuilder_->GetUInt16();
   uint32_t pad = 1;
-  uint32_t string_class = JSSTRING_UNICODE_CHARS;
+  uint32_t string_class = JSSTRING_UNICODE;
   if (IsAsciiChars(chars, length)) {
     unit_type = jsbuilder_->GetUInt8();
     pad = 2;
-    string_class = JSSTRING_ASCII_CHARS;
+    string_class = JSSTRING_ASCII;
   }
 
   if ((length & 0xffff6000) != 0)
@@ -701,7 +701,7 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
   if (pad == 2) {
     uint8_t cl[2];
     cl[0] = (string_class << 6) | (length + 32 >> 8);
-    cl[1] = ((length + 32) & 0xff);
+    cl[1] = ((length) & 0xff);
     uint64_t val = (uint64_t)(cl[0]);
     MIRIntConst *int_const = MP_NEW(jsbuilder_->module_->mp_,
                                     MIRIntConst(val, unit_type));
