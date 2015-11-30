@@ -659,6 +659,13 @@ int32_t JSCompiler::GetBuiltinStringId(const jschar *chars, size_t length) {
   return (int32_t)i;
 }
 
+bool IsAsciiChars(const jschar *chars, uint32_t length) {
+  for (uint32_t i = 0; i < length; i++) {
+    if (chars[i] >= 256) return false;
+  }
+  return true;
+}
+
 // JSOP_STRING 61
 BaseNode *JSCompiler::CompileOpString(JSString *str) {
   size_t length = 0;
@@ -672,25 +679,51 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
   if (jschar_symble_map_[chars])
     return jschar_symble_map_[chars];
 
-  size_t pad_length = length + 1;
-  MIRType *type = jsbuilder_->GetOrCreateArrayType(jsbuilder_->GetUInt16(),
-                                                   1, &(pad_length));
-  const char *temp_name = Util::GetSequentialName("const_jschars_", temp_var_no_, mp_);
+  MIRType *unit_type = jsbuilder_->GetUInt16();
+  uint32_t pad = 1;
+  uint32_t string_class = JSSTRING_UNICODE_CHARS;
+  if (IsAsciiChars(chars, length)) {
+    unit_type = jsbuilder_->GetUInt8();
+    pad = 2;
+    string_class = JSSTRING_ASCII_CHARS;
+  }
+
+  if ((length & 0xffff6000) != 0)
+    assert (false && "NIY");
+
+  size_t padding_length = length + pad;
+  MIRType *type = jsbuilder_->GetOrCreateArrayType(unit_type, 1, &(padding_length));
+  const char *temp_name = Util::GetSequentialName("const_chars_", temp_var_no_, mp_);
   MIRSymbol *var = jsbuilder_->GetOrCreateGlobalDecl(temp_name, type);
   MIRAggConst *init =  MP_NEW(jsbuilder_->module_->mp_, MIRAggConst(type));
 
-  if ((length & 0xffff6000) != 0) assert (false && "NIY");
-  uint8_t cl[2];
-  cl[0] = (JSSTRING_UNICODE_CHARS << 6) | (length >> 8);
-  cl[1] = (length & 0xff);
-  uint64_t val = (uint64_t)(*((uint16_t *)cl));
-  MIRIntConst *int_const = MP_NEW(jsbuilder_->module_->mp_,
-                                  MIRIntConst(val, jsbuilder_->GetUInt16()));
-  init->const_vec.push_back(int_const);
+
+  if (pad == 2) {
+    uint8_t cl[2];
+    cl[0] = (string_class << 6) | (length + 32 >> 8);
+    cl[1] = ((length + 32) & 0xff);
+    uint64_t val = (uint64_t)(cl[0]);
+    MIRIntConst *int_const = MP_NEW(jsbuilder_->module_->mp_,
+                                    MIRIntConst(val, unit_type));
+    init->const_vec.push_back(int_const);
+    val = (uint64_t)(cl[1]);
+    int_const = MP_NEW(jsbuilder_->module_->mp_,
+                                    MIRIntConst(val, unit_type));
+    init->const_vec.push_back(int_const);
+  } else {
+    uint8_t cl[2];
+    cl[0] = (string_class << 6) | (length >> 8);
+    cl[1] = ((length) & 0xff);
+    uint64_t val = (uint64_t)(*((uint16_t *)cl));
+    MIRIntConst *int_const = MP_NEW(jsbuilder_->module_->mp_,
+                                    MIRIntConst(val, unit_type));
+    init->const_vec.push_back(int_const);
+  }
+
   for (uint32_t i = 0; i < length; i++) {
     uint64_t val = chars[i];
     MIRIntConst *int_const = MP_NEW(jsbuilder_->module_->mp_,
-                                    MIRIntConst(val, jsbuilder_->GetUInt16()));
+                                    MIRIntConst(val, unit_type));
     init->const_vec.push_back(int_const);
   }
   var->value_.const_ = init;
