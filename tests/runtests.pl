@@ -4,9 +4,9 @@ my $pwd = getcwd;
 
 if(!(defined $ARGV[0])) {
   print "------------------------------------------------\n";
-  print "usage: testing.pl test_dir [pattern]\n";
+  print "usage: runtests.pl test_dir [pattern]\n";
   print "to test all *closure*.js in regression-tests:\n";
-  print "       testing.pl regression-tests closure\n";
+  print "       runtests.pl regression-tests closure\n";
   print "------------------------------------------------\n";
   exit;
 }
