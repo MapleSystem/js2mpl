@@ -230,7 +230,10 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
               std::pair<jsbytecode *, char *> P(pc, name);
               bytecodeAnonyFunc.push_back(P);
             }
+            DEBUGPRINT3(name);
             funcNames_.push_back(name);
+            std::pair<char *, JSFunction *> NF(name, jsfun);
+            nameSFunc_.push_back(NF);
             std::pair<JSScript *, char *> P(scr, name);
             scriptstack_.push(P);
 
@@ -319,6 +322,16 @@ void Scope::PopulateSNInfo() {
     if (sn->IsWithEnv() || sn->UseAliased())
       sn->PropWithEnv();
   }
+}
+
+JSFunction *Scope::GetJSFunc(char *name) {
+  std::vector<std::pair<char *, JSFunction *>>::iterator I;
+  for(I = nameSFunc_.begin(); I != nameSFunc_.end(); I++) {
+    if(strcmp(name, (*I).first) == 0) {
+      return (*I).second;
+    }
+  }
+  return NULL;
 }
 
 }  // namespace mapleir

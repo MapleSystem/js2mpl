@@ -596,8 +596,26 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom) {
   MIRSymbol *var;
   bool isfuncname = false;
   if (scope_->IsFunction(name)) {
-#ifndef DYNAMICLANG
-    name = Util::GetNameWithSuffix(name, "__obj", mp_);
+#ifndef USESIMPLEFUNCCALL
+    MIRSymbol *func = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalue_type_);
+    BaseNode *ptr = jsbuilder_->CreateAddrof(func, false, PTY_dynany);
+    MapleVector<BaseNode *> arguments(jsbuilder_->module_->mp_allocator_.Adapter());
+    JSFunction *jsfun = scope_->GetJSFunc(name);
+    DEBUGPRINT3(name);
+    assert(jsfun && "not a jsfunction");
+
+    arguments.push_back(ptr);
+    arguments.push_back(jsbuilder_->GetConstInt(-1-jsfun->nargs()));
+    arguments.push_back(jsbuilder_->GetConstInt(0));
+    arguments.push_back(jsbuilder_->GetConstUInt32(jsfun->strict()));
+    arguments.push_back(jsbuilder_->GetConstInt(0));
+    BaseNode *func_node = CompileGenericN(INTRN_JS_NEW_FUNCTION, arguments, true);
+
+    name = Util::GetNameWithSuffix(name, "_obj_", mp_);
+    name = Util::GetSequentialName(name, temp_var_no_, mp_);
+    MIRSymbol *func_obj = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalue_type_);
+    BaseNode *stmt = jsbuilder_->CreateStmtDassign(func_obj, 0, func_node);
+    jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
 #endif
     isfuncname = true;
     DEBUGPRINT2(name);
@@ -617,12 +635,14 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom) {
   }
   stidx_t stidx = var->GetStIdx();
   DEBUGPRINT3(stidx);
-  BaseNode *bn;
+
+  BaseNode *bn = jsbuilder_->CreateExprDread(jsvalue_type_, var);
+
+#ifdef USESIMPLEFUNCCALL
   if (isfuncname) {
     bn = jsbuilder_->CreateAddrof(var, false, PTY_dynany);
-  } else {
-    bn = jsbuilder_->CreateExprDread(jsvalue_type_, var);
   }
+#endif
 
   return bn;
 }

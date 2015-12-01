@@ -73,6 +73,7 @@ class Scope {
     uint32_t anon_func_no_;
 
     std::map<JSFunction *, unsigned> funcToAnonyidx_;
+    std::vector<std::pair<char *, JSFunction *>> nameSFunc_;
 
   public:
     Scope(JSContext *context, JSScript *script, mapleir::MIRModule *module) : 
@@ -98,6 +99,8 @@ class Scope {
     void SetSNClosure(char *name);
     void GetSNFlag(char *name);
     void AddSNChild(char *name, char *child);
+
+    JSFunction *GetJSFunc(char *name);
 
     void PopulateSNInfo();
 
