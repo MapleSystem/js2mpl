@@ -229,12 +229,12 @@ BaseNode *JSCompiler::CompileOpBinary(JSOp opcode,
     case JSOP_BITOR: mop = OP_bior; restype = jsbuilder_->GetUInt32(); break;
     case JSOP_BITXOR: mop = OP_bxor; restype = jsbuilder_->GetUInt32(); break;
     case JSOP_BITAND: mop = OP_band; restype = jsbuilder_->GetUInt32(); break;
-    case JSOP_EQ: mop = OP_eq; restype = jsbuilder_->GetUInt32(); break;
-    case JSOP_NE: mop = OP_ne; restype = jsbuilder_->GetUInt32(); break;
-    case JSOP_LT: mop = OP_lt; restype = jsbuilder_->GetUInt32(); break;
-    case JSOP_LE: mop = OP_le; restype = jsbuilder_->GetUInt32(); break;
-    case JSOP_GT: mop = OP_gt; restype = jsbuilder_->GetUInt32(); break;
-    case JSOP_GE: mop = OP_ge; restype = jsbuilder_->GetUInt32(); break;
+    case JSOP_EQ: mop = OP_eq; restype = jsbuilder_->GetUInt1(); break;
+    case JSOP_NE: mop = OP_ne; restype = jsbuilder_->GetUInt1(); break;
+    case JSOP_LT: mop = OP_lt; restype = jsbuilder_->GetUInt1(); break;
+    case JSOP_LE: mop = OP_le; restype = jsbuilder_->GetUInt1(); break;
+    case JSOP_GT: mop = OP_gt; restype = jsbuilder_->GetUInt1(); break;
+    case JSOP_GE: mop = OP_ge; restype = jsbuilder_->GetUInt1(); break;
     case JSOP_LSH: mop = OP_shl; restype = jsbuilder_->GetUInt32(); break;
     case JSOP_RSH: mop = OP_ashr; restype = jsbuilder_->GetUInt32(); break;
     case JSOP_URSH: mop = OP_lshr; restype = jsbuilder_->GetUInt32(); break;
