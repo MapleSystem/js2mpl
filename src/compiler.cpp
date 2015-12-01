@@ -613,7 +613,7 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom) {
 
     name = Util::GetNameWithSuffix(name, "_obj_", mp_);
     name = Util::GetSequentialName(name, temp_var_no_, mp_);
-    MIRSymbol *func_obj = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalue_type_);
+    MIRSymbol *func_obj = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_);
     BaseNode *stmt = jsbuilder_->CreateStmtDassign(func_obj, 0, func_node);
     jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
 #endif
@@ -624,7 +624,7 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom) {
   if (!jsbuilder_->GetStringIndex(name))
     create_p = true;
 
-  if (jsbuilder_->IsGlobalName(name) || isfuncname) {
+  if (jsbuilder_->IsGlobalName(name)) {
     var = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalue_type_);
   } else {
     var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_);
