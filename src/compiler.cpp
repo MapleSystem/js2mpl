@@ -261,7 +261,7 @@ BaseNode *JSCompiler::CompileOpUnary(JSOp opcode, BaseNode *op) {
   Opcode mop = (Opcode)0;
   MIRType *restype = jsbuilder_->GetDynany();
   switch (opcode) {
-    case JSOP_NOT: mop = OP_lnot; restype = jsbuilder_->GetUInt32(); break;
+    case JSOP_NOT: mop = OP_lnot; restype = jsbuilder_->GetUInt1(); break;
     case JSOP_BITNOT: mop = OP_bnot; restype = jsbuilder_->GetUInt32(); break;
     case JSOP_NEG: mop = OP_neg; break;
     default: break;
