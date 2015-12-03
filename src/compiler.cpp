@@ -469,22 +469,16 @@ BaseNode *JSCompiler::CompileOpCall(uint32_t argc) {
   MIRSymbol *symbol;
   char *name;
   if (js2mplDebug > 2) funcnode->dump();
-  if (funcnode->op == OP_addrof) {
-    AddrofNode *addrof = dynamic_cast<AddrofNode *>(funcnode);
-    symbol = jsbuilder_->module_->symtab->GetSymbolFromStidx(addrof->stidx);
-    name = (char *)(symbol->GetName().c_str());
-    if (scope_->IsFunction(name)) {
-      DEBUGPRINT2("call: function name without env");
-      stmt = jsbuilder_->CreateStmtCall(addrof->stidx, args);
-    }
-  } else {
-    MapleVector<BaseNode *> allargs(jsbuilder_->module_->mp_allocator_.Adapter());
-    allargs.push_back(funcnode);
-    allargs.push_back(impnode);
-    for (int32_t i = argc - 1; i >=0; i--)
-      allargs.push_back(argsvec[i]);
-    stmt = jsbuilder_->CreateStmtIntrinsicCallN(INTRN_JSOP_CALL, allargs);
-  }
+
+  MapleVector<BaseNode *> allargs(jsbuilder_->module_->mp_allocator_.Adapter());
+  allargs.push_back(funcnode);
+  allargs.push_back(impnode);
+
+  for (int32_t i = argc - 1; i >=0; i--)
+    allargs.push_back(argsvec[i]);
+
+  stmt = jsbuilder_->CreateStmtIntrinsicCallN(INTRN_JSOP_CALL, allargs);
+
   if (stmt)
     jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
 #if 0
