@@ -1531,7 +1531,7 @@ BaseNode *JSCompiler::CheckConvertToBoolean(BaseNode *node)
 {
   if (IsPrimitiveInteger(node->ptyp))
     return node;
-  return jsbuilder_->CreateExprIntrinsicop1(INTRN_JS_BOOLEAN, jsbuilder_->GetUInt32(), node);
+  return jsbuilder_->CreateExprIntrinsicop1(INTRN_JS_BOOLEAN, jsbuilder_->GetUInt1(), node);
 }
 
 BaseNode *JSCompiler::CheckConvertToInt32(BaseNode *node)
@@ -1921,9 +1921,9 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         int offset = GET_JUMP_OFFSET(pc);
         BaseNode *opnd0 = Pop();  //Pop IFEQ stmt
         BaseNode *cond0 = CheckConvertToBoolean(opnd0);
-        MIRSymbol *temp_var = CreateTempVar(jsbuilder_->GetUInt32());
-        jsbuilder_->CreateStmtDassign(temp_var, 0, cond0); 
-        opnd0 = jsbuilder_->CreateExprDread(jsbuilder_->GetUInt32(), temp_var);
+        MIRSymbol *temp_var = CreateTempJSValueTypeVar();
+        jsbuilder_->CreateStmtDassign(temp_var, 0, CheckConvertToJSValueType(cond0)); 
+        opnd0 = jsbuilder_->CreateExprDread(jsvalue_type_, temp_var);
         Push(opnd0);
 
         MIRLabel *mirlabel = GetorCreateLabelofPc(pc+offset);
@@ -1936,8 +1936,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         CompileScriptBytecodes(script, start, pc);
         BaseNode *opnd1 = Pop();
         BaseNode *cond1 = CheckConvertToBoolean(opnd1);
-        jsbuilder_->CreateStmtDassign(temp_var, 0, cond1);
-        opnd0 = jsbuilder_->CreateExprDread(jsbuilder_->GetUInt32(), temp_var);
+        jsbuilder_->CreateStmtDassign(temp_var, 0, CheckConvertToJSValueType(cond1));
+        opnd0 = jsbuilder_->CreateExprDread(jsvalue_type_, temp_var);
         Push(opnd0);
         continue;
       }
