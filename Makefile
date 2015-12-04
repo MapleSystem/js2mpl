@@ -8,7 +8,7 @@ TARGS = mapleall mozjs src tests
 TARGS = mapleall src tests
 
 all: $(TARGS)
-build: src
+build: mapleall src
 test: tests
 
 mapleall:

@@ -24,7 +24,7 @@
 #define DEBUGPRINT_S_LEVEL(str, level) do { \
   if (js2mplDebug >= level) { \
     PrintIndentation(js2mplDebugIndent); \
-    std::cout << _LOCATION << " " << str << std::endl; \
+    std::cout << " " << str << std::endl; \
   } \
 } while(0);
 #define DEBUGPRINTs(var)  DEBUGPRINT_S_LEVEL(var, 1)

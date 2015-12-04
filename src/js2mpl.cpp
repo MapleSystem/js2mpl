@@ -144,6 +144,7 @@ bool js2mpldriver(const char *fn, mapleir::MIRModule *module) {
     ///////////////////////////////////////////////
     // Pass To Set Up Scope Chain
     ///////////////////////////////////////////////
+    DEBUGPRINTs("\n\n =====> Pass To Set Up Scope Chain <====\n");
     mapleir::Scope *scope = MP_NEW(module->mp_, mapleir::Scope(cx, script, module));
     scope->Init();
     scope->Build(script);
@@ -160,6 +161,7 @@ bool js2mpldriver(const char *fn, mapleir::MIRModule *module) {
     ///////////////////////////////////////////////
     // Set Up JSMIRBuilder
     ///////////////////////////////////////////////
+    DEBUGPRINTs("\n\n =====> Pass To Set Up JSMIRBuilder <===\n");
     mapleir::JSMIRBuilder *jsbuilder = MP_NEW(module->mp_, mapleir::JSMIRBuilder(module));
     jsbuilder->Init();
 
@@ -168,6 +170,7 @@ bool js2mpldriver(const char *fn, mapleir::MIRModule *module) {
     ///////////////////////////////////////////////
     // Pass To Set Up Closure Environment
     ///////////////////////////////////////////////
+    DEBUGPRINTs("\n\n =====> Pass To Set Up Closure Env <====\n");
     mapleir::JSClosure *closure = MP_NEW(module->mp_,
         mapleir::JSClosure(fn, cx, script, module, scope, jsbuilder, opstack));
     closure->Init();
@@ -182,6 +185,7 @@ bool js2mpldriver(const char *fn, mapleir::MIRModule *module) {
     ///////////////////////////////////////////////
     // Pass To Build MapleIR.
     ///////////////////////////////////////////////
+    DEBUGPRINTs("\n\n =====> Pass To Build MapleIR <=========\n");
     mapleir::JSCompiler *compiler = MP_NEW(module->mp_,
         mapleir::JSCompiler(fn, cx, script, module, scope, jsbuilder, closure, opstack));
 
