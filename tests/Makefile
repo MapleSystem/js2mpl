@@ -10,9 +10,9 @@ JS2MPL=$(JS2MPLDIR)/build/js2mpl
 BE = $(MAPLEALL)/build/maplebe/be/mplbe
 MAPLEINTERPRETER=$(MAPLEALL)/build/maplevm/interpreter32
 
-SUBDIR:=$(wildcard regression-tests/* todo-tests/*)
+SUBDIR:=$(wildcard todo-tests/* todo-tests/*/* regression-tests/* regression-tests/*/*)
 MODULES=$(subst temp,,$(SUBDIR))
-SRCDIR:= todo-tests $(MODULES)
+SRCDIR:= $(MODULES)
 SRC0=$(foreach sdir, $(SRCDIR), $(wildcard $(sdir)/*.js))
 SRC=$(notdir $(SRC0))
 
