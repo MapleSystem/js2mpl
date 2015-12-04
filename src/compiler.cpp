@@ -1284,8 +1284,8 @@ void JSCompiler::CloseFuncBookKeeping() {
 
 BaseNode *JSCompiler::CompileOpIfJump(JSOp op, BaseNode *cond, jsbytecode *pcend) 
 {
-  MIRLabel *mirlabel = GetorCreateLabelofPc(pcend);
-  BaseNode* gotonode =  jsbuilder_->CreateStmtCondGoto(cond, (op == JSOP_IFEQ || op==JSOP_AND)?OP_brfalse:OP_brtrue, mirlabel->lab_idx);
+  labidx_t labidx = GetorCreateLabelofPc(pcend);
+  BaseNode* gotonode =  jsbuilder_->CreateStmtCondGoto(cond, (op == JSOP_IFEQ || op==JSOP_AND)?OP_brfalse:OP_brtrue, labidx);
   jsbuilder_->AddStmtInCurrentFunctionBody(gotonode);
   return gotonode;
 }
@@ -1329,7 +1329,7 @@ BaseNode *JSCompiler::CompileOpCondSwitch(BaseNode *opnd, JSScript *script,
   jsbytecode *pcjump;
   jsbytecode *pctemp1 = pcstart;
   jsbytecode *pctemp2 = js::GetNextPc(pcend);
-  MIRLabel *mirlabel;
+  labidx_t mirlabel;
   CaseVector switchtable(jsbuilder_->module_->mp_allocator_.Adapter());
   labidx_t defaultlabel;
 
@@ -1348,14 +1348,14 @@ BaseNode *JSCompiler::CompileOpCondSwitch(BaseNode *opnd, JSScript *script,
     offset = GET_JUMP_OFFSET(pcstart);
     pcjump = pcstart + offset;
     mirlabel = GetorCreateLabelofPc(pcjump);
-    switchtable.push_back(CasePair(const_val, mirlabel->lab_idx));
+    switchtable.push_back(CasePair(const_val, mirlabel));
     pcstart = js::GetNextPc(pcstart);
   }
 
   offset = GET_JUMP_OFFSET(pcstart);
   pcjump = pcstart + offset;
   mirlabel = GetorCreateLabelofPc(pcjump);
-  defaultlabel = mirlabel->lab_idx;
+  defaultlabel = mirlabel;
   BaseNode *switchnode = jsbuilder_->CreateStmtSwitch(opnd,
                                                     defaultlabel, switchtable);
   jsbuilder_->AddStmtInCurrentFunctionBody(switchnode);
@@ -1366,7 +1366,7 @@ BaseNode *JSCompiler::CompileOpTableSwitch(BaseNode *opnd, int32_t len,
                                            JSScript *script, jsbytecode *pc) {
   int offset,i;
   jsbytecode *pcjump,*pctemp1,*pctemp2;
-  MIRLabel *mirlabel;
+  labidx_t mirlabel;
   CaseVector switchtable(jsbuilder_->module_->mp_allocator_.Adapter());
   labidx_t defaultlabel;
 
@@ -1387,12 +1387,12 @@ BaseNode *JSCompiler::CompileOpTableSwitch(BaseNode *opnd, int32_t len,
     }
     pcjump = pc + offset;
     mirlabel = GetorCreateLabelofPc(pcjump);
-    switchtable.push_back(CasePair((int64_t)(low + i), mirlabel->lab_idx));
+    switchtable.push_back(CasePair((int64_t)(low + i), mirlabel));
   }
 
   pcjump = pc + len;
   mirlabel = GetorCreateLabelofPc(pcjump);
-  defaultlabel = mirlabel->lab_idx;
+  defaultlabel = mirlabel;
   BaseNode *cond = CheckConvertToInt32(opnd);
    
   BaseNode *stmt = jsbuilder_->CreateStmtSwitch(cond, defaultlabel, switchtable);
@@ -1400,43 +1400,43 @@ BaseNode *JSCompiler::CompileOpTableSwitch(BaseNode *opnd, int32_t len,
   return stmt;
 }
 
-MIRLabel *JSCompiler::GetorCreateLabelofPc(jsbytecode *pc, char *pref) {
-  MIRLabel *mirlabel = NULL;
+labidx_t JSCompiler::GetorCreateLabelofPc(jsbytecode *pc, char *pref) {
+  labidx_t labidx;
   if (label_map_[pc] != 0) {
-    mirlabel = label_map_[pc];
+    labidx = label_map_[pc];
   } else {
     const char *temp_name = Util::GetSequentialName(pref ? pref : "label", temp_var_no_, mp_);
-    mirlabel = jsbuilder_->GetorCreateMIRLabel(temp_name);
-    label_map_[pc] = mirlabel;
+    labidx = jsbuilder_->GetorCreateMIRLabel(temp_name);
+    label_map_[pc] = labidx;
   }
-  return mirlabel;
+  return labidx;
 }
 
 BaseNode *JSCompiler::CompileOpGoto(jsbytecode *pc, MIRSymbol *tempvar) {
-  MIRLabel *mirlabel = GetorCreateLabelofPc(pc);
-  BaseNode* gotonode = jsbuilder_->CreateStmtGoto(OP_goto, mirlabel->lab_idx);
+  labidx_t labidx = GetorCreateLabelofPc(pc);
+  BaseNode* gotonode = jsbuilder_->CreateStmtGoto(OP_goto, labidx);
   jsbuilder_->AddStmtInCurrentFunctionBody(gotonode);
   if (tempvar)  // the label will be the merge point of a conditional expression
-    label_tempvar_map_[mirlabel] = tempvar;
+    label_tempvar_map_[labidx] = tempvar;
   return gotonode;
 }
 
 BaseNode *JSCompiler::CompileOpGosub(jsbytecode *pc) {
-  MIRLabel *mirlabel = GetorCreateLabelofPc(pc, "f@");
-  BaseNode* gosubnode = jsbuilder_->CreateStmtGoto(OP_gosub, mirlabel->lab_idx);
+  labidx_t mirlabel = GetorCreateLabelofPc(pc, "f@");
+  BaseNode* gosubnode = jsbuilder_->CreateStmtGoto(OP_gosub, mirlabel);
   jsbuilder_->AddStmtInCurrentFunctionBody(gosubnode);
   return gosubnode;
 }
 
 BaseNode *JSCompiler::CompileOpTry(jsbytecode *pc) {
-  MIRLabel *mirlabel = GetorCreateLabelofPc(pc, "h@");
-  BaseNode* trynode = jsbuilder_->CreateStmtGoto(OP_try, mirlabel->lab_idx);
+  labidx_t mirlabel = GetorCreateLabelofPc(pc, "h@");
+  BaseNode* trynode = jsbuilder_->CreateStmtGoto(OP_try, mirlabel);
   jsbuilder_->AddStmtInCurrentFunctionBody(trynode);
   return trynode;
 }
 
 BaseNode *JSCompiler::CompileOpLoopHead(jsbytecode *pc) {
-  MIRLabel *mirlabel = NULL;
+  labidx_t mirlabel = NULL;
   if (label_map_[pc] != 0) {
     mirlabel = label_map_[pc];
   } else {
@@ -1444,7 +1444,7 @@ BaseNode *JSCompiler::CompileOpLoopHead(jsbytecode *pc) {
     mirlabel = jsbuilder_->GetorCreateMIRLabel(temp_name);
     label_map_[pc] = mirlabel;
   }
-  BaseNode *stmt = jsbuilder_->CreateStmtLabel(label_map_[pc]->lab_idx);
+  BaseNode *stmt = jsbuilder_->CreateStmtLabel(label_map_[pc]);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return stmt;
 }
@@ -1520,8 +1520,8 @@ void JSCompiler::CompileOpCase(jsbytecode *pc, int offset, BaseNode *rval, BaseN
   BaseNode *result = jsbuilder_->CreateExprDread(retty, temp);
   BaseNode *cond = CheckConvertToBoolean(result);
 
-  MIRLabel *mirlabel = GetorCreateLabelofPc(pc + offset);
-  BaseNode *gotonode = jsbuilder_->CreateStmtCondGoto(cond, OP_brtrue, mirlabel->lab_idx);
+  labidx_t mirlabel = GetorCreateLabelofPc(pc + offset);
+  BaseNode *gotonode = jsbuilder_->CreateStmtCondGoto(cond, OP_brtrue, mirlabel);
   jsbuilder_->AddStmtInCurrentFunctionBody(gotonode);
   Push(lval);
   return;
@@ -1709,12 +1709,12 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
     DEBUGPRINT0;
 
     if (label_map_[pc] != 0) {
-      MIRLabel *mirlabel = label_map_[pc];
-      if (label_tempvar_map_[mirlabel] != 0) { 
+      labidx_t labidx = label_map_[pc];
+      if (label_tempvar_map_[labidx] != 0) { 
         // handle the else part of the conditional expression by storing to 
         // the same temp
         assert(! opstack_->Empty());
-        MIRSymbol *tempvar = label_tempvar_map_[mirlabel];
+        MIRSymbol *tempvar = label_tempvar_map_[labidx];
         BaseNode *expr = Pop();
         MIRType *exprty;
         if (expr->ptyp != PTY_agg)
@@ -1722,8 +1722,9 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         else exprty = jsvalue_type_;
         jsbuilder_->CreateStmtDassign(tempvar, 0, expr); 
         Push(jsbuilder_->CreateExprDread(exprty, tempvar));
+        label_tempvar_map_[labidx] = 0;  // re-initialize to 0
       }
-      BaseNode *stmt = jsbuilder_->CreateStmtLabel(mirlabel->lab_idx);
+      BaseNode *stmt = jsbuilder_->CreateStmtLabel(labidx);
       jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
     }
 
@@ -1926,8 +1927,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         opnd0 = jsbuilder_->CreateExprDread(jsvalue_type_, temp_var);
         Push(opnd0);
 
-        MIRLabel *mirlabel = GetorCreateLabelofPc(pc+offset);
-        BaseNode* gotonode =  jsbuilder_->CreateStmtCondGoto(opnd0, (op==JSOP_AND)?OP_brfalse:OP_brtrue, mirlabel->lab_idx);
+        labidx_t mirlabel = GetorCreateLabelofPc(pc+offset);
+        BaseNode* gotonode =  jsbuilder_->CreateStmtCondGoto(opnd0, (op==JSOP_AND)?OP_brfalse:OP_brtrue, mirlabel);
         jsbuilder_->AddStmtInCurrentFunctionBody(gotonode);
   
         jsbytecode *start = js::GetNextPc(pc);

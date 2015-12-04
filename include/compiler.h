@@ -29,8 +29,8 @@ class JSCompiler{
   OperandStack *opstack_;
   std::stack<JSMIRFunction *> funcstack_;
   std::stack<BlockNode *> bodystack_;
-  std::map<jsbytecode *, MIRLabel *> label_map_;
-  std::map<MIRLabel *, MIRSymbol *> label_tempvar_map_;
+  std::map<jsbytecode *, labidx_t> label_map_;
+  std::map<labidx_t, MIRSymbol *> label_tempvar_map_;
 
   std::map<const jschar *, BaseNode *> jschar_symble_map_;
 
@@ -153,7 +153,7 @@ class JSCompiler{
   BaseNode *CompileOpName(JSAtom *atom);
   BaseNode *CompileOpIfJump(JSOp op, BaseNode *cond, jsbytecode *pcend);
   
-  MIRLabel *GetorCreateLabelofPc(jsbytecode *pc, char *pref = NULL);
+  labidx_t GetorCreateLabelofPc(jsbytecode *pc, char *pref = NULL);
   int64_t GetIntValue(jsbytecode *pc);
   BaseNode *CompileOpCondSwitch(BaseNode *opnd, JSScript *script,
                                 jsbytecode *pcstart, jsbytecode *pcend);
