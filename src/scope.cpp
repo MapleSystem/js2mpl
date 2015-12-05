@@ -198,7 +198,7 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
 
     if (script == jsscript_) {
       funcstack1_.push("main");
-      if (js2mplDebug>2) std::cout << "main {" << std::endl;
+      if (js2mplDebug) std::cout << "main {" << std::endl;
       ScopeNode * sn = GetOrCreateSN("main");
       sn->SetTopLevel();
     }
@@ -251,7 +251,7 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
         case JSOP_RETRVAL: /*153, 1, 0, 0*/
           {
             name = funcstack1_.top();
-            if (js2mplDebug>2) std::cout << "}\n" << std::endl;
+            if (js2mplDebug) std::cout << "}\n" << std::endl;
             funcstack1_.pop();
             DEBUGPRINT3((scriptstack_.size()));
             while (scriptstack_.size()) {
@@ -259,7 +259,7 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
               name = scriptstack_.top().second;
               scriptstack_.pop();
               funcstack1_.push(name);
-              if (js2mplDebug>2) std::cout << name << "{" << std::endl;
+              if (js2mplDebug) std::cout << name << " {" << std::endl;
               Build(scr);
             }
             break;

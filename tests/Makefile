@@ -5,10 +5,14 @@ MAPLEROOT = $(JS2MPLDIR)/..
 MAPLEALL = $(MAPLEROOT)/mapleall
 
 BUILD = $(CURDIR)/output
+build = output
 
 JS2MPL=$(JS2MPLDIR)/build/js2mpl
 BE = $(MAPLEALL)/build/maplebe/be/mplbe
 MAPLEINTERPRETER=$(MAPLEALL)/build/maplevm/interpreter32
+js2mpl=../build/js2mpl
+be = ../../mapleall/build/maplebe/be/mplbe
+mapleinterpreter=../../mapleall/build/maplevm/interpreter32
 
 SUBDIR:=$(wildcard todo-tests/* todo-tests/*/* regression-tests/* regression-tests/*/*)
 MODULES=$(subst temp,,$(SUBDIR))
@@ -39,8 +43,12 @@ DIRECTORIES:
 
 % : %.js $(JS2MPL) $(BE) $(MAPLEINTERPRETER) DIRECTORIES
 	cp $< $(BUILD)/$*.js
+	@echo gdb --args $(js2mpl) $(build)/$*.js $(OPT)
 	$(JS2MPL) $(BUILD)/$*.js $(OPT)
+	@echo gdb --args $(js2mpl) $(build)/$*.js $(OPT)
+	@echo gdb --args $(be) $(build)/$*.mpl
 	$(BE) $(BUILD)/$*.mpl > $(BUILD)/$*.log
+	@echo gdb --args $(mapleinterpreter) $(build)/$*.mmpl
 	$(MAPLEINTERPRETER) $(BUILD)/$*.mmpl
 	@echo ""
 
