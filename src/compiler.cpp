@@ -1539,7 +1539,7 @@ BaseNode *JSCompiler::CheckConvertToInt32(BaseNode *node)
   if (IsPrimitiveInteger(node->ptyp))
     return node;
 #ifdef DYNAMICLANG
-  return node;
+  return jsbuilder_->CreateExprTypeCvt(OP_cvt, jsbuilder_->GetInt32(), jsbuilder_->GetPrimType(node->ptyp), node);
 #else
   BaseNode *expr = jsbuilder_->CreateExprIntrinsicop1(INTRN_JS_INT32, jsbuilder_->GetInt32(), node);
   MIRSymbol *var = CreateTempVar(jsbuilder_->GetInt32());
@@ -2127,7 +2127,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_GETELEM: /*55, 1, 2, 1*/  {
         BaseNode *index = Pop();
         BaseNode *obj = Pop();
-        index = CheckConvertToInt32(index);
+//      index = CheckConvertToInt32(index);
         BaseNode *elem = CompileGeneric2(INTRN_JSOP_GETELEM, obj, index, false);
         Push(elem);
         break;
