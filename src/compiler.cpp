@@ -918,9 +918,9 @@ BaseNode *JSCompiler::CompileGeneric4(int32_t intrin_id, BaseNode *arg1,
 }
 
 bool JSCompiler::CompileOpSetElem(BaseNode *obj, BaseNode *index, BaseNode *val) {
-  index = CheckConvertToInt32(index);
+  index = CheckConvertToJSValueType(index);
   BaseNode *stmt = jsbuilder_->CreateStmtIntrinsicCall3(
-                     INTRN_JSOP_SETELEM,
+                     INTRN_JSOP_SETPROP,
                      obj, index, val);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return true;
@@ -943,16 +943,16 @@ bool JSCompiler::CompileOpInitPropSetter(BaseNode *obj, JSString *str, BaseNode 
 }
 
 bool JSCompiler::CompileOpInitElemGetter(BaseNode *obj, BaseNode *index, BaseNode *val) {
-  index = CheckConvertToInt32(index);
-  BaseNode *stmt = jsbuilder_->CreateStmtIntrinsicCall3(INTRN_JSOP_INITELEM_GETTER,
+  index = CheckConvertToJSValueType(index);
+  BaseNode *stmt = jsbuilder_->CreateStmtIntrinsicCall3(INTRN_JSOP_INITPROP_GETTER,
                                                         obj, index, val);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return true;
 }
 
 bool JSCompiler::CompileOpInitElemSetter(BaseNode *obj, BaseNode *index, BaseNode *val) {
-  index = CheckConvertToInt32(index);
-  BaseNode *stmt = jsbuilder_->CreateStmtIntrinsicCall3(INTRN_JSOP_INITELEM_SETTER,
+  index = CheckConvertToJSValueType(index);
+  BaseNode *stmt = jsbuilder_->CreateStmtIntrinsicCall3(INTRN_JSOP_INITPROP_SETTER,
                                                         obj, index, val);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return true;
@@ -2045,7 +2045,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_DELELEM: /*38, 1, 2, 1*/  {
         BaseNode *index = Pop();
         BaseNode *obj = Pop();
-        BaseNode *bn = CompileGeneric2(INTRN_JSOP_DELELEM, obj, index,  true);
+        index = CheckConvertToJSValueType(index);
+        BaseNode *bn = CompileGeneric2(INTRN_JSOP_DELPROP, obj, index,  true);
         Push(bn);
         break;
       }
@@ -2104,8 +2105,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_GETELEM: /*55, 1, 2, 1*/  {
         BaseNode *index = Pop();
         BaseNode *obj = Pop();
-//      index = CheckConvertToInt32(index);
-        BaseNode *elem = CompileGeneric2(INTRN_JSOP_GETELEM, obj, index, false);
+        index = CheckConvertToJSValueType(index);
+        BaseNode *elem = CompileGeneric2(INTRN_JSOP_GETPROP, obj, index, false);
         Push(elem);
         break;
       }
@@ -2115,8 +2116,11 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         BaseNode *val = Pop();
         BaseNode *index = Pop();
         BaseNode *obj = Pop();
-        if (!CompileOpSetElem(obj, index, val))
-          return false;
+        index = CheckConvertToJSValueType(index);
+        BaseNode *stmt = jsbuilder_->CreateStmtIntrinsicCall3(INTRN_JSOP_SETPROP, obj,
+                                                              index,
+                                                              val);
+        jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
         Push(obj);
         break;
       }

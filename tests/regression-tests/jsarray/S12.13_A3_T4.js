@@ -20,6 +20,7 @@ mycars2[2] = "Suzuki";
 
 // CHECK#1
 e = mycars.concat(mycars2);
+print(e[0]);
   for (var i=0;i<3;i++){
     if (e[i]!==mycars[i]) $ERROR('#1.'+i+': Exception['+i+']===mycars['+i+'](operation .concat). Actual:  Exception['+i+']==='+ e[i] );
   }
