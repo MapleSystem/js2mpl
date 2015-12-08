@@ -1032,6 +1032,7 @@ bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
     return false;
 
   JSMIRFunction *mfun = jsbuilder_->GetFunction(funcname);
+  mfun->isuserfunc = true;
 
   JSMIRFunction *parentFunc = funcstack_.top();
 
@@ -1080,6 +1081,7 @@ BaseNode *JSCompiler::CompileOpLambda(jsbytecode *pc) {
     funcname = scope_->GetAnonyFunctionName(pc);
 
   JSMIRFunction *lambda = jsbuilder_->GetFunction(funcname);
+  lambda->isuserfunc = true;
   DEBUGPRINT2(lambda);
 
   JSMIRFunction *parentFunc = funcstack_.top();
