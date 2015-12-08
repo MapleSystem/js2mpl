@@ -202,7 +202,6 @@ uint32_t JSCompiler::FindIntrinsicForOp(JSOp opcode) {
     {JSOP_POS, INTRN_JSOP_POS},
     {JSOP_OR, INTRN_JSOP_OR},
     {JSOP_AND, INTRN_JSOP_AND},
-    {JSOP_GETXPROP, INTRN_JSOP_GETXPROP},
     {JSOP_TYPEOF, INTRN_JSOP_TYPEOF}};
   int32_t intrinsic_code = -1;
   for (uint32_t i = 0; i < sizeof (op_to_intrinsic) / 8; i++) {
@@ -2078,11 +2077,13 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         Push(val);
         break;
       }
-      case JSOP_GETXPROP: /*195, 5, 1, 1*/  { 
-        // treat as unary op
-        BaseNode *opnd = Pop();
-        BaseNode *result = CompileOpUnary(op, opnd);
-        Push(result);
+      case JSOP_GETXPROP: /*195, 5, 1, 1*/  {
+        // See BytecodeEmitter.cpp:3678, JSOP_GETXPROP seems like JSOP_NAME.
+        // Actually I think it is a bug in SpiderMonkey.
+        Pop();
+        JSAtom *atom = script->getAtom(GET_UINT32_INDEX(pc));
+        BaseNode *bn = CompileOpName(atom);
+        Push(bn);
         break;
       }
       case JSOP_LENGTH: /*217, 5, 1, 1*/  {
