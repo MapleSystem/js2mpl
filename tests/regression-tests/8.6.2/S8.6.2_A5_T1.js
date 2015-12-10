@@ -9,7 +9,7 @@
  *  as testScreen = {touch:function(){count++}}
  */
 
-this.count=0;
+var count=0;
 
 var testScreen = {touch:function(){count++}};
 //////////////////////////////////////////////////////////////////////////////

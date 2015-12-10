@@ -9,7 +9,7 @@
  *  as seat['move']=function(){position++}
  */
 
-this.position=0;
+var position=0;
 var seat = {};
 seat['move']=function(){position++};
 //////////////////////////////////////////////////////////////////////////////

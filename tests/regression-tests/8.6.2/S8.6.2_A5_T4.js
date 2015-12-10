@@ -11,7 +11,7 @@
 
 var __count=0;
 
-this["beep"]=function(){__count++};
+var beep=function(){__count++};
 //////////////////////////////////////////////////////////////////////////////
 //CHECK#1
 beep();
@@ -23,7 +23,7 @@ if (__count !==1) {
 
 //////////////////////////////////////////////////////////////////////////////
 //CHECK#2
-this["beep"]();
+beep();
 if (__count !==2) {
   $ERROR('#2: __count=0; this["beep"]=function(){__count++}; beep(); this["beep"](); __count === 2. Actual: ' + (__count));
 }

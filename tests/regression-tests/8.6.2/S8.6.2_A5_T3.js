@@ -22,7 +22,7 @@ if (count !==1) {
 
 //////////////////////////////////////////////////////////////////////////////
 //CHECK#2
-this['knock']();
+knock();
 if (count !==2) {
   $ERROR('#2: count=0; knock=function(){count++}; knock(); this[\'knock\'](); count === 2. Actual: ' + (count));
 }
