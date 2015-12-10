@@ -36,18 +36,15 @@ function printBugNumber (num)
   BUGNUMBER = num;
   print ('BUGNUMBER: ' + num);
 }
-var SECT_PREFIX = 'Section ';
 var SECT_SUFFIX = ' of test - ';
 function inSection(x)
 {
-  return SECT_PREFIX + x + SECT_SUFFIX;
+  return x + SECT_SUFFIX;
 }
 
 printBugNumber(BUGNUMBER);
 print(summary);
-var arr = ['zero', 'one', 'two', 'three', 'four', 'five',
-           'six', 'seven', 'eight', 'nine', 'ten'];
-
+var arr = ['zero', 'one'];
 // This bug was intermittent. Stress-test it.
 for (var j=0; j<cnSTRESS; j++)
 {
@@ -75,132 +72,6 @@ for (var j=0; j<cnSTRESS; j++)
   status = inSection(j + cnDASH + 4);
   actual = arr['1'];
   expect = 'one';
-  if (actual !== expect) {
-    $ERROR(status, actual, expect); 
-  }
-
-  status = inSection(j + cnDASH + 5);
-  actual = arr[2];
-  expect = 'two';
-  if (actual !== expect) {
-    $ERROR(status, actual, expect); 
-  }
-
-  status = inSection(j + cnDASH + 6);
-  actual = arr['2'];
-  expect = 'two';
-  if (actual !== expect) {
-    $ERROR(status, actual, expect); 
-  }
-
-  status = inSection(j + cnDASH + 7);
-  actual = arr[3];
-  expect = 'three';
-  if (actual !== expect) {
-    $ERROR(status, actual, expect); 
-  }
-
-  status = inSection(j + cnDASH + 8);
-  actual = arr['3'];
-  expect = 'three';
-  if (actual !== expect) {
-    $ERROR(status, actual, expect); 
-  }
-
-  status = inSection(j + cnDASH + 9);
-  actual = arr[4];
-  expect = 'four';
-  if (actual !== expect) {
-    $ERROR(status, actual, expect); 
-  }
-
-  status = inSection(j + cnDASH + 10);
-  actual = arr['4'];
-  expect = 'four';
-  if (actual !== expect) {
-    $ERROR(status, actual, expect); 
-  }
-
-  status = inSection(j + cnDASH + 11);
-  actual = arr[5];
-  expect = 'five';
-  if (actual !== expect) {
-    $ERROR(status, actual, expect); 
-  }
-
-  status = inSection(j + cnDASH + 12);
-  actual = arr['5'];
-  expect = 'five';
-  if (actual !== expect) {
-    $ERROR(status, actual, expect); 
-  }
-
-  status = inSection(j + cnDASH + 13);
-  actual = arr[6];
-  expect = 'six';
-  if (actual !== expect) {
-    $ERROR(status, actual, expect); 
-  }
-
-  status = inSection(j + cnDASH + 14);
-  actual = arr['6'];
-  expect = 'six';
-  if (actual !== expect) {
-    $ERROR(status, actual, expect); 
-  }
-
-  status = inSection(j + cnDASH + 15);
-  actual = arr[7];
-  expect = 'seven';
-  if (actual !== expect) {
-    $ERROR(status, actual, expect); 
-  }
-
-  status = inSection(j + cnDASH + 16);
-  actual = arr['7'];
-  expect = 'seven';
-  if (actual !== expect) {
-    $ERROR(status, actual, expect); 
-  }
-
-  status = inSection(j + cnDASH + 17);
-  actual = arr[8];
-  expect = 'eight';
-  if (actual !== expect) {
-    $ERROR(status, actual, expect); 
-  }
-
-  status = inSection(j + cnDASH + 18);
-  actual = arr['8'];
-  expect = 'eight';
-  if (actual !== expect) {
-    $ERROR(status, actual, expect); 
-  }
-
-  status = inSection(j + cnDASH + 19);
-  actual = arr[9];
-  expect = 'nine';
-  if (actual !== expect) {
-    $ERROR(status, actual, expect); 
-  }
-
-  status = inSection(j + cnDASH + 20);
-  actual = arr['9'];
-  expect = 'nine';
-  if (actual !== expect) {
-    $ERROR(status, actual, expect); 
-  }
-
-  status = inSection(j + cnDASH + 21);
-  actual = arr[10];
-  expect = 'ten';
-  if (actual !== expect) {
-    $ERROR(status, actual, expect); 
-  }
-
-  status = inSection(j + cnDASH + 22);
-  actual = arr['10'];
-  expect = 'ten';
   if (actual !== expect) {
     $ERROR(status, actual, expect); 
   }
