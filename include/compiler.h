@@ -32,7 +32,7 @@ class JSCompiler{
   std::map<jsbytecode *, labidx_t> label_map_;
   std::map<labidx_t, MIRSymbol *> label_tempvar_map_;
 
-  std::map<const jschar *, BaseNode *> jschar_symble_map_;
+  std::map<const jschar *, BaseNode *> jsstring_map_;
 
   std::stack<std::pair<JSScript *, JSMIRFunction *>> scriptstack_;
 

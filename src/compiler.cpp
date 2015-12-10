@@ -480,13 +480,9 @@ BaseNode *JSCompiler::CompileOpCall(uint32_t argc) {
 
   if (stmt)
     jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
-#if 0
-  return jsbuilder_->CreateExprRegread(jsvalue_type_->GetPrimType(), -SREG_retval0);
-#else
   MIRSymbol *retrunVar = CreateTempVar(jsvalue_type_);
   jsbuilder_->SaveReturnValue(retrunVar);
   return jsbuilder_->CreateExprDread(jsvalue_type_, 0, retrunVar);
-#endif
 }
 
 BaseNode *JSCompiler::CompileOpNew(uint32_t argc) {
@@ -684,13 +680,14 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
   size_t length = 0;
   const jschar *chars = JS_GetInternedStringCharsAndLength(str, &length);
   int32_t id = GetBuiltinStringId(chars, length);
+  if (jsstring_map_[chars])
+    return jsstring_map_[chars];
+
+  BaseNode *data;
   if (id != -1) {
-    return CompileGeneric1((MIRIntrinsicId)INTRN_JS_GET_BUILTIN_STRING,
+    data = CompileGeneric1((MIRIntrinsicId)INTRN_JS_GET_BUILTIN_STRING,
                            jsbuilder_->GetConstUInt32(id), false);
   }
-
-  if (jschar_symble_map_[chars])
-    return jschar_symble_map_[chars];
 
   MIRType *unit_type = jsbuilder_->GetUInt16();
   uint32_t pad = 1;
@@ -740,10 +737,10 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
     init->const_vec.push_back(int_const);
   }
   var->value_.const_ = init;
-  BaseNode *ptr = jsbuilder_->CreateExprAddrof(0, var);
-  BaseNode *expr = CompileGeneric1((MIRIntrinsicId)INTRN_JSOP_NEW_STRING,
-                                    ptr, false);
-  jschar_symble_map_[chars] = expr;
+  data = jsbuilder_->CreateExprAddrof(0, var);
+  BaseNode *expr = jsbuilder_->CreateExprTypeCvt(OP_cvt, jsbuilder_->GetDynstr(),
+                                                 jsbuilder_->GetPrimType(data->ptyp), data);
+  jsstring_map_[chars] = expr;
   return expr;
 }
 
