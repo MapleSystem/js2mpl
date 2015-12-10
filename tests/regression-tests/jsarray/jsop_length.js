@@ -1,5 +1,5 @@
 var array1 = [1,2,9,10,11];
-var array2 = [3, "hello", 1.2];
+var array2 = [3, "hello", 1];
 var array3 = [];
 var len1 = array1.length;
 var len2 = array2.length;

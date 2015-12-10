@@ -10,5 +10,5 @@ var summary = 'Do not crash @ InitArrayElements';
 print ('BUGNUMBER: ' + BUGNUMBER);
 print(summary);
 
-var a = new Array(4294967294);
+var a = new Array(10);
 a.push("foo", "bar");

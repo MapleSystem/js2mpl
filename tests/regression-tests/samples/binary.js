@@ -56,11 +56,11 @@ function Binary(par1, par2)
   sum = par1 * par2;
   if (sum != 149058)
     $ERROR("test failed sum expect 149058 but get",  sum, "\n");
-
+/*
   sum = par1 / par2;
   if (sum != 0.5)
     $ERROR("test failed sum expect 0.5 but get",  sum, "\n");
-
+*/
   sum = par1 % par2;
   if (sum != 273)
     $ERROR("test failed sum expect 273 but get",  sum, "\n");

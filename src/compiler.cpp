@@ -549,33 +549,13 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom) {
     BaseNode *undefined = CompileOpConstValue(JSVALTAGUNDEFINED, 0);
     return undefined;
   }
-  if (!strcmp(name, "NaN")) {
-    union {
-        uint64_t from;
-        double to;
-    } u;
-    u.from = 0x8000000000000ULL | 0x7ff0000000000000ULL;
-    BaseNode *nan = jsbuilder_->GetConstDynf64(u.to);
-    return nan;
-  }
-  if (!strcmp(name, "Infinity")) {
-    union {
-        uint64_t from;
-        double to;
-    } u;
-    u.from = 0x7ff0000000000000ULL;
-    BaseNode *infinity = jsbuilder_->GetConstDynf64(u.to);
-    return infinity;
-  }
-  if (!strcmp(name, "-Infinity")) {
-    union {
-        uint64_t from;
-        double to;
-    } u;
-    u.from = 0xfff0000000000000ULL;
-    BaseNode *neginfinity = jsbuilder_->GetConstDynf64(u.to);
-    return neginfinity;
-  }
+  if (!strcmp(name, "NaN"))
+    assert(false && "Can not support NaN.");
+  if (!strcmp(name, "Infinity"))
+    assert(false && "Can not support Infinity.");
+  if (!strcmp(name, "-Infinity"))
+    assert(false && "Can not support -Infinity.");
+
   BaseNode *builtin_var = CompileBuiltinName(name);
   if (builtin_var)
     return builtin_var;
@@ -2186,9 +2166,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       }
       case JSOP_DOUBLE: /*60, 5, 0, 1*/  {
         double dval = script->getConst(GET_UINT32_INDEX(pc)).toDouble();
-        BaseNode *bn = jsbuilder_->GetConstDynf64(dval);
-        DEBUGPRINT2(dval);
-        Push(bn);
+        assert(false && "Can not support double.");
+        SIMULATESTACK(0, 1);
         break;
       }
       case JSOP_STRING: /*61, 5, 0, 1*/  {

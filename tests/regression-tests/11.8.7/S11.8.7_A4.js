@@ -14,13 +14,14 @@ object["true"] = 1;
 if (true in object !== "true" in object) {  
   $ERROR('#1: "var object = {}; object["true"] = 1; true in object === "true" in object');  
 }
-
+/*
 //CHECK#2
 var object = {};
 object.Infinity = 1;
 if (Infinity in object !== "Infinity" in object) {  
   $ERROR('#2: "var object = {}; object.Infinity = 1; Infinity in object === "Infinity" in object');  
 }
+*/
 
 //CHECK#4
 var object = {};

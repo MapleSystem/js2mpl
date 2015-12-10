@@ -76,12 +76,12 @@ if ((new Array(1)).length !== 1){
 if ((new Array(1)).toString !== Array.prototype.toString){
   $ERROR('#7: (new Array(1)).toString === Array.prototype.toString. Actual: ' + (new Array(1)).toString);
 }
-
+/*
 // CHECK#8
 if ((new Array(-0)).length !== 0){
   $ERROR('#8: (new Array(-0)).length === 0. Actual: ' + (new Array(-0)).length);
 }
-
+*/
 // CHECK#9
 if ((new Array(0)).length !== 0){
   $ERROR('#9: (new Array(0)).length === 0. Actual: ' + (new Array(0)).length);

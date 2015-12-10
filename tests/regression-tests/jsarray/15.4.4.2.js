@@ -42,13 +42,13 @@ if ((new Array(0,1)).toString() !== "0,1"){
   $ERROR('#4: (new Array(0,1)).toString() === "". Actual: ' + (new Array(0,1)).toString());
 }
 
-
+/*
 // CHECK#5
 if ((new Array( Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY)).toString() !== "NaN,Infinity,-Infinity"){
   $ERROR('#5: (new Array( Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY)).toString() === "NaN,Infinity,-Infinity". Actual: '
          + (new Array( Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY)).toString());
 }
-
+*/
 // CHECK#6
 //if ((new Array( Boolean(1), Boolean(0))).toString() !== "true,false"){
 //  $ERROR('#6: (new Array( Boolean(1), Boolean(0))).toString() === "true,false". Actual: ' + (new Array( Boolean(1), Boolean(0))).toString());

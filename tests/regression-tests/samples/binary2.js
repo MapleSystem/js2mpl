@@ -126,7 +126,7 @@ function Binary(par1, par2)
   } else {
     $ERROR("* failed\n",  sum, "\n");
   }
-
+/*
   sum = par1 / par2;
   print(sum);
   print(" expect 0.5\n");
@@ -135,7 +135,7 @@ function Binary(par1, par2)
   } else {
     $ERROR("/ failed\n",  sum, "\n");
   }
-
+*/
   sum = par1 % par2;
   print(sum);
   print(" expect 273\n");

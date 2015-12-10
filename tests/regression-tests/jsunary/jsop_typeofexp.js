@@ -1,6 +1,6 @@
 var x = typeof("abc");
-var y = typeof(12.5);
-var z = typeof(true + 0.3);
+var y = typeof(12);
+var z = typeof(true + 0);
 var m = typeof(3 + "hello");
 print(x);
 print(y);
