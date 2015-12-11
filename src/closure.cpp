@@ -414,6 +414,12 @@ void JSClosure::ProcessAliasedVar(jsbytecode *pc) {
   DEBUGPRINT3(name);
   ScopeNode *sn = scope_->GetOrCreateSN(func);
   ScopeNode *psn = sn->GetParent();
+
+  if (!psn) {
+    DEBUGPRINT3("alias var not found, could be from block"); 
+    return;
+  }
+
   JSMIRFunction *parent = psn->GetFunc();
 
   int idx = 0;
@@ -446,10 +452,15 @@ void JSClosure::ProcessAliasedVar(jsbytecode *pc) {
     if (idx)
       return;
     psn = psn->GetParent();
-    p = psn->GetFunc();
+
+    if (psn)
+      p = psn->GetFunc();
   }
 
-  assert(false && "could not find alias var in envs");
+  if (!idx) {
+    DEBUGPRINT3("alias var not found, could be from block"); 
+  }
+
   return;
 }
 

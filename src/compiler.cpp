@@ -543,8 +543,7 @@ BaseNode *JSCompiler::CompileBuiltinName(char *name) {
 // JSOP_NAME 59
 BaseNode *JSCompiler::CompileOpName(JSAtom *atom) {
   char *name = Util::GetString(atom, mp_, jscontext_);
-  if (!name)
-    return NULL;
+  JS_ASSERT(!name && "empty name");
   if (!strcmp(name, "undefined")) {
     BaseNode *undefined = CompileOpConstValue(JSVALTAGUNDEFINED, 0);
     return undefined;
@@ -930,8 +929,7 @@ bool JSCompiler::CompileOpSetProp(BaseNode *obj, JSString *str,
 // JSOP_BINDNAME 110
 BaseNode *JSCompiler::CompileOpBindName(JSAtom *atom) {
   char *name = Util::GetString(atom, mp_, jscontext_);
-  if (!name)
-    return NULL;
+  JS_ASSERT(!name && "empty name");
   BaseNode *builtin_var = CompileBuiltinName(name);
   if (builtin_var)
     return builtin_var;
@@ -964,8 +962,7 @@ BaseNode *JSCompiler::CompileOpBindName(JSAtom *atom) {
 // JSOP_SETNAME 110
 bool JSCompiler::CompileOpSetName(JSAtom *atom, BaseNode *val) {
   char *name = Util::GetString(atom, mp_, jscontext_);
-  if (!name)
-    return false;
+  JS_ASSERT(!name && "empty name");
   JSMIRFunction *func = funcstack_.top();
   MIRSymbol *var = closure_->GetSymbolFromEnclosingScope(func, name);
   if (!var) {
@@ -1009,8 +1006,7 @@ bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
 // JSOP_DEFVAR 129
 bool JSCompiler::CompileOpDefVar(JSAtom *atom) {
   char *name = Util::GetString(atom, mp_, jscontext_);
-  if (!name)
-    return false;
+  JS_ASSERT(!name && "empty name");
   JSMIRFunction *fun = jsbuilder_->GetCurrentFunction();
   DEBUGPRINT2((fun == funcstack_.top()));
   DEBUGPRINT2(fun);
@@ -1081,10 +1077,14 @@ int JSCompiler::ProcessAliasedVar(JSAtom *atom, MIRType *&env_ptr, BaseNode *&en
   JSMIRFunction *func = funcstack_.top();
   DEBUGPRINT3(func);
   char *name = Util::GetString(atom, mp_, jscontext_);
-  if (!name)
-    return NULL;
+  JS_ASSERT(!name && "empty name");
   ScopeNode *sn = scope_->GetOrCreateSN(func);
   ScopeNode *psn = sn->GetParent();
+
+  if (!psn) {
+    DEBUGPRINT3("alias var from catch block"); 
+  }
+
   JSMIRFunction *pfunc = psn->GetFunc();
   int idx = 0;
   depth = 0;
@@ -1124,37 +1124,37 @@ int JSCompiler::ProcessAliasedVar(JSAtom *atom, MIRType *&env_ptr, BaseNode *&en
 
     sn = psn;
     psn = psn->GetParent();
-    func = pfunc;
-    pfunc = psn->GetFunc();
 
-    while (pfunc != jsmain_ && !idx && psn->IsWithEnv()) {
-      depth ++;
-      DEBUGPRINTsv3("func to get env_ptr", pfunc);
-
-      env_ptr = pfunc->envptr;
-      env_node = jsbuilder_->CreateExprDread(pfunc->envptr, env_var);
-      env_node = jsbuilder_->CreateExprIread(pfunc->envptr, pfunc->envptr, 1, env_node);
-
-      env_name = Util::GetSequentialName("environment_", temp_var_no_, mp_);
-      env_var = jsbuilder_->GetOrCreateLocalDecl(env_name, pfunc->envptr);
-      stmt = jsbuilder_->CreateStmtDassign(env_var, 0, env_node);
-      env_node = jsbuilder_->CreateExprDread(pfunc->envptr, env_var);
-      idx = jsbuilder_->GetStructFieldIdFromFieldName(pfunc->envtype, name);
-      DEBUGPRINT3(idx);
-
-      sn = psn;
-      psn = psn->GetParent();
+    if (psn) {
       func = pfunc;
       pfunc = psn->GetFunc();
+
+      while (pfunc != jsmain_ && !idx && psn && psn->IsWithEnv()) {
+        depth ++;
+        DEBUGPRINTsv3("func to get env_ptr", pfunc);
+
+        env_ptr = pfunc->envptr;
+        env_node = jsbuilder_->CreateExprDread(pfunc->envptr, env_var);
+        env_node = jsbuilder_->CreateExprIread(pfunc->envptr, pfunc->envptr, 1, env_node);
+
+        env_name = Util::GetSequentialName("environment_", temp_var_no_, mp_);
+        env_var = jsbuilder_->GetOrCreateLocalDecl(env_name, pfunc->envptr);
+        stmt = jsbuilder_->CreateStmtDassign(env_var, 0, env_node);
+        env_node = jsbuilder_->CreateExprDread(pfunc->envptr, env_var);
+        idx = jsbuilder_->GetStructFieldIdFromFieldName(pfunc->envtype, name);
+        DEBUGPRINT3(idx);
+
+        sn = psn;
+        psn = psn->GetParent();
+        func = pfunc;
+
+        if (psn)
+          pfunc = psn->GetFunc();
+      }
     }
   }
 
   DEBUGPRINT2(depth);
-
-  // if still not found, something is wrong.
-  if (!idx) {
-    assert(false && "!!error: could not retrive alias");
-  }
 
   return idx;
 }
@@ -1168,7 +1168,15 @@ BaseNode *JSCompiler::CompileOpGetAliasedVar(JSAtom *atom) {
   int idx = ProcessAliasedVar(atom, env_ptr, env_node, depth);
 
   BaseNode *bn = NULL;
-  bn = jsbuilder_->CreateExprIread(jsvalue_type_, env_ptr, idx, env_node);
+  if (idx) {
+    bn = jsbuilder_->CreateExprIread(jsvalue_type_, env_ptr, idx, env_node);
+  } else {
+    // add to local
+    DEBUGPRINT3("alias var not found, could be from block");
+    char *name = Util::GetString(atom, mp_, jscontext_);
+    MIRSymbol *var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_);
+    bn = jsbuilder_->CreateExprDread(jsvalue_type_, var);
+  }
 
   return bn;
 }
@@ -1182,7 +1190,15 @@ BaseNode *JSCompiler::CompileOpSetAliasedVar(JSAtom *atom, BaseNode *val) {
   int idx = ProcessAliasedVar(atom, env_ptr, env_node, depth);
 
   BaseNode *bn = NULL;
-  bn = jsbuilder_->CreateStmtIassign(env_ptr, idx, env_node, val);
+  if (idx) {
+    bn = jsbuilder_->CreateStmtIassign(env_ptr, idx, env_node, val);
+  } else {
+    // add to local
+    DEBUGPRINT3("alias var not found, could be from block");
+    char *name = Util::GetString(atom, mp_, jscontext_);
+    MIRSymbol *var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_);
+    bn = jsbuilder_->CreateStmtDassign(var, 0, val);
+  }
   jsbuilder_->AddStmtInCurrentFunctionBody(bn);
 
   return bn;
