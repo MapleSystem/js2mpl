@@ -11,6 +11,7 @@
 
 //////////////////////////////////////////////////////////////////////////////
 //CHECK#1
+var __ref;
 if (typeof(__ref) !== "undefined"){
     $ERROR('#1: typeof(__ref) === "undefined". Actual: ' + (typeof(__ref)));  
 }; 
