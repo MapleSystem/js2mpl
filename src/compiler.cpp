@@ -1604,6 +1604,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
   char linenoText[1040];  // for printing current src line number
   char srcText[1024];   // for content of current src line to be printed
 
+  JSOp lastOp;
   while (pc < pcend) {
     JSOp op = JSOp(*pc); //Convert *pc to JSOP
     unsigned lineNo = js::PCToLineNumber(script, pc);
@@ -1809,7 +1810,6 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
             jsbuilder_->CreateStmtReturn(undefined, false);
           }
         }
-        CloseFuncBookKeeping();
         break;
       }
       case JSOP_DEFAULT: /*122, 5, 1, 0*/  { 
@@ -2403,8 +2403,13 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       }
     }  // End switch (op)
 
+    lastOp = op;
     pc = js::GetNextPc(pc);
   }  // End while (pc < script->codeEnd())
+
+  if (lastOp == JSOP_RETRVAL)
+    CloseFuncBookKeeping();
+
   return true;
 }  // End JSCompiler::CompileScript(JSScript *script)
 

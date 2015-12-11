@@ -500,6 +500,7 @@ bool JSClosure::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *
 
   char *name;
   char *parent;
+  JSOp lastOp;
   while (pc < pcend) {
     JSOp op = JSOp(*pc);
     JSScript *scr;
@@ -521,13 +522,13 @@ bool JSClosure::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *
         ProcessAliasedVar(pc);
         break;
       }
-      case JSOP_RETRVAL: /*153, 1, 0, 0*/ {
-        CloseFuncBookKeeping();
-        break;
-      }
     }
+    lastOp = op;
     pc = js::GetNextPc(pc);
   }
+
+  if (lastOp == JSOP_RETRVAL)
+    CloseFuncBookKeeping();
 
   return true;
 }

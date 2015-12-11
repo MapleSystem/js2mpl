@@ -205,6 +205,7 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
 
     char *name;
     char *parent;
+    JSOp lastOp;
     while (pc < pcend) {
       JSOp op = JSOp(*pc);
       unsigned lineNo = js::PCToLineNumber(script, pc);
@@ -248,24 +249,24 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
             SetSNClosure(name);
             break;
           }
-        case JSOP_RETRVAL: /*153, 1, 0, 0*/
-          {
-            name = funcstack1_.top();
-            if (js2mplDebug) std::cout << "}\n" << std::endl;
-            funcstack1_.pop();
-            DEBUGPRINT3((scriptstack_.size()));
-            while (scriptstack_.size()) {
-              JSScript *scr = scriptstack_.top().first;
-              name = scriptstack_.top().second;
-              scriptstack_.pop();
-              funcstack1_.push(name);
-              if (js2mplDebug) std::cout << name << " {" << std::endl;
-              Build(scr);
-            }
-            break;
-          }
       }
+      lastOp = op;
       pc = js::GetNextPc(pc);
+    }
+
+    if (lastOp == JSOP_RETRVAL) {
+      name = funcstack1_.top();
+      if (js2mplDebug) std::cout << "}\n" << std::endl;
+      funcstack1_.pop();
+      DEBUGPRINT3((scriptstack_.size()));
+      while (scriptstack_.size()) {
+        JSScript *scr = scriptstack_.top().first;
+        name = scriptstack_.top().second;
+        scriptstack_.pop();
+        funcstack1_.push(name);
+        if (js2mplDebug) std::cout << name << " {" << std::endl;
+          Build(scr);
+      }
     }
 
     PopulateSNInfo();
