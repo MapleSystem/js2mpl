@@ -1081,12 +1081,14 @@ int JSCompiler::ProcessAliasedVar(JSAtom *atom, MIRType *&env_ptr, BaseNode *&en
   ScopeNode *sn = scope_->GetOrCreateSN(func);
   ScopeNode *psn = sn->GetParent();
 
+  int idx = 0;
   if (!psn) {
     DEBUGPRINT3("alias var from catch block"); 
+    return idx;
   }
 
   JSMIRFunction *pfunc = psn->GetFunc();
-  int idx = 0;
+
   depth = 0;
   MIRSymbol *env_var = NULL;
   const char *env_name;
