@@ -24,7 +24,7 @@ my @successed_file;
 chdir $dirname;
 $dirname = "./";
 opendir (DIR, $dirname ) || die "Error in opening dir $dirname\n";
-print("\n==================== run tests ===================\n");
+print("\n====================== run tests =====================\n");
 my @count = 0;
 my @countMPL = 0;
 my @countMMPL = 0;
@@ -43,7 +43,7 @@ while( ($filename = readdir(DIR))){
       (my $file = $fullname) =~ s/\.[^.]+$//;
       print ".";
       if ($count % 50 == 0) {
-        print "\n";
+        print " $count\n";
       }
       if(defined $ARGV[1]) {
         print "$file\n";
@@ -60,6 +60,7 @@ while( ($filename = readdir(DIR))){
       system("cp $js_file $tempdir/$js_file");
       my $res = system("$pwd/../build/js2mpl $tempdir/$js_file $option > $tempdir/$log_file");
       if ($res > 0) {
+        print " ==js2mpl===> $file\n";
         $countMPL ++;
         push(@failed_mpl_file, $file);
         $flag ++;
@@ -67,6 +68,7 @@ while( ($filename = readdir(DIR))){
       }
       $res = system("$pwd/../../mapleall/build/maplebe/be/mplbe $tempdir/$mpl_file >> $tempdir/$log_file");
       if ($res > 0) {
+        print " ==mplbe===> $file\n";
         $countMMPL ++;
         push(@failed_mmpl_file, $file);
         $flag ++;
@@ -82,6 +84,7 @@ while( ($filename = readdir(DIR))){
         print "\n!!warning: string \"failed\" is emited from interpreter. please check the test case $js_file.\n";
       }
       if ($res > 0) {
+        print " ==interpreter32===> $file\n";
         $countINT ++;
         push(@failed_int_file, $file);
         $flag ++;
@@ -105,7 +108,7 @@ closedir(DIR);
 
 if ((scalar(@failed_mpl_file) + scalar(@failed_mmpl_file) + scalar(@failed_int_file)) eq 0) {
   print("\n all $count tests passed\n");
-  print("==================================================\n");
+  print("======================================================\n");
 } else {
   my $countFailed = $countMPL + $countMMPL + $countINT;
   my $countPassed = $count - $countFailed;
