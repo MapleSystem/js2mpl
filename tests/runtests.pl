@@ -12,7 +12,7 @@ if(!(defined $ARGV[0])) {
 }
 
 $dirname = "./$ARGV[0]";
-my $tempdir = "$pwd/temp";
+my $tempdir = "$pwd/output";
 if(!(-e $tempdir)) {
   mkdir $tempdir;
 }
@@ -30,7 +30,7 @@ my @countMPL = 0;
 my @countMMPL = 0;
 my @countINT = 0;
 while( ($filename = readdir(DIR))){
-  if(-d $filename and $filename ne ".." and $filename ne "temp") {
+  if(-d $filename and $filename ne ".." and $filename ne "output" and $filename ne "temp") {
     my $predir = getcwd;
     chdir $filename;
     my @files = <*.js>;
