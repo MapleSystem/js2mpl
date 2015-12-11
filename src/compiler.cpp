@@ -768,13 +768,7 @@ BaseNode *JSCompiler::CompileOpGetArg(uint32_t i) {
   int start = (fun->with_env_arg) ? 2 : 1;
   MIRSymbol *arg = jsbuilder_->GetFunctionArgument(fun, i+start); 
   BaseNode *irn = jsbuilder_->CreateExprDread(jsbuilder_->GetDynany(), arg);
-#if 1
   return irn;
-#else
-  MIRSymbol *temp = CreateTempJSValueTypeVar();
-  jsbuilder_->CreateStmtDassign(temp, 0, irn);
-  return jsbuilder_->CreateExprDread(jsvalue_type_, temp);
-#endif
 }
 
 // JSOP_SETARG 85
@@ -792,14 +786,7 @@ BaseNode *JSCompiler::CompileOpGetLocal(uint32_t local_no) {
   JSMIRFunction *func = jsbuilder_->GetCurrentFunction();
   char *name = closure_->GetLocalVar(func, local_no);
   MIRSymbol *var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_);
-#if 1
   return jsbuilder_->CreateExprDread(jsvalue_type_, var);
-#else
-  BaseNode *bn = jsbuilder_->CreateExprDread(jsvalue_type_, var);
-  MIRSymbol *temp = CreateTempJSValueTypeVar();
-  jsbuilder_->CreateStmtDassign(temp, 0, bn);
-  return jsbuilder_->CreateExprDread(jsvalue_type_, temp);
-#endif
 }
 
 // JSOP_SETLOCAL 87
@@ -846,11 +833,6 @@ BaseNode *JSCompiler::CompileGenericN(int32_t intrin_id,
   } else {
     return jsbuilder_->CreateExprIntrinsicopN(
                       (MIRIntrinsicId)intrin_id, retty, arguments);
-#if 0
-    MIRSymbol *var = CreateTempVar(retty);
-    jsbuilder_->CreateStmtDassign(var, 0, bn);
-    return jsbuilder_->CreateExprDread(retty, var);
-#endif
   }
 }
 
@@ -1409,18 +1391,7 @@ BaseNode *JSCompiler::CheckConvertToJSValueType(BaseNode *node)
 #ifdef DYNAMICLANG
   bool needconvert = false;
   if (! IsPrimitiveDynType(node->ptyp)) {
-#if 1
     return jsbuilder_->CreateExprTypeCvt(OP_cvt, jsbuilder_->GetDynany(), jsbuilder_->GetPrimType(node->ptyp), node);
-#else
-    needconvert = jsbuilder_->module_->type_table_[node->ptyp] != jsvalue_type_;
-    MIRSymbol *temp = CreateTempJSValueTypeVar();
-    jsbuilder_->CreateStmtDassign(temp, 0, node);
-    BaseNode *addrof_node = jsbuilder_->CreateAddrof(temp, true, PTY_u32);
-    BaseNode *constval = jsbuilder_->GetConstUInt32(JSVALTAGINT32);
-    BaseNode *stmt = jsbuilder_->CreateStmtIassignoff(4, addrof_node, constval);
-    jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
-    return jsbuilder_->CreateExprDread(jsvalue_type_, temp);
-#endif
   }
   return node;
 #else
@@ -1470,10 +1441,7 @@ void JSCompiler::CompileOpCase(jsbytecode *pc, int offset, BaseNode *rval, BaseN
   IntrinDesc *intrindesc = &IntrinDesc::intrintable[idx];
   MIRType *retty = intrindesc->GetReturnType();
   BaseNode *expr = jsbuilder_->CreateExprIntrinsicop2(idx, retty, rval, lval);
-  MIRSymbol *temp = CreateTempVar(retty);
-  jsbuilder_->CreateStmtDassign(temp, 0, expr);
-  BaseNode *result = jsbuilder_->CreateExprDread(retty, temp);
-  BaseNode *cond = CheckConvertToBoolean(result);
+  BaseNode *cond = CheckConvertToBoolean(expr);
 
   labidx_t mirlabel = GetorCreateLabelofPc(pc + offset);
   BaseNode *gotonode = jsbuilder_->CreateStmtCondGoto(cond, OP_brtrue, mirlabel);
