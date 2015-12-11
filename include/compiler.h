@@ -23,8 +23,6 @@ class JSCompiler{
   MIRType *jsvalue_type_;
   MIRType *jsvalue_ptr_;
 
-  JSScript *currscr_;
-
   JSMIRFunction *jsmain_;
   OperandStack *opstack_;
   std::stack<JSMIRFunction *> funcstack_;
@@ -146,7 +144,7 @@ class JSCompiler{
   int ProcessAliasedVar(JSAtom *atom, MIRType *&env_ptr, BaseNode *&base, int &depth);
   BaseNode *CompileOpGetAliasedVar(JSAtom *atom);
   BaseNode *CompileOpSetAliasedVar(JSAtom *atom, BaseNode *val);
-  BaseNode *CompileOpLambda(jsbytecode *pc);
+  BaseNode *CompileOpLambda(jsbytecode *pc, JSFunction *jsfun);
   BaseNode *CompileOpBindName(JSAtom *atom);
   BaseNode *CompileOpCall(uint32_t argc);
   BaseNode *CompileOpNew(uint32_t argc);

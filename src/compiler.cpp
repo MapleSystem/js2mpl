@@ -1024,8 +1024,7 @@ bool JSCompiler::CompileOpDefVar(JSAtom *atom) {
 }
 
 // JSOP_LAMBDA 131
-BaseNode *JSCompiler::CompileOpLambda(jsbytecode *pc) {
-  JSFunction *jsfun = currscr_->getFunction(GET_UINT32_INDEX(pc));
+BaseNode *JSCompiler::CompileOpLambda(jsbytecode *pc, JSFunction *jsfun) {
   JSAtom *atom = jsfun->displayAtom();
 
   // isLambda() does not seem reliable
@@ -1587,7 +1586,6 @@ void JSCompiler::EnvInit(JSMIRFunction *func) {
 bool JSCompiler::CompileScript(JSScript *script) {
   jsbytecode *start = script->code();
   jsbytecode *end = script->codeEnd();
-  currscr_ = script;
 
   JSMIRFunction *func = funcstack_.top();
   EnvInit(func);
@@ -2264,7 +2262,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         break;
       }
       case JSOP_LAMBDA: /*130, 5, 0, 1*/  {
-        BaseNode * bn = CompileOpLambda(pc);
+        JSFunction *jsfun = script->getFunction(GET_UINT32_INDEX(pc));
+        BaseNode * bn = CompileOpLambda(pc, jsfun);
         Push(bn);
         break;
       }
