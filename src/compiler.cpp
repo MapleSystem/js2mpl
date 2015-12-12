@@ -2398,6 +2398,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_FINALLY: /*135, 1, 0, 2*/  {
         BaseNode* finally = MP_NEW(jsbuilder_->module_->mp_, StmtNode(OP_finally));
         jsbuilder_->AddStmtInCurrentFunctionBody(finally);
+        // TODO: need to Push two entries onto stack.  false, (next bytecode's PC)
         break;
         }
       case JSOP_THROWING: /*151, 1, 1, 0*/
