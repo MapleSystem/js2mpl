@@ -1403,48 +1403,27 @@ BaseNode *JSCompiler::CompileOpLoopHead(jsbytecode *pc) {
   return stmt;
 }
 
-BaseNode *JSCompiler::CheckConvertToJSValueType(BaseNode *node)
+BaseNode *JSCompiler::CheckConvertToJSValueType(BaseNode *data)
 {
-#ifdef DYNAMICLANG
-  bool needconvert = false;
-  if (! IsPrimitiveDynType(node->ptyp)) {
-    return jsbuilder_->CreateExprTypeCvt(OP_cvt, jsbuilder_->GetDynany(), jsbuilder_->GetPrimType(node->ptyp), node);
+  MIRType *to_type = NULL;
+  if (IsPrimitiveDynType(data->ptyp))
+    return data;
+  switch (data->ptyp) {
+    case PTY_u1:
+      to_type = jsbuilder_->GetDynbool();
+      break;
+    case PTY_i32:
+    case PTY_u32:
+      to_type = jsbuilder_->GetDyni32();
+      break;
+    default:
+      assert("NIY");
+      break;
   }
-  return node;
-#else
-  bool needconvert = false;
-  if (node->ptyp != PTY_agg) {
-    needconvert = true;
-  } else if (node->op == OP_dread) {
-    DreadNode *dread = static_cast<DreadNode *>(node);
-    MIRSymbol *st = jsbuilder_->module_->GetSymbolFromStidx(dread->stidx, dread->islocal);
-    needconvert = st->GetType() != jsvalue_type_;
-  } else if (node->op == OP_iread) {
-    IreadNode *iread = static_cast<IreadNode *>(node);
-    if (iread->fieldid == 0) {
-      MIRType *ty = jsbuilder_->module_->GetTypeFromTyIdx(iread->tyidx);
-      needconvert = ty != jsvalue_type_;
-    }
-    else {
-      MIRType *pointed_ty = jsbuilder_->module_->type_table_[static_cast<MIRPointType *>(jsbuilder_->module_->type_table_[iread->tyidx])->pointed_tyidx_];
-      FieldPair fieldpair =  static_cast<MIRStructType *>(pointed_ty)->TraverseToField(iread->fieldid);
-      needconvert = jsbuilder_->module_->type_table_[fieldpair.second] != jsvalue_type_;
-    }
-  }
-  if (!needconvert)
-    return node;
-  MIRSymbol *temp = CreateTempJSValueTypeVar();
-  uint32_t jsvalue_tag_fieldid = jsbuilder_->GetStructFieldIdFromFieldName(jsvalue_type_, "tag");
-  uint32_t curtag = DetermineTagFromNode(node);
-  BaseNode *jsvalue_tag_node = jsbuilder_->GetConstUInt32(curtag);
-  BaseNode *stmt = jsbuilder_->CreateStmtDassign(temp, jsvalue_tag_fieldid, jsvalue_tag_node);
-  jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
-  uint32_t payload_fieldid = GetFieldidFromTag(curtag);
-  stmt = jsbuilder_->CreateStmtDassign(temp, payload_fieldid, node);
-  jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
-  return jsbuilder_->CreateExprDread(jsvalue_type_, temp);
-#endif
+  return jsbuilder_->CreateExprTypeCvt(OP_cvt, to_type,
+    jsbuilder_->GetPrimType(data->ptyp), data);
 }
+
   /*
    * Pops the top two values on the stack as rval and lval, compare th\
 em with ===,
@@ -2345,7 +2324,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_INITELEM_ARRAY: /*96, 4, 2, 1*/  {
         BaseNode *init = Pop();
         BaseNode *arr = Pop();
-        BaseNode *index = jsbuilder_->GetConstUInt32(GET_UINT24(pc));
+        BaseNode *index = jsbuilder_->GetConstInt((int32_t)GET_UINT24(pc));
         if (!CompileOpSetElem(arr, index, init))
           return false;
         Push(arr);
