@@ -36,4 +36,4 @@ function testcase() {
       }
       return false;
     }
-runTestCase(testcase);
+testcase();

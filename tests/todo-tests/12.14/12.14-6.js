@@ -30,4 +30,4 @@ function testcase() {
     }
   }
  }
-runTestCase(testcase);
+testcase();

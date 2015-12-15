@@ -39,4 +39,4 @@ function testcase() {
             delete this.x_12_14_13;
         }
     }
-runTestCase(testcase);
+testcase();
