@@ -92,7 +92,6 @@ class Scope {
     std::list<std::pair<char *, ScopeNode *>> scopeChain;
     std::list<std::pair<jsbytecode *, char *>> bytecodeAnonyFunc;
 
-    ScopeNode *GetOrCreateSN(JSMIRFunction *func);
     ScopeNode *GetOrCreateSN(char *name);
     void SetSNParent(char *name, char *parent);
     void SetSNLeaf(char *name);

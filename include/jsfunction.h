@@ -10,7 +10,7 @@ class JSClosure;
 class JSMIRFunction : public MIRFunction {
 
   public:
-    JSMIRFunction(MapleString &name): MIRFunction(name) {}
+    JSMIRFunction(stidx_t stidx): MIRFunction(stidx) {}
 
   public:
     bool with_env_arg;
@@ -26,8 +26,6 @@ class JSMIRFunction : public MIRFunction {
 
     JSMIRFunction *parent;
 
-    stidx_t stidx;
-
   public:
     void Init() {
       with_env_arg = false;
@@ -39,7 +37,6 @@ class JSMIRFunction : public MIRFunction {
       penvtype = NULL;
       penvptr = NULL;
       parent = NULL;
-      stidx = 0;
     }
 
     void initAliasList() { alias_vars.empty(); }

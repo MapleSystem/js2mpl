@@ -106,11 +106,6 @@ ScopeNode *Scope::GetOrCreateSN(char *name) {
   return sn;
 }
 
-ScopeNode *Scope::GetOrCreateSN(JSMIRFunction *func) {
-  char *name = func->_name.c_str();
-  return GetOrCreateSN(name);
-}
-
 void Scope::SetSNParent(char *name, char *parent) {
   ScopeNode *sn = GetOrCreateSN(name);
   ScopeNode *snp = GetOrCreateSN(parent);

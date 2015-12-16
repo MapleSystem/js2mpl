@@ -84,7 +84,7 @@ JSMIRFunction *JSMIRBuilder::GetOrCreateFunction(const char *name,
   funcst->sclass = SC_text;
   funcst->skind = ST_func;
 
-  fn =  MP_NEW(module_->mp_, JSMIRFunction(fname));
+  fn =  MP_NEW(module_->mp_, JSMIRFunction(funcst->GetStIdx()));
   fn->Init();
 
   fn->_return_tyidx = return_type->_ty_idx;
@@ -106,7 +106,6 @@ JSMIRFunction *JSMIRBuilder::GetOrCreateFunction(const char *name,
   funcst->SetFunction(fn);
   fn->body = module_->mp_->New<BlockNode>();
 
-  fn->stidx = stidx;
   AddNameFunc(name, fn);
 
   DEBUGPRINTsv2("function created: ", name);

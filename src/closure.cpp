@@ -33,7 +33,8 @@ MIRSymbol *JSClosure::GetSymbolFromEnclosingScope(JSMIRFunction *func,
 
 MIRType *JSClosure::GetOrCreateEnvType(JSMIRFunction *func) {
   std::stringstream ss;
-  ss << func->_name.c_str();
+  MIRSymbol *func_st = jsbuilder_->module_->symtab->GetSymbolFromStidx(func->stidx);
+  ss << func_st->GetName();
   std::string env_name = ss.str() + "_env_type";
   DEBUGPRINT2(env_name);
 
@@ -64,10 +65,9 @@ MIRType *JSClosure::GetOrCreateEnvType(JSMIRFunction *func) {
   DEBUGPRINT2(env_type);
   MIRStructType *stf = (MIRStructType *)(env_type);
   DEBUGPRINT2(stf->GetElemType(0));
-  stridx_t idxf = jsbuilder_->GetOrCreateStringIndex(func->_name);
+  stridx_t idxf = jsbuilder_->module_->symtab->GetSymbolFromStidx(func->stidx)->GetNameStridx();
   DEBUGPRINT2(idxf);
-  stidx_t stidx = jsbuilder_->module_->symtab->GetStidxFromStridx(idxf);
-  DEBUGPRINT2(stidx);
+  DEBUGPRINT2(func->stidx);
 
   func->envtype = env_type;
   func->envptr = jsbuilder_->GetOrCreatePointerType(env_type);
@@ -103,7 +103,8 @@ void JSClosure::AddFuncFormalsToEnvType(JSMIRFunction *func) {
       funcname = (char*)Util::GetSequentialName0("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_);
       DEBUGPRINT2(funcname);
     }
-    if (strcmp(funcname, func->_name.c_str()) == 0) {
+    MIRSymbol *func_st = jsbuilder_->module_->symtab->GetSymbolFromStidx(func->stidx);
+    if (func_st && strcmp(funcname, func_st->GetName().c_str()) == 0) {
       std::vector<JSAtom *> args = (*I).second;
       std::vector<JSAtom *>::iterator IA;
       DEBUGPRINTsv3("AddFuncFormalsToEnvType", funcname);
@@ -353,7 +354,8 @@ bool JSClosure::IsLocalVar(JSMIRFunction *func, char *name) {
       funcname = (char*)Util::GetSequentialName0("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_);
       DEBUGPRINT2(funcname);
     }
-    if (strcmp(funcname, func->_name.c_str()) == 0) {
+    MIRSymbol *func_st = jsbuilder_->module_->symtab->GetSymbolFromStidx(func->stidx);
+    if (func_st && strcmp(funcname, func_st->GetName().c_str()) == 0) {
       std::vector<JSAtom *> vars = (*I).second;
       std::vector<JSAtom *>::iterator IA;
       DEBUGPRINTsv3("IsLocalVar", funcname);
@@ -390,7 +392,8 @@ char *JSClosure::GetLocalVar(JSMIRFunction *func, uint32_t local_no) {
       DEBUGPRINT2(funcname);
     }
     // found the function
-    if (strcmp(funcname, func->_name.c_str()) == 0) {
+    MIRSymbol *func_st = jsbuilder_->module_->symtab->GetSymbolFromStidx(func->stidx);
+    if (func_st && strcmp(funcname, func_st->GetName().c_str()) == 0) {
       std::vector<JSAtom *> args = locals[i].second;
       if (local_no < args.size())
         name = Util::GetString(args[local_no], mp_, jscontext_);
@@ -412,7 +415,9 @@ void JSClosure::ProcessAliasedVar(jsbytecode *pc) {
   if (!name)
     return;
   DEBUGPRINT3(name);
-  ScopeNode *sn = scope_->GetOrCreateSN(func);
+  MIRSymbol *func_st = jsbuilder_->module_->symtab->GetSymbolFromStidx(func->stidx);
+  const char *funcname = func_st->GetName().c_str();
+  ScopeNode *sn = scope_->GetOrCreateSN((char *)funcname);
   ScopeNode *psn = sn->GetParent();
 
   if (!psn) {
