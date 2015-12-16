@@ -30,8 +30,8 @@ clean:
 	$(MAKE) clean -C src
 	$(MAKE) clean -C tests
 
-cleanall: clean
-	$(MAKE) clean -C ../mapleall
+cleanall:
+	rm -rf build ../mapleall/build
 
 rebuild: cleanall all
 

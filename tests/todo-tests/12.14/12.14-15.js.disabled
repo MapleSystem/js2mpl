@@ -25,4 +25,4 @@ function testcase() {
             delete fnGlobalObject()._12_14_15_foo;
         }
     }
-runTestCase(testcase);
+testcase();
