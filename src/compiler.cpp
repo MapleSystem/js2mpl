@@ -2320,7 +2320,11 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_INITELEM_ARRAY: /*96, 4, 2, 1*/  {
         BaseNode *init = Pop();
         BaseNode *arr = Pop();
+#ifdef DYNAMICLANG
+        BaseNode *index = jsbuilder_->GetConstDyni32((int32_t)GET_UINT24(pc));
+#else
         BaseNode *index = jsbuilder_->GetConstInt((int32_t)GET_UINT24(pc));
+#endif
         if (!CompileOpSetElem(arr, index, init))
           return false;
         Push(arr);
