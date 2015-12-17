@@ -163,6 +163,7 @@ bool Scope::Build(JSScript *script) {
 
   bool ret = BuildSection(script, start, end);
 
+  if (js2mplDebug>1) std::cout << "GetDepth() = " << GetDepth() << std::endl;
   return ret;
 }
 
@@ -193,7 +194,7 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
 
     if (script == jsscript_) {
       funcstack1_.push("main");
-      if (js2mplDebug) std::cout << "main {" << std::endl;
+      if (js2mplDebug>0) std::cout << "main {" << std::endl;
       ScopeNode * sn = GetOrCreateSN("main");
       sn->SetTopLevel();
     }
@@ -201,10 +202,11 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
     char *name;
     char *parent;
     JSOp lastOp;
+    JSScript *scr;
+
     while (pc < pcend) {
       JSOp op = JSOp(*pc);
       unsigned lineNo = js::PCToLineNumber(script, pc);
-      JSScript *scr;
 
       Util::SetIndent(2);
       DEBUGPRINTnn(lineNo, Util::getOpcodeName[op]);
@@ -245,13 +247,52 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
             break;
           }
       }
+
+      // calculate the expected stack size at the end
+      {
+        // get def/use for each op from mozjs js/src/vm/Opcodes.h
+        int use = 0;
+        int def = 0;
+        switch (op) {
+  #define JSOPDEPTH(op,val,name,token,length,nuses,ndefs,format)  case op: def=ndefs; use=nuses; break;
+    FOR_EACH_OPCODE(JSOPDEPTH)
+  #undef JSOPDEPTH
+        }
+
+        // handles dynamic use count (-1)
+        uint32_t use0 = 0;
+        switch (op) {
+          case JSOP_POPN:
+            use0 = GET_UINT16(pc);
+            use0 = 0;   // adjustment
+            break;
+          case JSOP_CALL:
+          case JSOP_FUNAPPLY:
+          case JSOP_NEW:
+          case JSOP_FUNCALL:
+          case JSOP_EVAL:
+            use0 = GET_ARGC(pc);
+            use0 += 2;   // adjustment
+            break;
+        }
+
+        use = (use < 0) ? use0 : use;
+        int inc = def - use;
+
+        if (js2mplDebug>3) std::cout << "line : " << lineNo << "  " << Util::getOpcodeName[op]
+                                     << "  stackDepth: " << stackDepth
+                                     << " == (u" << use << ", d" << def << ")==>"
+                                     << stackDepth+inc << std::endl;
+        stackDepth += inc;
+      }
+
       lastOp = op;
       pc = js::GetNextPc(pc);
     }
 
     if (lastOp == JSOP_RETRVAL) {
       name = funcstack1_.top();
-      if (js2mplDebug) std::cout << "}\n" << std::endl;
+      if (js2mplDebug>0) std::cout << "}\n" << std::endl;
       funcstack1_.pop();
       DEBUGPRINT3((scriptstack_.size()));
       while (scriptstack_.size()) {
@@ -259,7 +300,7 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
         name = scriptstack_.top().second;
         scriptstack_.pop();
         funcstack1_.push(name);
-        if (js2mplDebug) std::cout << name << " {" << std::endl;
+        if (js2mplDebug>0) std::cout << name << " {" << std::endl;
           Build(scr);
       }
     }

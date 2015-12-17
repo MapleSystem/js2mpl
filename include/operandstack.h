@@ -26,6 +26,7 @@ class OperandStack {
         max_depth_(max_depth) {}
 
   bool CheckDepth(unsigned expected) { return current_depth_ == expected; }
+  unsigned GetDepth() { return current_depth_; }
 
   void Push(void *node) {
     stack_.push_back(node);

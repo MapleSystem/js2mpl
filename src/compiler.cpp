@@ -35,7 +35,11 @@ void JSCompiler::Finish() {
   if (js2mplDebug != OPT_DONOTDUMPMAIN) {
     jsbuilder_->module_->AddFunction(jsmain_);  // add jsmain_ in the end
   }
-  assert(opstack_->CheckDepth(0));
+  // more forgiving about stack integrety
+  int expected = scope_->GetDepth();
+  DEBUGPRINT2(opstack_->GetDepth());
+  DEBUGPRINT2(expected);
+  assert(opstack_->CheckDepth(0) || opstack_->CheckDepth(expected));
 }
 
 void JSCompiler::SetupMainFuncRet(BaseNode *rval){
@@ -1628,15 +1632,17 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       if (label_tempvar_map_[labidx] != 0) { 
         // handle the else part of the conditional expression by storing to 
         // the same temp
-        assert(! opstack_->Empty());
-        MIRSymbol *tempvar = label_tempvar_map_[labidx];
-        BaseNode *expr = Pop();
-        MIRType *exprty;
-        if (expr->ptyp != PTY_agg)
-          exprty = jsbuilder_->GetPrimType(expr->ptyp);
-        else exprty = jsvalue_type_;
-        jsbuilder_->CreateStmtDassign(tempvar, 0, expr); 
-        Push(jsbuilder_->CreateExprDread(exprty, tempvar));
+        //assert(! opstack_->Empty());
+        if (! opstack_->Empty()) {
+          MIRSymbol *tempvar = label_tempvar_map_[labidx];
+          BaseNode *expr = Pop();
+          MIRType *exprty;
+          if (expr->ptyp != PTY_agg)
+            exprty = jsbuilder_->GetPrimType(expr->ptyp);
+          else exprty = jsvalue_type_;
+          jsbuilder_->CreateStmtDassign(tempvar, 0, expr); 
+          Push(jsbuilder_->CreateExprDread(exprty, tempvar));
+        }
         label_tempvar_map_[labidx] = 0;  // re-initialize to 0
       }
       BaseNode *stmt = jsbuilder_->CreateStmtLabel(labidx);
@@ -1764,7 +1770,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       }
       case JSOP_POPN: /*11, 3, -1, 0*/  {
         uint32_t n = GET_UINT16(pc);
-        for (uint32_t i = 0; i < n; i++) Pop();
+        DEBUGPRINT2(n);
+        //for (uint32_t i = 0; i < n; i++) Pop();
         break;
       }
       case JSOP_DUPAT: /*44, 4, 0, 1*/  {
@@ -1814,7 +1821,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
             ! opstack_->flag_after_throwing) {
           // in middle of conditional expression; save in a temp and associate
           // the temp with the goto label
-          BaseNode *expr = Pop();
+          // TODO should not pop from opstack_
+          BaseNode *expr = Top();
           MIRSymbol *tempvar = SymbolFromSavingInATemp(expr);
           CompileOpGoto(pc + offset, tempvar);
         }
@@ -2362,6 +2370,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         break;
       }
       case JSOP_RETSUB: /*117, 1, 2, 0*/  { 
+        BaseNode *lval = Pop();
+        BaseNode *rval = Pop();
         BaseNode* retsub = MP_NEW(jsbuilder_->module_->mp_, StmtNode(OP_retsub));
         jsbuilder_->AddStmtInCurrentFunctionBody(retsub);
         break;
@@ -2378,10 +2388,15 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         BaseNode* finally = MP_NEW(jsbuilder_->module_->mp_, StmtNode(OP_finally));
         jsbuilder_->AddStmtInCurrentFunctionBody(finally);
         // TODO: need to Push two entries onto stack.  false, (next bytecode's PC)
+        BaseNode *bval = CompileOpConstValue(JSVALTAGBOOLEAN, 0);
+        BaseNode *tval = CompileOpConstValue(JSVALTAGINT32, GET_UINT32_INDEX(js::GetNextPc(pc)));
+        Push(tval);
+        Push(bval);
         break;
         }
       case JSOP_THROWING: /*151, 1, 1, 0*/
         opstack_->flag_after_throwing = true;
+        SIMULATESTACK(1, 0);
         break;
       case JSOP_THROW: /*112, 1, 1, 0*/  { 
         BaseNode *rval = Pop();

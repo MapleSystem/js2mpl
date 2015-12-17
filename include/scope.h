@@ -71,6 +71,7 @@ class Scope {
     std::stack<std::pair<JSScript *, char *>> scriptstack_;
 
     uint32_t anon_func_no_;
+    int stackDepth;
 
     std::map<JSFunction *, unsigned> funcToAnonyidx_;
     std::vector<std::pair<char *, JSFunction *>> nameSFunc_;
@@ -79,6 +80,7 @@ class Scope {
     Scope(JSContext *context, JSScript *script, mapleir::MIRModule *module) : 
       mp_(module->mp_),
       anon_func_no_(0),
+      stackDepth(0),
       ctx_(context),
       jsscript_(script) {}
 
@@ -107,6 +109,7 @@ class Scope {
 
     char *GetAnonyFunctionName(jsbytecode *pc);
     bool IsFunction(char *name);
+    int GetDepth() { return stackDepth; }
 };
 
 }  // namespace mapleir
