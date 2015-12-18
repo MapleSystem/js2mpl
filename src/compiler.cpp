@@ -964,8 +964,8 @@ bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
   mfun->SetUserFunc();
 
   char *name;
-    MIRSymbol *func = jsbuilder_->GetOrCreateGlobalDecl(funcname, jsvalue_type_);
-    BaseNode *ptr = jsbuilder_->CreateAddrof(func, false, PTY_dynany);
+    MIRSymbol *func_st = jsbuilder_->GetOrCreateGlobalDecl(funcname, jsvalue_type_);
+    BaseNode *ptr = jsbuilder_->CreateExprAddroffunc(func_st->value_.func_->puidx);
     MapleVector<BaseNode *> arguments(jsbuilder_->module_->mp_allocator_.Adapter());
     assert(jsfun && "not a jsfunction");
 
@@ -1038,7 +1038,7 @@ BaseNode *JSCompiler::CompileOpLambda(jsbytecode *pc, JSFunction *jsfun) {
   JSMIRFunction *parentFunc = funcstack_.top();
 
   MIRSymbol *funcsymbol = jsbuilder_->GetOrCreateGlobalDecl(funcname, jsvalue_type_);
-  BaseNode *ptr = jsbuilder_->CreateAddrof(funcsymbol, false, PTY_dynany);
+  BaseNode *ptr = jsbuilder_->CreateExprAddroffunc(funcsymbol->value_.func_->puidx);
   MIRSymbol * env_var = NULL;
   BaseNode *bn;
   BaseNode *node;

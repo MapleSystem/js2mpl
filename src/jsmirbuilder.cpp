@@ -86,6 +86,8 @@ JSMIRFunction *JSMIRBuilder::GetOrCreateFunction(const char *name,
 
   fn =  MP_NEW(module_->mp_, JSMIRFunction(funcst->GetStIdx()));
   fn->Init();
+  fn->puidx = module_->functable.size();
+  module_->functable.push_back(fn);
 
   fn->_return_tyidx = return_type->_ty_idx;
 
