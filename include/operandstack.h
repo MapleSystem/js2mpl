@@ -19,9 +19,11 @@ class OperandStack {
   BaseNode *rval;
   bool flag_has_rval;
   bool flag_has_iter;
+  bool flag_in_try_block;
   bool flag_after_throwing;
   explicit OperandStack(unsigned max_depth)
       : current_depth_(0), flag_has_rval(false), flag_has_iter(false), 
+        flag_in_try_block(false),
         flag_after_throwing(false),
         max_depth_(max_depth) {}
 

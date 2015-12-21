@@ -556,8 +556,8 @@ BaseNode *JSCompiler::CompileBuiltinName(char *name) {
 BaseNode *JSCompiler::CompileOpName(JSAtom *atom) {
   char *name = Util::GetString(atom, mp_, jscontext_);
   JS_ASSERT(!name && "empty name");
+  BaseNode *undefined = CompileOpConstValue(JSVALTAGUNDEFINED, 0);
   if (!strcmp(name, "undefined")) {
-    BaseNode *undefined = CompileOpConstValue(JSVALTAGUNDEFINED, 0);
     return undefined;
   }
   if (!strcmp(name, "NaN"))
@@ -591,6 +591,11 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom) {
   DEBUGPRINT3(stidx);
 
   BaseNode *bn = jsbuilder_->CreateExprDread(jsvalue_type_, var);
+
+  if (created && opstack_->flag_in_try_block) {
+    BaseNode *throwstmt = jsbuilder_->CreateStmtThrow(bn);
+    jsbuilder_->AddStmtInCurrentFunctionBody(throwstmt);
+  }
 
   return bn;
 }
@@ -1759,6 +1764,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         continue;
       }
       case JSOP_TRY: /*134, 1, 0, 0*/  { 
+        opstack_->flag_in_try_block = true;
         JSTryNote *tn = script->trynotes()->vector;
         JSTryNote *tnlimit = tn + script->trynotes()->length;
         for (; tn < tnlimit; tn++) {
@@ -1804,6 +1810,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       }
       case JSOP_SETRVAL: /*152, 1, 1, 0*/  {
         opstack_->flag_has_rval = true;
+        opstack_->flag_in_try_block = false;
         BaseNode *rval = Pop();
         opstack_->rval = rval;
         break;
