@@ -1810,7 +1810,6 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       }
       case JSOP_SETRVAL: /*152, 1, 1, 0*/  {
         opstack_->flag_has_rval = true;
-        opstack_->flag_in_try_block = false;
         BaseNode *rval = Pop();
         opstack_->rval = rval;
         break;
@@ -1846,6 +1845,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       }
       case JSOP_GOTO: /*6, 5, 0, 0*/  {
         int offset = GET_JUMP_OFFSET(pc);
+        opstack_->flag_in_try_block = false;
         if (! opstack_->flag_has_iter && ! opstack_->Empty() && 
             ! opstack_->flag_after_throwing) {
           // in middle of conditional expression; save in a temp and associate
