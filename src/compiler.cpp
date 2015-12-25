@@ -13,6 +13,7 @@
 #include "js/src/vm/ScopeObject.h"
 #include "../include/compiler.h"
 
+mapleir::OpcodeTable mapleir::opcodeinfo;
 namespace mapleir {
 
 void JSCompiler::Init() {
