@@ -34,12 +34,12 @@ expect = 3;
 if (actual !== expect)
   $ERROR("CHECK #10 failed :", actual, expect);
 
-actual = typeof Array(12345);
+actual = typeof Array(123);
 expect = "object";
 if (actual !== expect)
   $ERROR("CHECK #11 failed :", actual, expect);
 
-var arr = Array(12345);
+var arr = Array(123);
 arr.getClass = Object.prototype.toString;
 actual = arr.getClass();
 expect = "[object Array]";
@@ -49,8 +49,3 @@ if (actual !== expect)
 var arr = Array(1,2,3,4,5);
 if (arr.toString !== Array.prototype.toString)
   $ERROR("CHECK #13 failed :", arr.toString, Array.prototype.toString);
-
-actual = Array(12345).length;
-expect = 12345;
-if (actual !== expect)
-  $ERROR("CHECK #14 failed :", actual, expect);

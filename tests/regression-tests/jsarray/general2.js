@@ -22,7 +22,7 @@ writeHeaderToLog( SECTION + " "+ TITLE);
 
 array1 = new Array();
 array2 = [];
-size   = 5;
+size   = 4;
 // this for loop populates array1 and array2 as follows:
 // array1 = [0,1,2,3,4,....,size - 2,size - 1]
 // array2 = [size - 1, size - 2,...,4,3,2,1,0]

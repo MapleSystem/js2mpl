@@ -98,29 +98,19 @@ if ((new Array('1')).length !== 1){
 }
 
 // CHECK#12
-if ((new Array(1000)).length !== 1000){
-  $ERROR('#12: (new Array(1000)).length === 1000. Actual: ' + (new Array(1000)).length);
+if ((new Array(100)).length !== 100){
+  $ERROR('#12: (new Array(1000)).length === 1000. Actual: ' + (new Array(100)).length);
 }
 
 // CHECK#13
-if ((new Array('1000')).length !== 1){
-  $ERROR('#13: (new Array("1000")).length === 1. Actual: ' + (new Array('1000')).length);
+if ((new Array('100')).length !== 1){
+  $ERROR('#13: (new Array("100")).length === 1. Actual: ' + (new Array('1000')).length);
 }
 
 // CHECK#14
 //if ((new Array(4294967295)).length !== ToUint32(4294967295)){
 //  $ERROR('#14: (new Array(4294967295)).length === ToUint32(4294967295). Actual: ' + (new Array(4294967295)).length);
 //}
-
-// CHECK#15
-if ((new Array("8589934592")).length !== 1){
-  $ERROR('#15: (new Array("8589934592")).length === 1. Actual: ' + (new Array("8589934592")).length);
-}
-
-// CHECK#16
-if ((new Array("4294967296")).length !== 1){
-  $ERROR('#16: (new Array("4294967296")).length === 1. Actual: ' + (new Array("4294967296")).length);
-}
 
 // CHECK#17
 //if ((new Array(1073741824)).length !== ToUint32(1073741824)){

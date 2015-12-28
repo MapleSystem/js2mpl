@@ -48,34 +48,34 @@ print (SECTION + " "+ TITLE);
 
 // P is "length"
 // CHECK#1
-var A = new Array(); A.length = 1000; 
-if (A.length !== 1000){
-  $ERROR('#1: A.length === 1000. Actual: ' + A.length);
+var A = new Array(); A.length = 100; 
+if (A.length !== 100){
+  $ERROR('#1: A.length === 100. Actual: ' + A.length);
 }
 
 // A has Property P, and P is not length or an array index
 // CHECK#2
-var A = new Array(1000); A.name = 'name of this array';
+var A = new Array(100); A.name = 'name of this array';
 if (A.name !== "name of this array"){
   $ERROR('#2: A.name === "name of this array". Actual: ' + A.name);
 }
 
 // CHECK#3
-var A = new Array(1000); A.name = 'name of this array';
-if (A.length !== 1000){
+var A = new Array(100); A.name = 'name of this array';
+if (A.length !== 100){
   $ERROR('#3: A.length === 1000. Actual: ' + A.length);
 }
 
 // A has Property P, P is not length, P is an array index, and ToUint32(p) is less than the
 // value of length
 // CHECK#4
-var A = new Array(1000); A[123] = 'hola';
+var A = new Array(200); A[123] = 'hola';
 if (A[123].toString() !== "hola"){
   $ERROR('#4: A[123] === "hola". Actual: ' + A[123]);
 }
 
 // CHECK#5
-var A = new Array(1000); A[123] = 'hola'; 
-if (A.length !== 1000){
-  $ERROR('#5: A.length === 1000. Actual: ' + A.length);
+var A = new Array(200); A[123] = 'hola'; 
+if (A.length !== 200){
+  $ERROR('#5: A.length === 200. Actual: ' + A.length);
 }

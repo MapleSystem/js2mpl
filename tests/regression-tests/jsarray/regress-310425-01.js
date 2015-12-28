@@ -23,8 +23,8 @@ if (actual !== expect)
   $ERROR("CHECK #2:", actual, expect);
 
 var x = [];
-x[1 << 30] = 1;
-expect = (1 << 30);
+x[1 << 8] = 1;
+expect = (1 << 8);
 actual = x.lastIndexOf(1);
 if (actual !== expect)
   $ERROR("CHECL #3:", actual, expect);

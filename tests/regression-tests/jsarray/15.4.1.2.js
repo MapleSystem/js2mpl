@@ -51,13 +51,13 @@ actual = (Array('1')).length;
 if (actual !== expect)
   $ERROR("CHECK #5 failed :", actual, expect);
 
-expect = 1000;
-actual = (Array(1000)).length;
+expect = 100;
+actual = (Array(100)).length;
 if (actual !== expect)
   $ERROR("CHECK #6 failed :", actual, expect);
 
 expect = 1;
-actual = (Array('1000')).length;
+actual = (Array('100')).length;
 if (actual !== expect)
   $ERROR("CHECK #7 failed :", actual, expect);
 
@@ -83,15 +83,6 @@ actual = (Array(Math.pow(2,31)+1)).length;
 if (actual !== expect)
   $ERROR("CHECK #11 failed :", actual, expect);
 */
-expect = 1;
-actual = (Array('8589934592')).length;
-if (actual !== expect)
-  $ERROR("CHECK #12 failed :", actual, expect);
-
-expect = 1;
-actual = (Array('4294967296')).length;
-if (actual !== expect)
-  $ERROR("CHECK #13 failed :", actual, expect);
 
 /*
 expect = ToUint32(1073741823);
