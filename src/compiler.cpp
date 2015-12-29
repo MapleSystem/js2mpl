@@ -967,7 +967,7 @@ bool JSCompiler::CompileOpSetName(JSAtom *atom, BaseNode *val) {
   // variable being set, evaluate and store the result in a new temp and replace
   // the stack items by the temp
   opstack_->ReplaceStackItemsWithTemps(this, var);
-  BaseNode *bn = jsbuilder_->CreateStmtDassign(var, 0, val);
+  BaseNode *bn = jsbuilder_->CreateStmtDassign(var, 0, CheckConvertToJSValueType(val));
   return true;
 }
 
@@ -1874,9 +1874,9 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         int offset = GET_JUMP_OFFSET(pc);
         BaseNode *opnd0 = Pop();  //Pop IFEQ stmt
         BaseNode *cond0 = CheckConvertToBoolean(opnd0);
-        MIRSymbol *temp_var = CreateTempJSValueTypeVar();
-        jsbuilder_->CreateStmtDassign(temp_var, 0, CheckConvertToJSValueType(cond0)); 
-        opnd0 = jsbuilder_->CreateExprDread(jsvalue_type_, temp_var);
+        MIRSymbol *temp_var = CreateTempVar(jsbuilder_->GetUInt1());
+        jsbuilder_->CreateStmtDassign(temp_var, 0, cond0); 
+        opnd0 = jsbuilder_->CreateExprDread(jsbuilder_->GetUInt1(), temp_var);
         Push(opnd0);
 
         labidx_t mirlabel = GetorCreateLabelofPc(pc+offset);
@@ -1889,8 +1889,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         CompileScriptBytecodes(script, start, pc);
         BaseNode *opnd1 = Pop();
         BaseNode *cond1 = CheckConvertToBoolean(opnd1);
-        jsbuilder_->CreateStmtDassign(temp_var, 0, CheckConvertToJSValueType(cond1));
-        opnd0 = jsbuilder_->CreateExprDread(jsvalue_type_, temp_var);
+        jsbuilder_->CreateStmtDassign(temp_var, 0, cond1);
+        opnd0 = jsbuilder_->CreateExprDread(jsbuilder_->GetUInt1(), temp_var);
         Push(opnd0);
         continue;
       }
@@ -2430,7 +2430,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         break;
       case JSOP_THROW: /*112, 1, 1, 0*/  { 
         BaseNode *rval = Pop();
-        BaseNode *throwstmt = jsbuilder_->CreateStmtThrow(rval);
+        BaseNode *throwstmt = jsbuilder_->CreateStmtThrow(CheckConvertToJSValueType(rval));
         jsbuilder_->AddStmtInCurrentFunctionBody(throwstmt);
         break;
         }
