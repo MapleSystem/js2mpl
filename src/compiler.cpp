@@ -807,7 +807,7 @@ BaseNode *JSCompiler::CompileOpNewInit(uint32_t kind) {
 
 BaseNode *JSCompiler::CompileGenericN(int32_t intrin_id,
                                         MapleVector<BaseNode *> &arguments,
-                                        bool is_call) {
+                                        bool is_call, bool retvalOK) {
   IntrinDesc *intrindesc = &IntrinDesc::intrintable[intrin_id];
   MIRType *retty = intrindesc->GetReturnType();
   if (is_call) {
@@ -815,6 +815,8 @@ BaseNode *JSCompiler::CompileGenericN(int32_t intrin_id,
                        (MIRIntrinsicId)intrin_id, arguments);
     jsbuilder_->AddStmtInCurrentFunctionBody(call);
     //  TODO: if retty is void, return NULL
+    if (retvalOK)
+      return jsbuilder_->CreateExprRegread(retty->GetPrimType(), -SREG_retval0);
     MIRSymbol *var = CreateTempVar(retty);
     jsbuilder_->SaveReturnValue(var);
     return jsbuilder_->CreateExprDread(retty, var);
@@ -824,43 +826,43 @@ BaseNode *JSCompiler::CompileGenericN(int32_t intrin_id,
   }
 }
 
-BaseNode *JSCompiler::CompileGeneric0(int32_t intrin_id, bool is_call) {
+BaseNode *JSCompiler::CompileGeneric0(int32_t intrin_id, bool is_call, bool retvalOK) {
   MapleVector<BaseNode *> arguments(jsbuilder_->module_->mp_allocator_.Adapter());
-  return CompileGenericN(intrin_id, arguments, is_call);
+  return CompileGenericN(intrin_id, arguments, is_call, retvalOK);
 }
 
 BaseNode *JSCompiler::CompileGeneric1(int32_t intrin_id,
-                                      BaseNode *arg, bool is_call) {
+                                      BaseNode *arg, bool is_call, bool retvalOK) {
   MapleVector<BaseNode *> arguments(jsbuilder_->module_->mp_allocator_.Adapter());
   arguments.push_back(arg);
-  return CompileGenericN(intrin_id, arguments, is_call);
+  return CompileGenericN(intrin_id, arguments, is_call, retvalOK);
 }
 
 BaseNode *JSCompiler::CompileGeneric2(int32_t intrin_id, BaseNode *arg1,
-                                      BaseNode *arg2, bool is_call) {
+                                      BaseNode *arg2, bool is_call, bool retvalOK) {
   MapleVector<BaseNode *> arguments(jsbuilder_->module_->mp_allocator_.Adapter());
   arguments.push_back(arg1);
   arguments.push_back(arg2);
-  return CompileGenericN(intrin_id, arguments, is_call);
+  return CompileGenericN(intrin_id, arguments, is_call, retvalOK);
 }
 
 BaseNode *JSCompiler::CompileGeneric3(int32_t intrin_id, BaseNode *arg1,
-                                      BaseNode *arg2, BaseNode *arg3, bool is_call) {
+                                      BaseNode *arg2, BaseNode *arg3, bool is_call, bool retvalOK) {
   MapleVector<BaseNode *> arguments(jsbuilder_->module_->mp_allocator_.Adapter());
   arguments.push_back(arg1);
   arguments.push_back(arg2);
   arguments.push_back(arg3);
-  return CompileGenericN(intrin_id, arguments, is_call);
+  return CompileGenericN(intrin_id, arguments, is_call, retvalOK);
 }
 
 BaseNode *JSCompiler::CompileGeneric4(int32_t intrin_id, BaseNode *arg1,
-                                      BaseNode *arg2, BaseNode *arg3, BaseNode *arg4, bool is_call) {
+                                      BaseNode *arg2, BaseNode *arg3, BaseNode *arg4, bool is_call, bool retvalOK) {
   MapleVector<BaseNode *> arguments(jsbuilder_->module_->mp_allocator_.Adapter());
   arguments.push_back(arg1);
   arguments.push_back(arg2);
   arguments.push_back(arg3);
   arguments.push_back(arg4);
-  return CompileGenericN(intrin_id, arguments, is_call);
+  return CompileGenericN(intrin_id, arguments, is_call, retvalOK);
 }
 
 bool JSCompiler::CompileOpSetElem(BaseNode *obj, BaseNode *index, BaseNode *val) {
@@ -997,7 +999,7 @@ bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
     arguments.push_back(jsbuilder_->GetConstInt(0));
     arguments.push_back(jsbuilder_->GetConstUInt32(jsfun->strict()));
     arguments.push_back(jsbuilder_->GetConstInt(0));
-    BaseNode *func_node = CompileGenericN(INTRN_JS_NEW_FUNCTION, arguments, true);
+    BaseNode *func_node = CompileGenericN(INTRN_JS_NEW_FUNCTION, arguments, true, true);
 
     MIRSymbol *func_obj = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalue_type_, created);
     jsbuilder_->InsertGlobalName(name);

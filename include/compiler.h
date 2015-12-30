@@ -111,17 +111,17 @@ class JSCompiler{
   BaseNode *CompileOpUnary(JSOp op, BaseNode *opnd);
   BaseNode *CompileGenericN(int32_t intrin_id,
                             MapleVector<BaseNode *> &arguments,
-                            bool is_call);
+                            bool is_call, bool retvalOK = false);
   BaseNode *CompileGeneric0(int32_t intrin_id,
-                            bool is_call);
+                            bool is_call, bool retvalOK = false);
   BaseNode *CompileGeneric1(int32_t intrin_id, BaseNode *arg,
-                            bool is_call);
+                            bool is_call, bool retvalOK = false);
   BaseNode *CompileGeneric2(int32_t intrin_id, BaseNode *arg0,
-                            BaseNode *arg1, bool is_call);
+                            BaseNode *arg1, bool is_call, bool retvalOK = false);
   BaseNode *CompileGeneric3(int32_t intrin_id, BaseNode *arg0,
-                            BaseNode *arg1, BaseNode *arg2, bool is_call);
+                            BaseNode *arg1, BaseNode *arg2, bool is_call, bool retvalOK = false);
   BaseNode *CompileGeneric4(int32_t intrin_id, BaseNode *arg0,
-                            BaseNode *arg1, BaseNode *arg2, BaseNode *arg3, bool is_call);
+                            BaseNode *arg1, BaseNode *arg2, BaseNode *arg3, bool is_call, bool retvalOK = false);
   BaseNode *CompileOpGetProp(BaseNode *obj, JSString *name);
   BaseNode *CompileOpCallprop(BaseNode *obj, JSAtom *atom);
   BaseNode *CompileOpString(JSString *str);
