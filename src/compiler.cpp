@@ -2040,7 +2040,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         break;
       }
       case JSOP_THIS: /*65, 1, 0, 1*/  {
-        BaseNode *bn = CompileGeneric0(INTRN_JSOP_THIS, true);
+        BaseNode *bn = CompileGeneric0(INTRN_JSOP_THIS, false);
         Push(bn);
         break;
       }
