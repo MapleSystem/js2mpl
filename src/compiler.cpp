@@ -29,7 +29,7 @@ void JSCompiler::Init() {
 
   funcFormals = closure_->funcFormals;
 
-  dummyNode = CompileOpConstValue(JSVALTAGUNDEFINED, DEADBEEF);
+  dummyNode = CompileOpConstValue(JSVALTAGUNDEFINED, 0);
 }
 
 void JSCompiler::Finish() {
@@ -648,9 +648,8 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
   if (jsstring_map_[chars])
     return jsstring_map_[chars];
 
-  BaseNode *data;
   if (id != -1) {
-    data = CompileGeneric1((MIRIntrinsicId)INTRN_JS_GET_BUILTIN_STRING,
+    (void)CompileGeneric1((MIRIntrinsicId)INTRN_JS_GET_BUILTIN_STRING,
                            jsbuilder_->GetConstUInt32(id), false);
   }
 
@@ -703,7 +702,7 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
     init->const_vec.push_back(int_const);
   }
   var->value_.const_ = init;
-  data = jsbuilder_->CreateExprAddrof(0, var);
+  BaseNode *data = jsbuilder_->CreateExprAddrof(0, var);
   BaseNode *expr = jsbuilder_->CreateExprTypeCvt(OP_cvt, jsbuilder_->GetDynstr(),
                                                  jsbuilder_->GetPrimType(data->ptyp), data);
   jsstring_map_[chars] = expr;
@@ -2034,9 +2033,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         break;
       }
       case JSOP_VOID: /*40, 1, 1, 1*/  {
-        BaseNode *opnd = Pop();
-        BaseNode *bn = CompileGeneric1(INTRN_JSOP_VOID, opnd, false);
-        Push(bn);
+        (void)Pop();
+        Push(CompileOpConstValue(JSVALTAGUNDEFINED, 0));
         break;
       }
       case JSOP_THIS: /*65, 1, 0, 1*/  {
