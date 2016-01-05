@@ -173,7 +173,7 @@ class JSCompiler{
   bool CompileOpDefVar(JSAtom *atom);
   bool CompileScript(JSScript *script);
   bool CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart,
-                              jsbytecode *pcend);
+                              jsbytecode *pcend, jsbytecode **newpc);
   bool CollectInfo(JSScript *script, jsbytecode *pcstart, jsbytecode *pcend);
   uint32_t GetTagFromIntrinId(IntrinArgType);
   // Finish job.
