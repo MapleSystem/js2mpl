@@ -585,6 +585,11 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom) {
     var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_, created);
   }
 
+  // print is a builtin function.
+  if (!strcmp(name, "print")) {
+    created = false;
+  }
+
   InitWithUndefined(created, var);
 
   stidx_t stidx = var->GetStIdx();
