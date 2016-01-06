@@ -646,10 +646,13 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
   int32_t id = GetBuiltinStringId(chars, length);
   if (jsstring_map_[chars])
     return jsstring_map_[chars];
-
   if (id != -1) {
-    (void)CompileGeneric1((MIRIntrinsicId)INTRN_JS_GET_BUILTIN_STRING,
+    BaseNode *data = CompileGeneric1((MIRIntrinsicId)INTRN_JS_GET_BUILTIN_STRING,
                            jsbuilder_->GetConstUInt32(id), false);
+    BaseNode *expr = jsbuilder_->CreateExprTypeCvt(OP_cvt, jsbuilder_->GetDynstr(),
+                                                 jsbuilder_->GetPrimType(data->ptyp), data);
+    jsstring_map_[chars] = expr;
+    return expr;
   }
 
   MIRType *unit_type = jsbuilder_->GetUInt16();
