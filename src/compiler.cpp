@@ -128,15 +128,15 @@ uint32_t JSCompiler::GetTagFromIntrinId(IntrinArgType intrnargtype) {
   }
 }
 
-uint32_t JSCompiler::DetermineTagFromNode(BaseNode *node) {
+MIRType *JSCompiler::DetermineTypeFromNode(BaseNode *node) {
   tyidx_t tyidx;
   if (node->IsCmpNode())
-    return JSVALTAGBOOLEAN;
+    return jsbuilder_->module_->GetTypeFromTyIdx((tyidx_t)PTY_u1);
   if (node->op == OP_intrinsicop) {
     // TODO: look up intrinsic table
     MIRIntrinsicId intrnid = static_cast<IntrinsicopNode *>(node)->intrinsic;
     IntrinDesc *intrndesc = &IntrinDesc::intrintable[intrnid];
-    return GetTagFromIntrinId(intrndesc->argtypes_[0]);
+    return intrndesc->GetTypeFromArgTy(intrndesc->argtypes_[0]);
   }
   if (node->op == OP_dread) {
     DreadNode *dread = static_cast<DreadNode *>(node);
@@ -149,13 +149,9 @@ uint32_t JSCompiler::DetermineTagFromNode(BaseNode *node) {
     tyidx = node->ptyp;
   }
   if (tyidx == jsvalue_type_->_ty_idx)
-    return JSVALTAGCLEAR;
-  MIRType *ty = jsbuilder_->module_->GetTypeFromTyIdx(tyidx);
-  if (ty->_primtype == PTY_u1)
-    return JSVALTAGBOOLEAN;
-  if (IsPrimitiveInteger(ty->_primtype))
-    return JSVALTAGINT32;
-  return JSVALTAGCLEAR;
+    return jsvalue_type_;
+
+  return jsbuilder_->module_->GetTypeFromTyIdx(tyidx);
 }
 
 // create a new temporary, store expr to the temporary and return the temporary
@@ -257,9 +253,12 @@ BaseNode *JSCompiler::CompileOpBinary(JSOp opcode,
     case JSOP_MOD: mop = OP_rem; break;
     default: break;
   }
-  if (mop != 0)
+  if (mop != 0) {
+    if (op0->ptyp == op1->ptyp)
+      restype = jsbuilder_->module_->GetTypeFromTyIdx((tyidx_t)op0->ptyp);
     return jsbuilder_->CreateExprBinary(mop, restype,
            CheckConvertToJSValueType(op0), CheckConvertToJSValueType(op1));
+  }
 
   MIRIntrinsicId idx = (MIRIntrinsicId)FindIntrinsicForOp(opcode);
   IntrinDesc *intrindesc = &IntrinDesc::intrintable[idx];
@@ -780,6 +779,11 @@ BaseNode *JSCompiler::CompileOpGetLocal(uint32_t local_no) {
   bool created;
   MIRSymbol *var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_, created);
   InitWithUndefined(created, var);
+  if (!created) {
+    MIRType *type = jsbuilder_->module_->GetTypeFromTyIdx(var->GetTyIdx());
+    return jsbuilder_->CreateExprDread(type, var);
+  }
+
   return jsbuilder_->CreateExprDread(jsvalue_type_, var);
 }
 
@@ -787,9 +791,9 @@ BaseNode *JSCompiler::CompileOpGetLocal(uint32_t local_no) {
 BaseNode *JSCompiler::CompileOpSetLocal(uint32_t local_no, BaseNode *src) {
   JSMIRFunction *func = jsbuilder_->GetCurrentFunction();
   char *name = closure_->GetLocalVar(func, local_no);
-  uint32_t curtag = DetermineTagFromNode(src);
+  MIRType *type = DetermineTypeFromNode(src);
   bool created;
-  MIRSymbol *var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_, created);
+  MIRSymbol *var = jsbuilder_->GetOrCreateLocalDecl(name, type, created);
 
   // if the stack is not empty, for each stack item that contains the 
   // variable being set, evaluate and store the result in a new temp and replace
