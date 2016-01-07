@@ -19,6 +19,7 @@ if(!(-e $tempdir)) {
 
 my @failed_mpl_file;
 my @failed_mmpl_file;
+my @failed_cmpl_file;
 my @failed_int_file;
 my @successed_file;
 chdir $dirname;
@@ -28,6 +29,9 @@ print("\n====================== run tests =====================\n");
 my @count = 0;
 my @countMPL = 0;
 my @countMMPL = 0;
+my @countgenCMPL = 0;
+my @countprintCMPL = 0;
+my @countrunCMPL = 0;
 my @countINT = 0;
 while( ($filename = readdir(DIR))){
   if(-d $filename and $filename ne ".." and $filename ne "output" and $filename ne "temp") {
@@ -52,6 +56,7 @@ while( ($filename = readdir(DIR))){
       my $js_file = $file.'.js';
       my $mpl_file = $file.'.mpl';
       my $mmpl_file = $file.".mmpl";
+      my $cmpl_file = $file.".cmpl";
       my $log_file = $file.'.log';
       my $out_file = $file.'.out';
       my $err_file = $file.'.err';
@@ -71,6 +76,30 @@ while( ($filename = readdir(DIR))){
         print " ==mplbe===> $file\n";
         $countMMPL ++;
         push(@failed_mmpl_file, $file);
+        $flag ++;
+        next;
+      }
+      $res = system("$pwd/../../mapleall/build/maplevm/binmir/gencmpl $tempdir/$mmpl_file >> $tempdir/$log_file");
+      if ($res > 0) {
+        print " ==gencmpl===> $file\n";
+        $countgenCMPL ++;
+        push(@failed_cmpl_file, $file);
+        $flag ++;
+        next;
+      }
+      $res = system("$pwd/../../mapleall/build/maplevm/binmir/printcmpl $tempdir/$cmpl_file >> $tempdir/$log_file");
+      if ($res > 0) {
+        print " ==printcmpl===> $file\n";
+        $countprintCMPL ++;
+        push(@failed_cmpl_file, $file);
+        $flag ++;
+        next;
+      }
+      $res = system("$pwd/../../mapleall/build/maplevm/compact/jsvm-cmpl $tempdir/$cmpl_file >> $tempdir/$log_file");
+      if ($res > 0) {
+        print " ==jsvm-cmpl===> $file\n";
+        $countrunCMPL ++;
+        push(@failed_cmpl_file, $file);
         $flag ++;
         next;
       }
@@ -95,6 +124,7 @@ while( ($filename = readdir(DIR))){
         system("rm -f $tempdir/$js_file");
         system("rm -f $tempdir/$mpl_file");
         system("rm -f $tempdir/$mmpl_file");
+        system("rm -f $tempdir/$cmpl_file");
         system("rm -f $tempdir/$log_file");
         system("rm -f $tempdir/$out_file");
         system("rm -f $tempdir/$err_file");
@@ -106,16 +136,16 @@ while( ($filename = readdir(DIR))){
 }
 closedir(DIR);
 
-if ((scalar(@failed_mpl_file) + scalar(@failed_mmpl_file) + scalar(@failed_int_file)) eq 0) {
+if ((scalar(@failed_mpl_file) + scalar(@failed_mmpl_file) + scalar(@failed_int_file) + scalar(@failed_cmpl_file)) eq 0) {
   print("\n all $count tests passed\n");
   print("======================================================\n");
 } else {
-  my $countFailed = $countMPL + $countMMPL + $countINT;
+  my $countFailed = $countMPL + $countMMPL + $countINT + $countrunCMPL;
   my $countPassed = $count - $countFailed;
   if(scalar(@successed_file) > 0) {
     print "\n=========================\npassed $countPassed tests:\n\n";
     foreach $successed (@successed_file) {
-    print $successed."\n";
+      print $successed."\n";
     }
     print "=========================\n";
   }
@@ -123,22 +153,31 @@ if ((scalar(@failed_mpl_file) + scalar(@failed_mmpl_file) + scalar(@failed_int_f
   if(scalar(@failed_mpl_file) > 0){
     print("=== failed generation of maple IR: $countMPL tests\n");
     foreach $failed (@failed_mpl_file) {
-    print $failed."\n";
+      print $failed."\n";
     }
     print "\n";
   }
   if(scalar(@failed_mmpl_file) > 0){
     print("=== failed generation of machine maple IR: $countMMPL tests\n");
     foreach $failed (@failed_mmpl_file) {
-    print $failed."\n";
+      print $failed."\n";
     }
     print "\n";
   }
   if(scalar(@failed_int_file) > 0){
     print("=== failed interpretation: $countINT tests\n");
     foreach $failed (@failed_int_file) {
-    print $failed."\n";
+      print $failed."\n";
     }
+  }
+  if(scalar(@failed_cmpl_file) > 0) {
+    print("=== failed gen-compact maple IR: $countgenCMPL tests\n");
+    print("=== failed print-compact maple IR: $countprintCMPL tests\n");
+    print("=== failed interprete-compact maple IR: $countrunCMPL tests\n");
+    foreach $failed (@failed_cmpl_file) {
+      print $failed."\n";
+    }
+    print "\n";
   }
   print "=========================\n";
 }

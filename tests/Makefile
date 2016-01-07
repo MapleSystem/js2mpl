@@ -10,6 +10,9 @@ build = output
 JS2MPL=$(JS2MPLDIR)/build/js2mpl
 BE = $(MAPLEALL)/build/maplebe/be/mplbe
 MAPLEINTERPRETER=$(MAPLEALL)/build/maplevm/interpreter32
+GEN_CMPL=$(MAPLEALL)/build/maplevm/binmir/gencmpl
+PRINT_CMPL=$(MAPLEALL)/build/maplevm/binmir/printcmpl
+VM_CMPL=$(MAPLEALL)/build/maplevm/compact/jsvm-cmpl
 js2mpl=../build/js2mpl
 be = ../../mapleall/build/maplebe/be/mplbe
 mapleinterpreter=../../mapleall/build/maplevm/interpreter32
@@ -48,8 +51,15 @@ DIRECTORIES:
 	@echo gdb --args $(js2mpl) $(build)/$*.js $(OPT)
 	@echo gdb --args $(be) $(build)/$*.mpl
 	$(BE) $(BUILD)/$*.mpl > $(BUILD)/$*.log
+	@echo convert mmpl to cmpl
+	$(GEN_CMPL) $(BUILD)/$*.mmpl
+	#@echo test cmpl print
+	#$(PRINT_CMPL) $(BUILD)/$*.cmpl
 	@echo gdb --args $(mapleinterpreter) $(build)/$*.mmpl
 	$(MAPLEINTERPRETER) $(BUILD)/$*.mmpl
+	@echo to debug compact-vm, set DEBUG=1 when "make compact-vm"
+	@echo gdb --args $(VM_CMPL) $(build)/$*.cmpl
+	$(VM_CMPL) $(BUILD)/$*.cmpl
 	@echo ""
 
 src:
