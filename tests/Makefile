@@ -13,6 +13,7 @@ MAPLEINTERPRETER=$(MAPLEALL)/build/maplevm/interpreter32
 GEN_CMPL=$(MAPLEALL)/build/maplevm/binmir/gencmpl
 PRINT_CMPL=$(MAPLEALL)/build/maplevm/binmir/printcmpl
 VM_CMPL=$(MAPLEALL)/build/maplevm/compact/jsvm-cmpl
+MEM_PROFILER_CMPL=./get-mem-usage.sh
 js2mpl=../build/js2mpl
 be = ../../mapleall/build/maplebe/be/mplbe
 mapleinterpreter=../../mapleall/build/maplevm/interpreter32
@@ -60,6 +61,8 @@ DIRECTORIES:
 	@echo to debug compact-vm, set DEBUG=1 when "make compact-vm"
 	@echo gdb --args $(VM_CMPL) $(build)/$*.cmpl
 	$(VM_CMPL) $(BUILD)/$*.cmpl
+	@echo profile memory usage of compact-vm for the app
+	$(MEM_PROFILER_CMPL) $(BUILD)/$*.cmpl 
 	@echo ""
 
 src:
