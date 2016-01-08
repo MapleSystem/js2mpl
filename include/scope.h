@@ -70,6 +70,8 @@ class Scope {
     std::stack<char *> funcstack1_;
     std::stack<std::pair<JSScript *, char *>> scriptstack_;
 
+    std::stack<jsbytecode *> trystack_;
+
     uint32_t anon_func_no_;
     int stackDepth;
 
@@ -93,6 +95,7 @@ class Scope {
 
     std::list<std::pair<char *, ScopeNode *>> scopeChain;
     std::list<std::pair<jsbytecode *, char *>> bytecodeAnonyFunc;
+    std::map<jsbytecode *, jsbytecode *> tryFinallyMap;
 
     ScopeNode *GetOrCreateSN(char *name);
     void SetSNParent(char *name, char *parent);

@@ -61,7 +61,7 @@ class JSCompiler{
       scope_(scope),
       module_(module),
       mp_(module->mp_),
-      temp_var_no_(0),
+      temp_var_no_(1),
       jsbuilder_(jsbuilder),
       closure_(closure),
       opstack_(opstack) {}

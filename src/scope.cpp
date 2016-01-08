@@ -248,6 +248,34 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
           }
       }
 
+      // collecting EH info
+      switch (op) {
+        case JSOP_TRY: {
+          JSTryNote *tn = script->trynotes()->vector;
+          JSTryNote *tnlimit = tn + script->trynotes()->length;
+          for (; tn < tnlimit; tn++) {
+            if ((tn->start + script->mainOffset()) == (pc - script->code() + 1)) {
+              jsbytecode *catchpc = pc + 1 + tn->length;
+              trystack_.push(catchpc);
+              tryFinallyMap[catchpc] = (jsbytecode *)0xdeadbeef;
+              break;
+            }
+          }
+          break;
+        }
+        case JSOP_FINALLY: {
+          tryFinallyMap[trystack_.top()] = pc;
+          // check if no catch (catch == finally)
+          if (trystack_.top() == pc)
+            tryFinallyMap[trystack_.top()] = 0;
+          break;
+        }
+        case JSOP_NOP:
+          // TODO: NOP terminate a try/catch/finally blocks
+          trystack_.pop();
+          break;
+      }
+
       // calculate the expected stack size at the end
       {
         // get def/use for each op from mozjs js/src/vm/Opcodes.h

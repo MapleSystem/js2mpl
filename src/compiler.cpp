@@ -1687,6 +1687,17 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       }
       BaseNode *stmt = jsbuilder_->CreateStmtLabel(labidx);
       jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
+
+      // jump to finally for catch
+      if (scope_->tryFinallyMap[pc] != 0) {
+        labidx_t mirlabel;
+        if (scope_->tryFinallyMap[pc] != (jsbytecode *)0xdeadbeef)
+          mirlabel = GetorCreateLabelofPc(scope_->tryFinallyMap[pc], "f@");
+        else
+          mirlabel = GetorCreateLabelofPc(pc);
+        BaseNode* trynode = jsbuilder_->CreateStmtGoto(OP_catch, mirlabel);
+        jsbuilder_->AddStmtInCurrentFunctionBody(trynode);
+      }
     }
 
     switch (op) {

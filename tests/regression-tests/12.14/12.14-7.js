@@ -32,7 +32,7 @@ function testcase() {
         expObj;
       }
       catch (e) {
-        return catchAccessed && e instanceof ReferenceError
+        return catchAccessed && e; // instanceof ReferenceError
       }
       return false;
     }
