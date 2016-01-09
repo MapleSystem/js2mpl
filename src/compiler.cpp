@@ -2127,14 +2127,14 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_SPREADNEW: /*42, 1, 3, 1*/  { SIMULATESTACK(3, 1); break; }
       case JSOP_SPREADCALL: /*41, 1, 3, 1*/  { SIMULATESTACK(3, 1); break; }
       case JSOP_SPREADEVAL: /*43, 1, 3, 1*/  { SIMULATESTACK(3, 1); break; }
-      case JSOP_FUNAPPLY: /*79, 3, -1, 1*/
-      case JSOP_FUNCALL: /*108, 3, -1, 1*/
       case JSOP_NEW: /*82, 3, -1, 1*/ {
         uint32_t argc = GET_ARGC(pc);
         BaseNode *bn = CompileOpNew(argc);
         Push(bn);
         break;
       }
+      case JSOP_FUNAPPLY: /*79, 3, -1, 1*/
+      case JSOP_FUNCALL: /*108, 3, -1, 1*/
       case JSOP_CALL: /*58, 3, -1, 1*/  {
         uint32_t argc = GET_ARGC(pc);
         BaseNode *bn = CompileOpCall(argc);
@@ -2454,32 +2454,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         Push(arr);
         break;
       }
-      case JSOP_INITELEM_INC: /*95, 1, 3, 2*/  {
-        BaseNode *val = Pop();
-        BaseNode *id = Pop();
-        BaseNode *obj = Pop();
-        if (!CompileOpSetElem(obj, id, val))
-          return false;
-        BaseNode *ofst = CompileOpConstValue(JSVALTAGINT32, 1);
-        BaseNode *newid = CompileOpBinary(JSOP_ADD, id, ofst);
-        MIRSymbol *temp_var = CreateTempVar(jsvalue_type_);
-        jsbuilder_->CreateStmtDassign(temp_var, 0, newid);
-        newid = jsbuilder_->CreateExprDread(jsvalue_type_, temp_var);
-        Push(obj);
-        Push(newid);
-        break;
-      }
-      case JSOP_SPREAD: /*83, 1, 3, 2*/  {
-        BaseNode *val = Pop();
-        BaseNode *id = Pop();
-        BaseNode *obj = Pop();
-        BaseNode *newobj = CompileGeneric3(INTRN_JSOP_ARR_SPREAD, obj, id, val, true);
-        BaseNode *length = CompileGeneric1(INTRN_JSOP_LENGTH, val, false);
-        BaseNode *newid = CompileOpBinary(JSOP_ADD, id, length);
-        Push(newobj);
-        Push(newid);
-        break;
-      }
+      case JSOP_INITELEM_INC: /*95, 1, 3, 2*/  { SIMULATESTACK(3, 2); break; }
+      case JSOP_SPREAD: /*83, 1, 3, 2*/  { SIMULATESTACK(3, 2); break; }
       case JSOP_GOSUB: /*116, 5, 0, 0*/  {
         int offset = GET_JUMP_OFFSET(pc);
         CompileOpGosub(pc + offset);
