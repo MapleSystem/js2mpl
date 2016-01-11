@@ -272,7 +272,8 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
         }
         case JSOP_NOP:
           // TODO: NOP terminate a try/catch/finally blocks
-          trystack_.pop();
+          if (trystack_.size())
+            trystack_.pop();
           break;
       }
 
