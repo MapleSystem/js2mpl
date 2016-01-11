@@ -179,23 +179,25 @@ BaseNode *JSCompiler::NodeFromSavingInATemp(BaseNode *expr) {
 // JSOP_UINT24 188
 // JSOP_INT8 215
 // JSOP_INT32 216
-BaseNode *JSCompiler::CompileOpConstValue(uint32_t jsvalue_tag,
-                                          uint32_t payload) {
+BaseNode *JSCompiler::CompileOpConstValue(uint32_t jsvalue_tag, int32_t payload) {
+  PrimType pty;
   switch (jsvalue_tag) {
    case JSVALTAGINT32:
-     return jsbuilder_->GetConstDyni32(payload);
+     pty = PTY_dyni32; break;
    case JSVALTAGUNDEFINED:
-     return jsbuilder_->GetConstDynundef();
+     pty = PTY_dynundef; break;
    case JSVALTAGNULL:
-     return jsbuilder_->GetConstDynnull();
+     pty = PTY_dynnull; break;
    case JSVALTAGBOOLEAN:
-     return jsbuilder_->GetConstDynbool(payload);
+     pty = PTY_dynbool; break;
    case JSVALTAGELEMHOLE:
-     return jsbuilder_->GetConstDynhole();
+     pty = PTY_dynhole; break;
    default:
      assert(false && "NIY");
-     return NULL;
+     break;
   }
+  int64_t val = (int64_t)((uint64_t)(uint32_t)jsvalue_tag << 32 | (uint64_t)(uint32_t)payload);
+  return jsbuilder_->CreateIntConst(val, pty);
 }
 
 // Return the corresponding intrinsic code for JSop binary or unary opcode.
@@ -2444,11 +2446,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_INITELEM_ARRAY: /*96, 4, 2, 1*/  {
         BaseNode *init = Pop();
         BaseNode *arr = Pop();
-#ifdef DYNAMICLANG
-        BaseNode *index = jsbuilder_->GetConstDyni32((int32_t)GET_UINT24(pc));
-#else
-        BaseNode *index = jsbuilder_->GetConstInt((int32_t)GET_UINT24(pc));
-#endif
+        BaseNode *index = CompileOpConstValue(JSVALTAGINT32, (int32_t)GET_UINT24(pc));
         if (!CompileOpSetElem(arr, index, init))
           return false;
         Push(arr);

@@ -9,8 +9,8 @@ namespace mapleir {
 #define JSVALTYPEMAGIC             ((uint8_t)0x04)
 #define JSVALTYPESTRING            ((uint8_t)0x05)
 #define JSVALTYPENULL              ((uint8_t)0x06)
+#define JSVALTYPEELEMHOLE          ((uint8_t)0x09)
 #define JSVALTYPEOBJECT            ((uint8_t)0x10)
-#define JSVALTYPEELEMHOLE          ((uint8_t)0x14)
 #define JSVALTYPEUNKNOWN           ((uint8_t)0x20)
 
 #define JSVALTAGCLEAR              ((uint32_t)(0xFFFFFF80))

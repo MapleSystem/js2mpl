@@ -100,8 +100,7 @@ class JSCompiler{
   MIRSymbol *SymbolFromSavingInATemp(BaseNode *expr);
   BaseNode *NodeFromSavingInATemp(BaseNode *expr);
   // Compile Functions.
-  BaseNode *CompileOpConstValue(uint32_t jsvalue_tag, uint32_t payload);
-  BaseNode *CompileOpDoubleConstValue(double dval);
+  BaseNode *CompileOpConstValue(uint32_t jsvalue_tag, int32_t payload);
   js_builtin_id EcmaNameToId(char *name);
   int32_t GetBuiltinStringId(const jschar *chars, uint32_t length);
   BaseNode *CompileBuiltinName(char *name);
