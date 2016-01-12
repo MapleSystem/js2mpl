@@ -258,6 +258,15 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
               jsbytecode *catchpc = pc + 1 + tn->length;
               trystack_.push(catchpc);
               tryFinallyMap[catchpc] = (jsbytecode *)0xdeadbeef;
+
+              // use the goto before catchpc to find the end of try combo
+              int length = js_CodeSpec[JSOP_GOTO].length;
+              jsbytecode *jumppc = catchpc - length;
+              JSOp jumpop = JSOp(*jumppc);
+              assert(jumpop == JSOP_GOTO);
+              int offset = GET_JUMP_OFFSET(jumppc);
+              jsbytecode *targetpc = jumppc + offset;
+              tryendstack_.push(targetpc);
               break;
             }
           }
@@ -270,11 +279,12 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
             tryFinallyMap[trystack_.top()] = 0;
           break;
         }
-        case JSOP_NOP:
-          // TODO: NOP terminate a try/catch/finally blocks
-          if (trystack_.size())
-            trystack_.pop();
-          break;
+      }
+
+      // end of current try combo
+      if (tryendstack_.size() && pc >= tryendstack_.top()) {
+        trystack_.pop();
+        tryendstack_.pop();
       }
 
       // calculate the expected stack size at the end

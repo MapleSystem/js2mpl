@@ -71,6 +71,7 @@ class Scope {
     std::stack<std::pair<JSScript *, char *>> scriptstack_;
 
     std::stack<jsbytecode *> trystack_;
+    std::stack<jsbytecode *> tryendstack_;
 
     uint32_t anon_func_no_;
     int stackDepth;
