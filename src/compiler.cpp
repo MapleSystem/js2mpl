@@ -270,7 +270,7 @@ BaseNode *JSCompiler::CompileOpBinary(JSOp opcode,
 }
 
 // JSOP_NOT JSOP_BITNOT JSOP_NEG JSOP_POS 32~35
-BaseNode *JSCompiler::CompileOpUnary(JSOp opcode, BaseNode *op) {
+BaseNode *JSCompiler::CompileOpUnary(JSOp opcode, BaseNode *val) {
   Opcode mop = (Opcode)0;
   MIRType *restype = jsbuilder_->GetDynany();
   switch (opcode) {
@@ -280,12 +280,27 @@ BaseNode *JSCompiler::CompileOpUnary(JSOp opcode, BaseNode *op) {
     default: break;
   }
   if (mop != 0)
-    return jsbuilder_->CreateExprUnary(mop, restype, op);
+    return jsbuilder_->CreateExprUnary(mop, restype, val);
+
+  if (opcode == JSOP_POS) {
+    PrimType pty;
+    if (val->op == OP_constval)
+      pty = val->ptyp;
+    if (val->op == OP_dread) {
+      DreadNode *node = static_cast<DreadNode *>(val);
+      MIRSymbol *st = jsbuilder_->module_->GetSymbolFromStidx(node->stidx, node->islocal);
+      MIRType *type = st->GetType();
+      pty = type->GetPrimType();
+    }
+
+    if (IsPrimitiveDynInteger (pty) || IsPrimitiveInteger (pty))
+      return val;
+  }
 
   MIRIntrinsicId idx = (MIRIntrinsicId)FindIntrinsicForOp(opcode);
   IntrinDesc *intrindesc = &IntrinDesc::intrintable[idx];
   MIRType *retty = intrindesc->GetReturnType();
-  return jsbuilder_->CreateExprIntrinsicop1(idx, retty, CheckConvertToJSValueType(op));
+  return jsbuilder_->CreateExprIntrinsicop1(idx, retty, CheckConvertToJSValueType(val));
 }
 
 int32_t JSCompiler::GetBuiltinMethod(uint32_t argc, bool *need_this) {
