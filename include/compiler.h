@@ -45,6 +45,7 @@ class JSCompiler{
 
   typedef std::pair<JSMIRFunction *, std::vector<char *>> funcArgPair;
   std::vector<funcArgPair> funcFormals;
+  std::vector<std::pair<char*, char*>> objFuncMap;
 
  public:
   explicit JSCompiler(const char *filename, 
@@ -84,8 +85,10 @@ class JSCompiler{
     return bn;
   }
 
-  void SetScope(Scope *scope) { scope_ = scope; }
-  Scope *GetScope() { return scope_; }
+  bool UseSimpleCall(char *name) { 
+    return name && scope_->IsFunction(name) &&
+           !closure_->IsFuncWithEnv(name) &&
+           !closure_->IsFuncModified(name); }
 
   void Init();
   void EnvInit(JSMIRFunction *func);

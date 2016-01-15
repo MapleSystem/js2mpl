@@ -34,7 +34,7 @@ void JSCompiler::Init() {
 
 void JSCompiler::Finish() {
   if (js2mplDebug != OPT_DONOTDUMPMAIN) {
-    jsbuilder_->module_->AddFunction(jsmain_);  // add jsmain_ in the end
+    module_->AddFunction(jsmain_);  // add jsmain_ in the end
   }
   // more forgiving about stack integrety
   int expected = scope_->GetDepth();
@@ -49,7 +49,7 @@ void JSCompiler::SetupMainFuncRet(BaseNode *rval){
   // right now if rval is jsvalue_type_, we return the value for test
   /*   if (rval->op == OP_dread) {  // TODO: don't need this after print is implemented
     DreadNode * node = static_cast<DreadNode *>(rval);
-    MIRSymbol *st = jsbuilder_->module_->GetSymbolFromStidx(node->stidx, node->islocal);
+    MIRSymbol *st = module_->GetSymbolFromStidx(node->stidx, node->islocal);
     MIRType *type = st->GetType();
     if (type == jsvalue_type_) {
       BaseNode *newdreadnode = jsbuilder_->CreateExprDread(type, 4, st);
@@ -131,7 +131,7 @@ uint32_t JSCompiler::GetTagFromIntrinId(IntrinArgType intrnargtype) {
 MIRType *JSCompiler::DetermineTypeFromNode(BaseNode *node) {
   tyidx_t tyidx;
   if (node->IsCmpNode())
-    return jsbuilder_->module_->GetTypeFromTyIdx((tyidx_t)PTY_u1);
+    return module_->GetTypeFromTyIdx((tyidx_t)PTY_u1);
   if (node->op == OP_intrinsicop) {
     // TODO: look up intrinsic table
     MIRIntrinsicId intrnid = static_cast<IntrinsicopNode *>(node)->intrinsic;
@@ -140,7 +140,7 @@ MIRType *JSCompiler::DetermineTypeFromNode(BaseNode *node) {
   }
   if (node->op == OP_dread) {
     DreadNode *dread = static_cast<DreadNode *>(node);
-    MIRSymbol *st = jsbuilder_->module_->GetSymbolFromStidx(dread->stidx, dread->islocal);
+    MIRSymbol *st = module_->GetSymbolFromStidx(dread->stidx, dread->islocal);
     tyidx = st->GetTyIdx();
   } else if (node->op == OP_iread) {
     IreadNode *iread = static_cast<IreadNode *>(node);
@@ -151,7 +151,7 @@ MIRType *JSCompiler::DetermineTypeFromNode(BaseNode *node) {
   if (tyidx == jsvalue_type_->_ty_idx)
     return jsvalue_type_;
 
-  return jsbuilder_->module_->GetTypeFromTyIdx(tyidx);
+  return module_->GetTypeFromTyIdx(tyidx);
 }
 
 // create a new temporary, store expr to the temporary and return the temporary
@@ -257,7 +257,7 @@ BaseNode *JSCompiler::CompileOpBinary(JSOp opcode,
   }
   if (mop != 0) {
     if (op0->ptyp == op1->ptyp)
-      restype = jsbuilder_->module_->GetTypeFromTyIdx((tyidx_t)op0->ptyp);
+      restype = module_->GetTypeFromTyIdx((tyidx_t)op0->ptyp);
     return jsbuilder_->CreateExprBinary(mop, restype,
            CheckConvertToJSValueType(op0), CheckConvertToJSValueType(op1));
   }
@@ -288,7 +288,7 @@ BaseNode *JSCompiler::CompileOpUnary(JSOp opcode, BaseNode *val) {
       pty = val->ptyp;
     if (val->op == OP_dread) {
       DreadNode *node = static_cast<DreadNode *>(val);
-      MIRSymbol *st = jsbuilder_->module_->GetSymbolFromStidx(node->stidx, node->islocal);
+      MIRSymbol *st = module_->GetSymbolFromStidx(node->stidx, node->islocal);
       MIRType *type = st->GetType();
       pty = type->GetPrimType();
     }
@@ -333,8 +333,8 @@ int32_t JSCompiler::GetBuiltinMethod(uint32_t argc, bool *need_this) {
     return -1;
   DreadNode *drn = static_cast<DreadNode *> (bn);
   assert (drn);
-  // MIRSymbol *var = jsbuilder_->module_->symtab->GetSymbolFromStidx(drn->stidx);
-  MIRSymbol *var = jsbuilder_->module_->GetSymbolFromStidx(drn->stidx, drn->islocal);
+  // MIRSymbol *var = module_->symtab->GetSymbolFromStidx(drn->stidx);
+  MIRSymbol *var = module_->GetSymbolFromStidx(drn->stidx, drn->islocal);
   const MapleString &name = var->GetName();
   DEBUGPRINT3(name);
 
@@ -380,12 +380,12 @@ BaseNode *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool need_t
   Pop();
 
   if((MIRIntrinsicId)idx == INTRN_JS_NEW_ARR_ELEMS) {
-    MapleVector<BaseNode *> args(jsbuilder_->module_->mp_allocator_.Adapter());
+    MapleVector<BaseNode *> args(module_->mp_allocator_.Adapter());
     MIRSymbol *arguments = NULL;
     arguments = jsbuilder_->GetCurrentFunction()->symtab->CreateSymbol();
     const char *temp_name = Util::GetSequentialName("js_arguments_", temp_var_no_, mp_);
-    MapleString argname(temp_name, jsbuilder_->module_->mp_);
-    arguments->SetNameStridx(jsbuilder_->module_->stringtable.GetOrCreateStridxFromName(argname));
+    MapleString argname(temp_name, mp_);
+    arguments->SetNameStridx(module_->stringtable.GetOrCreateStridxFromName(argname));
     jsbuilder_->GetCurrentFunction()->symtab->AddToStringSymbolMap(arguments);
     arguments->sclass = SC_auto;
     arguments->skind  = ST_var;
@@ -447,7 +447,7 @@ BaseNode *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool need_t
   }
 
    IntrinDesc *intrindesc = &IntrinDesc::intrintable[idx];
-   MapleVector<BaseNode *> arguments(jsbuilder_->module_->mp_allocator_.Adapter());
+   MapleVector<BaseNode *> arguments(module_->mp_allocator_.Adapter());
   // Push args into arguments.
   for (uint32_t i = 0; i < arg_num; i++) {
     BaseNode *bn = tmp_stack.top();
@@ -480,34 +480,76 @@ BaseNode *JSCompiler::CompileOpCall(uint32_t argc) {
     argsvec.push_back(Pop());
   }
 
-  MapleVector<BaseNode *> args(jsbuilder_->module_->mp_allocator_.Adapter());
-  
   MIRSymbol *var;
 
   // impnode: implicitethis - first arg for closure node if needed
   // funcnode: it is intervened with arg setup
   BaseNode *impnode = Pop();
   BaseNode *funcnode = Pop();
-  args.push_back(impnode);
-  for (int32_t i = argc - 1; i >=0; i--)
-    args.push_back(argsvec[i]);
-
   BaseNode *stmt = NULL;
   MIRSymbol *symbol;
   char *name;
   if (js2mplDebug > 2) funcnode->dump();
 
-  MapleVector<BaseNode *> allargs(jsbuilder_->module_->mp_allocator_.Adapter());
+  MapleVector<BaseNode *> allargs(module_->mp_allocator_.Adapter());
   allargs.push_back(funcnode);
   allargs.push_back(impnode);
 
   for (int32_t i = argc - 1; i >=0; i--)
     allargs.push_back(argsvec[i]);
 
-  stmt = jsbuilder_->CreateStmtIntrinsicCallN(INTRN_JSOP_CALL, allargs);
+  bool useSimpleCall = false;
+  char *funcname = NULL;
+  puidx_t puidx;
+
+  DreadNode *dread = dynamic_cast<DreadNode *>(funcnode);
+  if (dread) {
+    MIRSymbol *funcobj = module_->symtab->GetSymbolFromStidx(dread->stidx, /*checkfirst*/true);
+    // the function might not be a global one, embeded in obj
+    if (funcobj) {
+      char *funcobjname = (char *)(funcobj->GetName().c_str());
+      DEBUGPRINT3(funcobjname);
+
+      std::vector<std::pair<char*, char*>>::iterator I;
+      for (I = objFuncMap.begin(); I != objFuncMap.end(); I++) {
+        if (!strcmp(funcobjname, (*I).first)) {
+          funcname = (*I).second;
+          break;
+        }
+      }
+      if (funcname) {
+        JSMIRFunction *func = closure_->GetJSMIRFunc(funcname);
+        if (func) {
+          puidx = func->puidx;
+          useSimpleCall = UseSimpleCall(funcname);
+        }
+      }
+    }
+  }
+
+  if (useSimpleCall) {
+    DEBUGPRINT3(funcname);
+    MapleVector<BaseNode *> args(module_->mp_allocator_.Adapter());
+    for (int32_t i = argc - 1; i >= 0; i--)
+      args.push_back(argsvec[i]);
+
+    JSMIRFunction *func = closure_->GetJSMIRFunc(funcname);
+
+    DEBUGPRINT3(argc);
+    DEBUGPRINT3(func->argc);
+    if (argc < func->argc) {
+      BaseNode *undefined = CompileOpConstValue(JSVALTAGUNDEFINED, 0);
+      for (int32_t i = argc; i < func->argc; i++)
+        args.push_back(undefined);
+    }
+    stmt = jsbuilder_->CreateStmtCall(puidx, args);
+  } else {
+    stmt = jsbuilder_->CreateStmtIntrinsicCallN(INTRN_JSOP_CALL, allargs);
+  }
 
   if (stmt)
     jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
+
   MIRSymbol *retrunVar = CreateTempVar(jsvalue_type_);
   jsbuilder_->SaveReturnValue(retrunVar);
   return jsbuilder_->CreateExprDread(jsvalue_type_, 0, retrunVar);
@@ -520,13 +562,22 @@ BaseNode *JSCompiler::CompileOpNew(uint32_t argc) {
     tmpStack.push(Pop());
   }
 
-  MapleVector<BaseNode *> args(jsbuilder_->module_->mp_allocator_.Adapter());
+  MapleVector<BaseNode *> args(module_->mp_allocator_.Adapter());
   MIRSymbol *var;
 
   // impnode: implicitethis - first arg for closure node if needed
   // funcnode: it is intervened with arg setup
   BaseNode *impnode = Pop();
   BaseNode *funcnode = Pop();
+
+  AddroffuncNode *addrfunc = dynamic_cast<AddroffuncNode *>(funcnode);
+  if (addrfunc) {
+    MIRFunction *func = module_->functable[addrfunc->puidx];
+    MIRSymbol *funcsymbol = module_->symtab->GetSymbolFromStidx(func->stidx);
+    char *funcname = (char *)funcsymbol->GetName().c_str();
+    if (UseSimpleCall(funcname))
+      return funcnode;
+  }
 
   uint32_t size_array[1];
   size_array[0] = argc;
@@ -587,14 +638,18 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom) {
   if (builtin_var)
     return builtin_var;
 
+  BaseNode *bn = NULL;
   if (scope_->IsFunction(name)) {
-    name = Util::GetNameWithSuffix(name, "_obj_", mp_);
+    DEBUGPRINT2(name);
+    char * objname = Util::GetNameWithSuffix(name, "_obj_", mp_);
+    std::pair<char*, char*> P(objname, name);
+    objFuncMap.push_back(P);
+    name = objname;
   }
 
   // ??? Generate a dread node to pass the name.
   MIRSymbol *var;
   bool created;
-
   if (jsbuilder_->IsGlobalName(name)) {
     var = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalue_type_, created);
   } else {
@@ -611,7 +666,7 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom) {
   stidx_t stidx = var->GetStIdx();
   DEBUGPRINT3(stidx);
 
-  BaseNode *bn = jsbuilder_->CreateExprDread(jsvalue_type_, var);
+  bn = jsbuilder_->CreateExprDread(jsvalue_type_, var);
 
   if (created && opstack_->flag_in_try_block) {
     BaseNode *throwstmt = jsbuilder_->CreateStmtThrow(bn);
@@ -697,31 +752,27 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
   bool created;
   MIRSymbol *var = jsbuilder_->GetOrCreateGlobalDecl(temp_name, type, created);
   //InitWithUndefined(created, var);
-  MIRAggConst *init =  MP_NEW(jsbuilder_->module_->mp_, MIRAggConst(type));
+  MIRAggConst *init =  MP_NEW(module_->mp_, MIRAggConst(type));
 
   uint8_t cl[2];
   cl[0] = string_class;
   cl[1] = length;
   if (pad == 2) {
     uint64_t val = (uint64_t)(cl[0]);
-    MIRIntConst *int_const = MP_NEW(jsbuilder_->module_->mp_,
-                                    MIRIntConst(val, unit_type));
+    MIRIntConst *int_const = MP_NEW(mp_, MIRIntConst(val, unit_type));
     init->const_vec.push_back(int_const);
     val = (uint64_t)(cl[1]);
-    int_const = MP_NEW(jsbuilder_->module_->mp_,
-                                    MIRIntConst(val, unit_type));
+    int_const = MP_NEW(mp_, MIRIntConst(val, unit_type));
     init->const_vec.push_back(int_const);
   } else {
     uint64_t val = (uint64_t)(*((uint16_t *)cl));
-    MIRIntConst *int_const = MP_NEW(jsbuilder_->module_->mp_,
-                                    MIRIntConst(val, unit_type));
+    MIRIntConst *int_const = MP_NEW(mp_, MIRIntConst(val, unit_type));
     init->const_vec.push_back(int_const);
   }
 
   for (uint32_t i = 0; i < length; i++) {
     uint64_t val = chars[i];
-    MIRIntConst *int_const = MP_NEW(jsbuilder_->module_->mp_,
-                                    MIRIntConst(val, unit_type));
+    MIRIntConst *int_const = MP_NEW(mp_, MIRIntConst(val, unit_type));
     init->const_vec.push_back(int_const);
   }
   var->value_.const_ = init;
@@ -797,7 +848,7 @@ BaseNode *JSCompiler::CompileOpGetLocal(uint32_t local_no) {
   MIRSymbol *var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_, created);
   InitWithUndefined(created, var);
   if (!created) {
-    MIRType *type = jsbuilder_->module_->GetTypeFromTyIdx(var->GetTyIdx());
+    MIRType *type = module_->GetTypeFromTyIdx(var->GetTyIdx());
     return jsbuilder_->CreateExprDread(type, var);
   }
 
@@ -855,20 +906,20 @@ BaseNode *JSCompiler::CompileGenericN(int32_t intrin_id,
 }
 
 BaseNode *JSCompiler::CompileGeneric0(int32_t intrin_id, bool is_call, bool retvalOK) {
-  MapleVector<BaseNode *> arguments(jsbuilder_->module_->mp_allocator_.Adapter());
+  MapleVector<BaseNode *> arguments(module_->mp_allocator_.Adapter());
   return CompileGenericN(intrin_id, arguments, is_call, retvalOK);
 }
 
 BaseNode *JSCompiler::CompileGeneric1(int32_t intrin_id,
                                       BaseNode *arg, bool is_call, bool retvalOK) {
-  MapleVector<BaseNode *> arguments(jsbuilder_->module_->mp_allocator_.Adapter());
+  MapleVector<BaseNode *> arguments(module_->mp_allocator_.Adapter());
   arguments.push_back(arg);
   return CompileGenericN(intrin_id, arguments, is_call, retvalOK);
 }
 
 BaseNode *JSCompiler::CompileGeneric2(int32_t intrin_id, BaseNode *arg1,
                                       BaseNode *arg2, bool is_call, bool retvalOK) {
-  MapleVector<BaseNode *> arguments(jsbuilder_->module_->mp_allocator_.Adapter());
+  MapleVector<BaseNode *> arguments(module_->mp_allocator_.Adapter());
   arguments.push_back(arg1);
   arguments.push_back(arg2);
   return CompileGenericN(intrin_id, arguments, is_call, retvalOK);
@@ -876,7 +927,7 @@ BaseNode *JSCompiler::CompileGeneric2(int32_t intrin_id, BaseNode *arg1,
 
 BaseNode *JSCompiler::CompileGeneric3(int32_t intrin_id, BaseNode *arg1,
                                       BaseNode *arg2, BaseNode *arg3, bool is_call, bool retvalOK) {
-  MapleVector<BaseNode *> arguments(jsbuilder_->module_->mp_allocator_.Adapter());
+  MapleVector<BaseNode *> arguments(module_->mp_allocator_.Adapter());
   arguments.push_back(arg1);
   arguments.push_back(arg2);
   arguments.push_back(arg3);
@@ -885,7 +936,7 @@ BaseNode *JSCompiler::CompileGeneric3(int32_t intrin_id, BaseNode *arg1,
 
 BaseNode *JSCompiler::CompileGeneric4(int32_t intrin_id, BaseNode *arg1,
                                       BaseNode *arg2, BaseNode *arg3, BaseNode *arg4, bool is_call, bool retvalOK) {
-  MapleVector<BaseNode *> arguments(jsbuilder_->module_->mp_allocator_.Adapter());
+  MapleVector<BaseNode *> arguments(module_->mp_allocator_.Adapter());
   arguments.push_back(arg1);
   arguments.push_back(arg2);
   arguments.push_back(arg3);
@@ -1013,15 +1064,15 @@ bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
   JSMIRFunction *mfun = jsbuilder_->GetFunction(funcname);
   mfun->SetUserFunc();
 
-  char *name;
   bool created;
   MIRSymbol *func_st = jsbuilder_->GetOrCreateGlobalDecl(funcname, jsvalue_type_, created);
   BaseNode *ptr = jsbuilder_->CreateExprAddroffunc(func_st->value_.func_->puidx);
-  MapleVector<BaseNode *> arguments(jsbuilder_->module_->mp_allocator_.Adapter());
+  MapleVector<BaseNode *> arguments(module_->mp_allocator_.Adapter());
   assert(jsfun && "not a jsfunction");
 
-  name = Util::GetNameWithSuffix(funcname, "_obj_", mp_);
+  char *name = Util::GetNameWithSuffix(funcname, "_obj_", mp_);
   if (!jsbuilder_->GetStringIndex(name)) {
+    DEBUGPRINT2(name);
     arguments.push_back(ptr);
     arguments.push_back(jsbuilder_->GetConstInt(-1-jsfun->nargs()));
     arguments.push_back(jsbuilder_->GetConstInt(0));
@@ -1036,15 +1087,7 @@ bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
     jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   }
 
-  DEBUGPRINT2(name);
-
-  JSMIRFunction *parentFunc = funcstack_.top();
-
-  jsbuilder_->SetCurrentFunction(mfun);
-  DEBUGPRINT0;
-  DEBUGPRINTfunc(funcname);
   funcstack_.push(mfun);
-
   jsbuilder_->SetCurrentFunction(mfun);
 
   CompileScript(scr);
@@ -1107,7 +1150,7 @@ BaseNode *JSCompiler::CompileOpLambda(jsbytecode *pc, JSFunction *jsfun) {
     DEBUGPRINTs3("lambda->scope->IsTopLevel()");
   }
 
-  MapleVector<BaseNode *> arguments(jsbuilder_->module_->mp_allocator_.Adapter());
+  MapleVector<BaseNode *> arguments(module_->mp_allocator_.Adapter());
   arguments.push_back(ptr);
   arguments.push_back(jsbuilder_->GetConstInt(-1-jsfun->nargs()));
   arguments.push_back(node);
@@ -1128,7 +1171,7 @@ int JSCompiler::ProcessAliasedVar(JSAtom *atom, MIRType *&env_ptr, BaseNode *&en
   DEBUGPRINT3(func);
   char *name = Util::GetString(atom, mp_, jscontext_);
   JS_ASSERT(!name && "empty name");
-  MIRSymbol *func_st = jsbuilder_->module_->symtab->GetSymbolFromStidx(func->stidx);
+  MIRSymbol *func_st = module_->symtab->GetSymbolFromStidx(func->stidx);
   const char *funcname = func_st->GetName().c_str();
   ScopeNode *sn = scope_->GetOrCreateSN((char *)funcname);
   ScopeNode *psn = sn->GetParent();
@@ -1273,7 +1316,7 @@ void JSCompiler::CloseFuncBookKeeping() {
     JSMIRFunction *lambda = scriptstack_.top().second;
     jsbuilder_->SetCurrentFunction(lambda);
     DEBUGPRINT0;
-    MIRSymbol *lambda_st = jsbuilder_->module_->symtab->GetSymbolFromStidx(lambda->stidx);
+    MIRSymbol *lambda_st = module_->symtab->GetSymbolFromStidx(lambda->stidx);
     DEBUGPRINTfunc((lambda_st->GetName().c_str()));
     funcstack_.push(lambda);
     scriptstack_.pop();
@@ -1340,7 +1383,7 @@ BaseNode *JSCompiler::CompileOpCondSwitch(BaseNode *opnd, JSScript *script,
   jsbytecode *pctemp1 = pcstart;
   jsbytecode *pctemp2 = js::GetNextPc(pcend);
   labidx_t mirlabel;
-  CaseVector switchtable(jsbuilder_->module_->mp_allocator_.Adapter());
+  CaseVector switchtable(module_->mp_allocator_.Adapter());
   labidx_t defaultlabel;
 
   while(pctemp1 < pctemp2){
@@ -1377,7 +1420,7 @@ BaseNode *JSCompiler::CompileOpTableSwitch(BaseNode *opnd, int32_t len,
   int offset,i;
   jsbytecode *pcjump,*pctemp1,*pctemp2;
   labidx_t mirlabel;
-  CaseVector switchtable(jsbuilder_->module_->mp_allocator_.Adapter());
+  CaseVector switchtable(module_->mp_allocator_.Adapter());
   labidx_t defaultlabel;
 
   pctemp1 = pc;
@@ -1465,6 +1508,8 @@ BaseNode *JSCompiler::CheckConvertToJSValueType(BaseNode *data)
   if (IsPrimitiveDynType(data->ptyp))
     return data;
   switch (data->ptyp) {
+    case PTY_ptr:
+      return data;
     case PTY_u1:
       to_type = jsbuilder_->GetDynbool();
       break;
@@ -1664,7 +1709,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
     unsigned lineNo = js::PCToLineNumber(script, pc);
     Util::SetIndent(2);
     DEBUGPRINTnn(lineNo, Util::getOpcodeName[op]);
-    if (lastLineNo != lineNo && jsbuilder_->module_->curfunction != NULL) {
+    if (lastLineNo != lineNo && module_->curfunction != NULL) {
       sprintf(linenoText, "LINE %d: ", lineNo);
 
       srcText[0] = 0;
@@ -2330,8 +2375,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
           MIRSymbol *arguments = NULL;
           arguments = jsbuilder_->GetCurrentFunction()->symtab->CreateSymbol();
           const char *temp_name = Util::GetSequentialName("js_arguments_", temp_var_no_, mp_);
-          MapleString argname(temp_name, jsbuilder_->module_->mp_);
-          arguments->SetNameStridx(jsbuilder_->module_->stringtable.GetOrCreateStridxFromName(argname));
+          MapleString argname(temp_name, mp_);
+          arguments->SetNameStridx(module_->stringtable.GetOrCreateStridxFromName(argname));
           jsbuilder_->GetCurrentFunction()->symtab->AddToStringSymbolMap(arguments);
           arguments->sclass = SC_auto;
           arguments->skind  = ST_var;
@@ -2359,7 +2404,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
               jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
           }
 
-          MapleVector<BaseNode *> args(jsbuilder_->module_->mp_allocator_.Adapter());
+          MapleVector<BaseNode *> args(module_->mp_allocator_.Adapter());
           args.push_back(arr);
           args.push_back(addr_base);
           args.push_back(len);
@@ -2477,12 +2522,12 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_RETSUB: /*117, 1, 2, 0*/  { 
         BaseNode *lval = Pop();
         BaseNode *rval = Pop();
-        BaseNode* retsub = MP_NEW(jsbuilder_->module_->mp_, StmtNode(OP_retsub));
+        BaseNode* retsub = MP_NEW(mp_, StmtNode(OP_retsub));
         jsbuilder_->AddStmtInCurrentFunctionBody(retsub);
         break;
         }
       case JSOP_EXCEPTION: /*118, 1, 0, 1*/  {
-        BaseNode* handler = MP_NEW(jsbuilder_->module_->mp_, StmtNode(OP_handler));
+        BaseNode* handler = MP_NEW(mp_, StmtNode(OP_handler));
         jsbuilder_->AddStmtInCurrentFunctionBody(handler);
           
         BaseNode *rr = jsbuilder_->CreateExprRegread(PTY_dynany, -SREG_thrownval);
@@ -2490,7 +2535,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         break; 
         }
       case JSOP_FINALLY: /*135, 1, 0, 2*/  {
-        BaseNode* finally = MP_NEW(jsbuilder_->module_->mp_, StmtNode(OP_finally));
+        BaseNode* finally = MP_NEW(mp_, StmtNode(OP_finally));
         jsbuilder_->AddStmtInCurrentFunctionBody(finally);
         // TODO: need to Push two entries onto stack.  false, (next bytecode's PC)
         BaseNode *bval = CompileOpConstValue(JSVALTAGBOOLEAN, 0);

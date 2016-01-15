@@ -67,7 +67,7 @@ class Scope {
     JSScript *jsscript_;
     MemPool *mp_;
     std::vector<char *> funcNames_;
-    std::stack<char *> funcstack1_;
+    std::stack<char *> funcstack_;
     std::stack<std::pair<JSScript *, char *>> scriptstack_;
 
     std::stack<jsbytecode *> trystack_;
@@ -77,7 +77,7 @@ class Scope {
     int stackDepth;
 
     std::map<JSFunction *, unsigned> funcToAnonyidx_;
-    std::vector<std::pair<char *, JSFunction *>> nameSFunc_;
+    std::vector<std::pair<char *, JSFunction *>> nameJSfunc_;
 
   public:
     Scope(JSContext *context, JSScript *script, mapleir::MIRModule *module) : 
@@ -106,6 +106,7 @@ class Scope {
     void AddSNChild(char *name, char *child);
 
     JSFunction *GetJSFunc(char *name);
+    void SetJSFunc(char *name, JSFunction *func);
 
     void PopulateSNInfo();
 

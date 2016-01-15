@@ -20,7 +20,7 @@ var c2=0;
 try{
   try{
     someValue;
-    $ERROR('#3.1: "someValues" lead to throwing exception');
+    $ERROR('#2.1: "someValues" lead to throwing exception');
   }
   finally{
     c2=1;
@@ -28,7 +28,7 @@ try{
 }
 catch(e){
   if (c2!==1){
-    $ERROR('#3.2: "finally" block must be evaluated');
+    $ERROR('#2.2: "finally" block must be evaluated');
   }
 }
 

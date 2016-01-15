@@ -193,7 +193,7 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
   } else {
 
     if (script == jsscript_) {
-      funcstack1_.push("main");
+      funcstack_.push("main");
       if (js2mplDebug>0) std::cout << "main {" << std::endl;
       ScopeNode * sn = GetOrCreateSN("main");
       sn->SetTopLevel();
@@ -230,19 +230,18 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
             }
             DEBUGPRINT3(name);
             funcNames_.push_back(name);
-            std::pair<char *, JSFunction *> NF(name, jsfun);
-            nameSFunc_.push_back(NF);
+            SetJSFunc(name, jsfun);
             std::pair<JSScript *, char *> P(scr, name);
             scriptstack_.push(P);
 
-            parent = funcstack1_.top();
+            parent = funcstack_.top();
             SetSNParent(name, parent);
             break;
           }
         case JSOP_GETALIASEDVAR: /*136, 5, 0, 1*/
         case JSOP_SETALIASEDVAR: /*137, 5, 1, 1*/
           {
-            name = funcstack1_.top();
+            name = funcstack_.top();
             SetSNClosure(name);
             break;
           }
@@ -255,18 +254,15 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
           JSTryNote *tnlimit = tn + script->trynotes()->length;
           for (; tn < tnlimit; tn++) {
             if ((tn->start + script->mainOffset()) == (pc - script->code() + 1)) {
-              jsbytecode *catchpc = pc + 1 + tn->length;
-              trystack_.push(catchpc);
-              tryFinallyMap[catchpc] = (jsbytecode *)0xdeadbeef;
+              jsbytecode *trythrow = pc + 1 + tn->length;
+              trystack_.push(trythrow);
+              tryFinallyMap[trythrow] = (jsbytecode *)0xdeadbeef;
 
-              // use the goto before catchpc to find the end of try combo
-              int length = js_CodeSpec[JSOP_GOTO].length;
-              jsbytecode *jumppc = catchpc - length;
-              JSOp jumpop = JSOp(*jumppc);
-              assert(jumpop == JSOP_GOTO);
-              int offset = GET_JUMP_OFFSET(jumppc);
-              jsbytecode *targetpc = jumppc + offset;
-              tryendstack_.push(targetpc);
+              // use the goto before trythrow to find the end of try combo
+              jsbytecode *jumppc = trythrow - js_CodeSpec[JSOP_GOTO].length;
+              assert(JSOp(*jumppc) == JSOP_GOTO);
+              jsbytecode *aftertrypc = jumppc + GET_JUMP_OFFSET(jumppc);
+              tryendstack_.push(aftertrypc);
               break;
             }
           }
@@ -330,15 +326,15 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
     }
 
     if (lastOp == JSOP_RETRVAL) {
-      name = funcstack1_.top();
+      name = funcstack_.top();
       if (js2mplDebug>0) std::cout << "}\n" << std::endl;
-      funcstack1_.pop();
+      funcstack_.pop();
       DEBUGPRINT3((scriptstack_.size()));
       while (scriptstack_.size()) {
         JSScript *scr = scriptstack_.top().first;
         name = scriptstack_.top().second;
         scriptstack_.pop();
-        funcstack1_.push(name);
+        funcstack_.push(name);
         if (js2mplDebug>0) std::cout << name << " {" << std::endl;
           Build(scr);
       }
@@ -402,12 +398,19 @@ void Scope::PopulateSNInfo() {
 
 JSFunction *Scope::GetJSFunc(char *name) {
   std::vector<std::pair<char *, JSFunction *>>::iterator I;
-  for(I = nameSFunc_.begin(); I != nameSFunc_.end(); I++) {
+  for(I = nameJSfunc_.begin(); I != nameJSfunc_.end(); I++) {
     if(strcmp(name, (*I).first) == 0) {
       return (*I).second;
     }
   }
   return NULL;
+}
+
+void Scope::SetJSFunc(char *name, JSFunction *func) {
+  if (GetJSFunc(name))
+    return;
+  std::pair<char *, JSFunction *> P(name, func);
+  nameJSfunc_.push_back(P);
 }
 
 }  // namespace mapleir

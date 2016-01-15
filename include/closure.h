@@ -61,6 +61,8 @@ class JSClosure {
     MIRType *jsvalue_type_;
     MIRType *jsvalue_ptr_;
     std::vector<funcArgPair> funcFormals;
+    std::vector<char *> funcMod;
+    std::vector<std::pair<char *, JSMIRFunction *>> nameJSMIRfunc_;
 
     void Init();
     bool Build(JSScript *script);
@@ -81,6 +83,13 @@ class JSClosure {
     void AddFuncFormalsToEnvType(JSMIRFunction *func);
     bool IsLocalVar(JSMIRFunction *func, char *name);
     char *GetLocalVar(JSMIRFunction *func, uint32_t local_no);
+
+    bool IsFuncWithEnv(char *name);
+    void UpdateFuncMod(char *name);
+    bool IsFuncModified(char *name);
+
+    JSMIRFunction *GetJSMIRFunc(char *name);
+    void SetJSMIRFunc(char *name, JSMIRFunction *);
 };
 }   // namespace mapleir
 #endif  // JS2MPL_INCLUDE_JSCLOSURE_H_

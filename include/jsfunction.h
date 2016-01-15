@@ -16,6 +16,8 @@ class JSMIRFunction : public MIRFunction {
     bool with_env_arg;
     bool env_setup;
 
+    int argc;
+
     std::list<stridx_t> alias_vars;
     ScopeNode * scope;
 

@@ -58,9 +58,11 @@ DIRECTORIES:
 	#$(PRINT_CMPL) $(BUILD)/$*.cmpl
 	@echo gdb --args $(mapleinterpreter) $(build)/$*.mmpl
 	$(MAPLEINTERPRETER) $(BUILD)/$*.mmpl
+	@echo gdb --args $(mapleinterpreter) $(build)/$*.mmpl
 	@echo to debug compact-vm, set DEBUG=1 when "make compact-vm"
 	@echo gdb --args $(VM_CMPL) $(build)/$*.cmpl
 	$(VM_CMPL) $(BUILD)/$*.cmpl
+	@echo gdb --args $(VM_CMPL) $(build)/$*.cmpl
 	@echo profile memory usage of compact-vm for the app
 	$(MEM_PROFILER_CMPL) $(BUILD)/$*.cmpl 
 	@echo ""
