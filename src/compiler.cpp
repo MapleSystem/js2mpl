@@ -676,18 +676,21 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
     return expr;
   }
 
-  MIRType *unit_type = jsbuilder_->GetUInt16();
-  uint32_t pad = 1;
-  uint32_t string_class = JSSTRING_UNICODE;
+  if (length > 255)
+    assert(false && "Not Support too long string now");
+  MIRType *unit_type;;
+  uint32_t pad = 2;
+  uint32_t string_class;
   if (IsAsciiChars(chars, length)) {
     unit_type = jsbuilder_->GetUInt8();
     pad = 2;
     string_class = JSSTRING_ASCII;
+  } else {
+      unit_type = jsbuilder_->GetUInt16();
+      pad = 1;
+      string_class = JSSTRING_UNICODE;
   }
-
-  if ((length & 0xffff6000) != 0)
-    assert (false && "NIY");
-
+    
   size_t padding_length = length + pad;
   MIRType *type = jsbuilder_->GetOrCreateArrayType(unit_type, 1, &(padding_length));
   const char *temp_name = Util::GetSequentialName("const_chars_", temp_var_no_, mp_);
@@ -696,10 +699,10 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
   //InitWithUndefined(created, var);
   MIRAggConst *init =  MP_NEW(jsbuilder_->module_->mp_, MIRAggConst(type));
 
+  uint8_t cl[2];
+  cl[0] = string_class;
+  cl[1] = length;
   if (pad == 2) {
-    uint8_t cl[2];
-    cl[0] = (string_class << 6) | (length + 32 >> 8);
-    cl[1] = ((length) & 0xff);
     uint64_t val = (uint64_t)(cl[0]);
     MIRIntConst *int_const = MP_NEW(jsbuilder_->module_->mp_,
                                     MIRIntConst(val, unit_type));
@@ -709,9 +712,6 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
                                     MIRIntConst(val, unit_type));
     init->const_vec.push_back(int_const);
   } else {
-    uint8_t cl[2];
-    cl[0] = (string_class << 6) | (length >> 8);
-    cl[1] = ((length) & 0xff);
     uint64_t val = (uint64_t)(*((uint16_t *)cl));
     MIRIntConst *int_const = MP_NEW(jsbuilder_->module_->mp_,
                                     MIRIntConst(val, unit_type));

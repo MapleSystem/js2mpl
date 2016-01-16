@@ -24,14 +24,14 @@ namespace mapleir {
 #define JSVALTAGELEMHOLE           ((uint32_t)(JSVALTAGCLEAR | JSVALTYPEELEMHOLE))
 
 typedef enum {
-  // Include sequences of 16-bit code units, which is longer than 2^14.
-  JSSTRING_LONG = 0,
-  // Builtin-string have a special way to encode and decode class and length.
-  JSSTRING_BUILTIN,
+  // Include sequences of 8-bit code units.
+  JSSTRING_ASCII = 0,
   // Include sequences of 16-bit code units.
   JSSTRING_UNICODE,
-  // Include sequences of 8-bit code units.
-  JSSTRING_ASCII
+  // Inclue sequences of 8-bit code units of generated.
+  JSSTRING_ASCII_GEN,
+  // Inclue sequences of 16-bit code units of generated.
+  JSSTRING_UNICODE_GEN,
 }__jsstring_class;
 
 typedef enum {
