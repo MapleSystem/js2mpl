@@ -84,7 +84,7 @@ class JSClosure {
     bool IsLocalVar(JSMIRFunction *func, char *name);
     char *GetLocalVar(JSMIRFunction *func, uint32_t local_no);
 
-    bool IsFuncWithEnv(char *name);
+    bool FuncUseEnv(char *name);
     void UpdateFuncMod(char *name);
     bool IsFuncModified(char *name);
 

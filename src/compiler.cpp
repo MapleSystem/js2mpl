@@ -510,13 +510,7 @@ BaseNode *JSCompiler::CompileOpCall(uint32_t argc) {
       char *funcobjname = (char *)(funcobj->GetName().c_str());
       DEBUGPRINT3(funcobjname);
 
-      std::vector<std::pair<char*, char*>>::iterator I;
-      for (I = objFuncMap.begin(); I != objFuncMap.end(); I++) {
-        if (!strcmp(funcobjname, (*I).first)) {
-          funcname = (*I).second;
-          break;
-        }
-      }
+      funcname = GetFuncName(funcobjname);
       if (funcname) {
         JSMIRFunction *func = closure_->GetJSMIRFunc(funcname);
         if (func) {
@@ -642,8 +636,10 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom) {
   if (scope_->IsFunction(name)) {
     DEBUGPRINT2(name);
     char * objname = Util::GetNameWithSuffix(name, "_obj_", mp_);
-    std::pair<char*, char*> P(objname, name);
-    objFuncMap.push_back(P);
+    if (!GetFuncName(objname)) {
+      std::pair<char*, char*> P(objname, name);
+      objFuncMap.push_back(P);
+    }
     name = objname;
   }
 
@@ -865,8 +861,21 @@ BaseNode *JSCompiler::CompileOpGetLocal(uint32_t local_no) {
   JSMIRFunction *func = jsbuilder_->GetCurrentFunction();
   char *name = closure_->GetLocalVar(func, local_no);
   bool created;
-  MIRSymbol *var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_, created);
-  InitWithUndefined(created, var);
+  MIRSymbol *var;
+
+  // for function name, use suffix _obj_
+  if (scope_->IsFunction(name)) {
+    char * objname = Util::GetNameWithSuffix(name, "_obj_", mp_);
+    if (!GetFuncName(objname)) {
+      std::pair<char*, char*> P(objname, name);
+      objFuncMap.push_back(P);
+    }
+    var = jsbuilder_->GetOrCreateGlobalDecl(objname, jsvalue_type_, created);
+  } else {
+    var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_, created);
+    InitWithUndefined(created, var);
+  }
+
   if (!created) {
     MIRType *type = module_->GetTypeFromTyIdx(var->GetTyIdx());
     return jsbuilder_->CreateExprDread(type, var);
@@ -881,7 +890,19 @@ BaseNode *JSCompiler::CompileOpSetLocal(uint32_t local_no, BaseNode *src) {
   char *name = closure_->GetLocalVar(func, local_no);
   MIRType *type = DetermineTypeFromNode(src);
   bool created;
-  MIRSymbol *var = jsbuilder_->GetOrCreateLocalDecl(name, type, created);
+  MIRSymbol *var;
+
+  // for function name, use suffix _obj_
+  if (scope_->IsFunction(name)) {
+    char * objname = Util::GetNameWithSuffix(name, "_obj_", mp_);
+    if (!GetFuncName(objname)) {
+      std::pair<char*, char*> P(objname, name);
+      objFuncMap.push_back(P);
+    }
+    var = jsbuilder_->GetOrCreateGlobalDecl(objname, type, created);
+  } else {
+    var = jsbuilder_->GetOrCreateLocalDecl(name, type, created);
+  }
 
   // if the stack is not empty, for each stack item that contains the 
   // variable being set, evaluate and store the result in a new temp and replace

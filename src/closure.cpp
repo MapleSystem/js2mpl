@@ -446,7 +446,9 @@ bool JSClosure::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *
         uint32_t i = GET_LOCALNO(pc);
         JSMIRFunction *func = jsbuilder_->GetCurrentFunction();
         char *name = GetLocalVar(func, i);
-        UpdateFuncMod(name);
+        // not count the init
+        if (lastOp != JSOP_LAMBDA)
+          UpdateFuncMod(name);
         break;
       }
       case JSOP_SETGNAME:
@@ -468,8 +470,9 @@ bool JSClosure::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *
   return true;
 }
 
-bool JSClosure::IsFuncWithEnv(char *name) {
-  return scope_->GetOrCreateSN(name)->IsWithEnv();
+bool JSClosure::FuncUseEnv(char *name) {
+  ScopeNode * sn = scope_->GetOrCreateSN(name);
+  return sn->IsWithEnv() || sn->UseAliased();
 }
 
 JSMIRFunction *JSClosure::GetJSMIRFunc(char *name) {

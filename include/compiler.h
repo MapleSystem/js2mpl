@@ -87,8 +87,18 @@ class JSCompiler{
 
   bool UseSimpleCall(char *name) { 
     return name && scope_->IsFunction(name) &&
-           !closure_->IsFuncWithEnv(name) &&
+           !closure_->FuncUseEnv(name) &&
            !closure_->IsFuncModified(name); }
+
+  char *GetFuncName(char *objname) {
+    std::vector<std::pair<char*, char*>>::iterator I;
+    for (I = objFuncMap.begin(); I != objFuncMap.end(); I++) {
+      if (!strcmp(objname, (*I).first)) {
+        return (*I).second;
+      }
+    }
+    return NULL;
+  }
 
   void Init();
   void EnvInit(JSMIRFunction *func);
