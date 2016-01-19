@@ -731,19 +731,18 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
     return expr;
   }
 
-  if (length > 255)
+  if (length >= pow(2, 24))
     assert(false && "Not Support too long string now");
   MIRType *unit_type;;
   uint32_t pad = 2;
-  uint32_t string_class;
+  uint32_t string_class = 0;
   if (IsAsciiChars(chars, length)) {
     unit_type = jsbuilder_->GetUInt8();
     pad = 2;
-    string_class = JSSTRING_ASCII;
   } else {
       unit_type = jsbuilder_->GetUInt16();
       pad = 1;
-      string_class = JSSTRING_UNICODE;
+      string_class |= JSSTRING_UNICODE;
   }
     
   size_t padding_length = length + pad;
@@ -754,9 +753,16 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
   //InitWithUndefined(created, var);
   MIRAggConst *init =  MP_NEW(module_->mp_, MIRAggConst(type));
 
-  uint8_t cl[2];
+  uint8_t cl[4];
   cl[0] = string_class;
-  cl[1] = length;
+  if (length < 256) {
+    cl[1] = length;
+  } else {
+      string_class |= JSSTRING_LARGE;
+      cl[1] = (length & 0xff0000) >> 16;
+      cl[2] = (length & 0x00fff00) >> 8;
+      cl[3] = length & 0xff;
+  }
   if (pad == 2) {
     uint64_t val = (uint64_t)(cl[0]);
     MIRIntConst *int_const = MP_NEW(mp_, MIRIntConst(val, unit_type));
@@ -764,10 +770,24 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
     val = (uint64_t)(cl[1]);
     int_const = MP_NEW(mp_, MIRIntConst(val, unit_type));
     init->const_vec.push_back(int_const);
+    if (length > 255) {
+      val = (uint64_t)(cl[2]);
+      int_const = MP_NEW(mp_, MIRIntConst(val, unit_type));
+      init->const_vec.push_back(int_const);
+      val = (uint64_t)(cl[3]);
+      int_const = MP_NEW(mp_, MIRIntConst(val, unit_type));
+      init->const_vec.push_back(int_const);
+    }
   } else {
-    uint64_t val = (uint64_t)(*((uint16_t *)cl));
+    uint16_t *tmp = (uint16_t *)cl;
+    uint64_t val = (uint64_t)(tmp[0]);
     MIRIntConst *int_const = MP_NEW(mp_, MIRIntConst(val, unit_type));
     init->const_vec.push_back(int_const);
+    if (length > 255) {
+      uint64_t val = (uint64_t)(tmp[0]);
+      MIRIntConst *int_const = MP_NEW(mp_, MIRIntConst(val, unit_type));
+      init->const_vec.push_back(int_const);
+    }
   }
 
   for (uint32_t i = 0; i < length; i++) {

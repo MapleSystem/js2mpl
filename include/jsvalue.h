@@ -23,16 +23,12 @@ namespace mapleir {
 #define JSVALTAGOBJECT             ((uint32_t)(JSVALTAGCLEAR | JSVALTYPEOBJECT))
 #define JSVALTAGELEMHOLE           ((uint32_t)(JSVALTAGCLEAR | JSVALTYPEELEMHOLE))
 
-typedef enum {
-  // Include sequences of 8-bit code units.
-  JSSTRING_ASCII = 0,
-  // Include sequences of 16-bit code units.
-  JSSTRING_UNICODE,
-  // Inclue sequences of 8-bit code units of generated.
-  JSSTRING_ASCII_GEN,
-  // Inclue sequences of 16-bit code units of generated.
-  JSSTRING_UNICODE_GEN,
-}__jsstring_class;
+// Bit is set for 16-bit code units
+#define JSSTRING_UNICODE ((uint8_t)0x01)
+// Bit is set for non-const code units
+#define JSSTRING_GEN ((uint8_t)0x02)
+// Bit is set for large strs whose length > 255 
+#define JSSTRING_LARGE ((uint8_t)0x04)
 
 typedef enum {
   JS_BUILTIN_GLOBAL = 0,
