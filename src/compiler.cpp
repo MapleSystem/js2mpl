@@ -29,7 +29,7 @@ void JSCompiler::Init() {
 
   funcFormals = closure_->funcFormals;
 
-  dummyNode = CompileOpConstValue(JSVALTAGUNDEFINED, 0);
+  dummyNode = CompileOpConstValue(JSTYPE_UNDEFINED, 0);
 }
 
 void JSCompiler::Finish() {
@@ -76,7 +76,7 @@ MIRSymbol *JSCompiler::CreateTempJSValueTypeVar() {
 
 void JSCompiler::InitWithUndefined(bool doit, MIRSymbol *var) {
   if (doit) {
-    BaseNode *undefined = CompileOpConstValue(JSVALTAGUNDEFINED, 0);
+    BaseNode *undefined = CompileOpConstValue(JSTYPE_UNDEFINED, 0);
     BaseNode *stmt = jsbuilder_->CreateStmtDassign(var, 0, undefined);
   }
 }
@@ -84,9 +84,9 @@ void JSCompiler::InitWithUndefined(bool doit, MIRSymbol *var) {
 uint32_t JSCompiler::GetFieldidFromTag(uint32_t tag) {
   char *tagname;
   switch (tag) {
-  case JSVALTAGBOOLEAN: tagname = "boo"; break;
-  case JSVALTAGSTRING: tagname = "str"; break;
-  case JSVALTAGOBJECT: tagname = "prop_list"; break;
+  case JSTYPE_BOOLEAN: tagname = "boo"; break;
+  case JSTYPE_STRING: tagname = "str"; break;
+  case JSTYPE_OBJECT: tagname = "prop_list"; break;
   default: tagname = "i32"; break;
   }
   return jsbuilder_->GetStructFieldIdFromFieldName(jsvalue_type_, tagname);
@@ -146,15 +146,15 @@ BaseNode *JSCompiler::NodeFromSavingInATemp(BaseNode *expr) {
 BaseNode *JSCompiler::CompileOpConstValue(uint32_t jsvalue_tag, int32_t payload) {
   PrimType pty;
   switch (jsvalue_tag) {
-   case JSVALTAGINT32:
+   case JSTYPE_NUMBER:
      pty = PTY_dyni32; break;
-   case JSVALTAGUNDEFINED:
+   case JSTYPE_UNDEFINED:
      pty = PTY_dynundef; break;
-   case JSVALTAGNULL:
+   case JSTYPE_NULL:
      pty = PTY_dynnull; break;
-   case JSVALTAGBOOLEAN:
+   case JSTYPE_BOOLEAN:
      pty = PTY_dynbool; break;
-   case JSVALTAGELEMHOLE:
+   case JSTYPE_ELEMHOLE:
      pty = PTY_dynhole; break;
    default:
      assert(false && "NIY");
@@ -329,7 +329,7 @@ BaseNode *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool need_t
   if (arg_num == 0 && (MIRIntrinsicId)idx == INTRN_JS_BOOLEAN) {
     Pop();
     Pop();
-    return CompileOpConstValue(JSVALTAGBOOLEAN, 0);
+    return CompileOpConstValue(JSTYPE_BOOLEAN, 0);
   }
 
   for (uint32_t i = 0; i < arg_num; i++) {
@@ -395,7 +395,7 @@ BaseNode *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool need_t
   if((MIRIntrinsicId)idx == INTRN_JS_NUMBER || (MIRIntrinsicId)idx == INTRN_JS_STRING) {
     BaseNode * argument;
     if(arg_num == 0) {
-      argument = CompileOpConstValue(JSVALTAGELEMHOLE, 0);
+      argument = CompileOpConstValue(JSTYPE_ELEMHOLE, 0);
     }
     else {
       BaseNode *bn = tmp_stack.top();
@@ -496,7 +496,7 @@ BaseNode *JSCompiler::CompileOpCall(uint32_t argc) {
     DEBUGPRINT3(argc);
     DEBUGPRINT3(func->argc);
     if (argc < func->argc) {
-      BaseNode *undefined = CompileOpConstValue(JSVALTAGUNDEFINED, 0);
+      BaseNode *undefined = CompileOpConstValue(JSTYPE_UNDEFINED, 0);
       for (int32_t i = argc; i < func->argc; i++)
         args.push_back(undefined);
     }
@@ -581,7 +581,7 @@ BaseNode *JSCompiler::CompileBuiltinName(char *name) {
 BaseNode *JSCompiler::CompileOpName(JSAtom *atom) {
   char *name = Util::GetString(atom, mp_, jscontext_);
   JS_ASSERT(!name && "empty name");
-  BaseNode *undefined = CompileOpConstValue(JSVALTAGUNDEFINED, 0);
+  BaseNode *undefined = CompileOpConstValue(JSTYPE_UNDEFINED, 0);
   if (!strcmp(name, "undefined")) {
     return undefined;
   }
@@ -1878,7 +1878,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       }
       case JSOP_LINENO: /*119, 3, 0, 0*/  { NOTHANDLED; break; }
       case JSOP_UNDEFINED: /*1, 1, 0, 1*/  {
-        BaseNode *undefined = CompileOpConstValue(JSVALTAGUNDEFINED, 0);
+        BaseNode *undefined = CompileOpConstValue(JSTYPE_UNDEFINED, 0);
         Push(undefined);
         break;
       }
@@ -1925,7 +1925,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
           if (jsbuilder_->GetCurrentFunction() == jsmain_) {
             jsbuilder_->CreateStmtReturn(jsbuilder_->GetConstInt(0), false);
           } else {
-            BaseNode *undefined = CompileOpConstValue(JSVALTAGUNDEFINED, 0);
+            BaseNode *undefined = CompileOpConstValue(JSTYPE_UNDEFINED, 0);
             jsbuilder_->CreateStmtReturn(undefined, false);
           }
         }
@@ -2125,7 +2125,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       }
       case JSOP_VOID: /*40, 1, 1, 1*/  {
         (void)Pop();
-        Push(CompileOpConstValue(JSVALTAGUNDEFINED, 0));
+        Push(CompileOpConstValue(JSTYPE_UNDEFINED, 0));
         break;
       }
       case JSOP_THIS: /*65, 1, 0, 1*/  {
@@ -2210,7 +2210,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       }
       case JSOP_SETCALL: /*74, 1, 0, 0*/  { NOTHANDLED; break; }
       case JSOP_IMPLICITTHIS: /*226, 5, 0, 1*/  {
-        BaseNode *bn = CompileOpConstValue(JSVALTAGUNDEFINED, 0);
+        BaseNode *bn = CompileOpConstValue(JSTYPE_UNDEFINED, 0);
         Push(bn);
         break;
       }
@@ -2224,28 +2224,28 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_GETINTRINSIC: /*143, 5, 0, 1*/  { SIMULATESTACK(0, 1); break; }
       case JSOP_UINT16: /*88, 3, 0, 1*/ {
         unsigned uval = GET_UINT16(pc);
-        BaseNode *bn = CompileOpConstValue(JSVALTAGINT32, uval);
+        BaseNode *bn = CompileOpConstValue(JSTYPE_NUMBER, uval);
         DEBUGPRINT2(uval);
         Push(bn);
         break;
       }
       case JSOP_UINT24: /*188, 4, 0, 1*/ {
         unsigned uval = GET_UINT24(pc);
-        BaseNode *bn = CompileOpConstValue(JSVALTAGINT32, uval);
+        BaseNode *bn = CompileOpConstValue(JSTYPE_NUMBER, uval);
         DEBUGPRINT2(uval);
         Push(bn);
         break;
       }
       case JSOP_INT8: /*215, 2, 0, 1*/ {
         int ival = GET_INT8(pc);
-        BaseNode *bn = CompileOpConstValue(JSVALTAGINT32, ival);
+        BaseNode *bn = CompileOpConstValue(JSTYPE_NUMBER, ival);
         DEBUGPRINT2(ival);
         Push(bn);
         break;
       }
       case JSOP_INT32: /*216, 5, 0, 1*/ {
         int ival = GET_INT32(pc);
-        BaseNode *bn = CompileOpConstValue(JSVALTAGINT32, ival);
+        BaseNode *bn = CompileOpConstValue(JSTYPE_NUMBER, ival);
         DEBUGPRINT2(ival);
         Push(bn);
         break;
@@ -2265,27 +2265,27 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_OBJECT: /*80, 5, 0, 1*/  { SIMULATESTACK(0, 1);  break; }
       case JSOP_REGEXP: /*160, 5, 0, 1*/  { SIMULATESTACK(0, 1); break; }
       case JSOP_ZERO: /*62, 1, 0, 1*/  {
-        BaseNode *bn = CompileOpConstValue(JSVALTAGINT32, 0);
+        BaseNode *bn = CompileOpConstValue(JSTYPE_NUMBER, 0);
         Push(bn);
         break;
       }
       case JSOP_ONE: /*63, 1, 0, 1*/  {
-        BaseNode *bn = CompileOpConstValue(JSVALTAGINT32, 1);
+        BaseNode *bn = CompileOpConstValue(JSTYPE_NUMBER, 1);
         Push(bn);
         break;
       }
       case JSOP_NULL: /*64, 1, 0, 1*/  {
-        BaseNode *bn = CompileOpConstValue(JSVALTAGNULL, 0);
+        BaseNode *bn = CompileOpConstValue(JSTYPE_NULL, 0);
         Push(bn);
         break;
       }
       case JSOP_FALSE: /*66, 1, 0, 1*/  {
-        BaseNode *bn = CompileOpConstValue(JSVALTAGBOOLEAN, 0);
+        BaseNode *bn = CompileOpConstValue(JSTYPE_BOOLEAN, 0);
         Push(bn);
         break;
       }
       case JSOP_TRUE: /*67, 1, 0, 1*/  {
-        BaseNode *bn = CompileOpConstValue(JSVALTAGBOOLEAN, 1);
+        BaseNode *bn = CompileOpConstValue(JSTYPE_BOOLEAN, 1);
         Push(bn);
         break;
       }
@@ -2492,7 +2492,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         break;
       }
       case JSOP_HOLE: /*218, 1, 0, 1*/  {
-        BaseNode *hole_elem = CompileOpConstValue(JSVALTAGELEMHOLE, 0);
+        BaseNode *hole_elem = CompileOpConstValue(JSTYPE_ELEMHOLE, 0);
         Push(hole_elem);
         break;
       }
@@ -2511,7 +2511,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_INITELEM_ARRAY: /*96, 4, 2, 1*/  {
         BaseNode *init = Pop();
         BaseNode *arr = Pop();
-        BaseNode *index = CompileOpConstValue(JSVALTAGINT32, (int32_t)GET_UINT24(pc));
+        BaseNode *index = CompileOpConstValue(JSTYPE_NUMBER, (int32_t)GET_UINT24(pc));
         if (!CompileOpSetElem(arr, index, init))
           return false;
         Push(arr);
@@ -2543,8 +2543,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         BaseNode* finally = MP_NEW(mp_, StmtNode(OP_finally));
         jsbuilder_->AddStmtInCurrentFunctionBody(finally);
         // TODO: need to Push two entries onto stack.  false, (next bytecode's PC)
-        BaseNode *bval = CompileOpConstValue(JSVALTAGBOOLEAN, 0);
-        BaseNode *tval = CompileOpConstValue(JSVALTAGINT32, GET_UINT32_INDEX(js::GetNextPc(pc)));
+        BaseNode *bval = CompileOpConstValue(JSTYPE_BOOLEAN, 0);
+        BaseNode *tval = CompileOpConstValue(JSTYPE_NUMBER, GET_UINT32_INDEX(js::GetNextPc(pc)));
         Push(tval);
         Push(bval);
         break;

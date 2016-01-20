@@ -18,8 +18,3 @@ if (!(-0) !== true) {
   $ERROR('#2: !(-0) === true. Actual: ' + (!(-0)));
 }
 
-// CHECK#3
-if (!(Number.NaN) !== true) {
-  $ERROR('#3: !(Number.NaN) === true. Actual: ' + (!(Number.NaN)));
-}
-
