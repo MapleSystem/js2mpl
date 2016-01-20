@@ -92,42 +92,6 @@ uint32_t JSCompiler::GetFieldidFromTag(uint32_t tag) {
   return jsbuilder_->GetStructFieldIdFromFieldName(jsvalue_type_, tagname);
 }
 
-uint32_t JSCompiler::GetTagFromIntrinId(IntrinArgType intrnargtype) {
-  switch(intrnargtype) {
-    case ArgTy_i8:
-    case ArgTy_i16:
-    case ArgTy_i32:
-    case ArgTy_i64:
-    case ArgTy_u8:
-    case ArgTy_u16:
-    case ArgTy_u32:
-    case ArgTy_a32:
-      return JSVALTAGINT32;
-    case ArgTy_u1:
-      return JSVALTAGBOOLEAN;
-    case ArgTy_ptr:
-      return JSVALTAGINT32;
-#ifdef DYNAMICLANG
-    case ArgTy_dynu32:
-    case ArgTy_dyni32:
-    case ArgTy_dynundef:
-    case ArgTy_dynnull:
-    case ArgTy_dynhole:
-    case ArgTy_dynbool:
-    case ArgTy_dynptr:
-    case ArgTy_dynf64:
-    case ArgTy_dynf32:
-    case ArgTy_dynstr:
-    case ArgTy_dynobj:
-    case ArgTy_dynany:
-#endif
-    case ArgTy_jsvalue:  // a special type for java script
-      return JSVALTAGCLEAR;
-    default:
-      assert(false&&"NYI");
-  }
-}
-
 MIRType *JSCompiler::DetermineTypeFromNode(BaseNode *node) {
   tyidx_t tyidx;
   if (node->IsCmpNode())

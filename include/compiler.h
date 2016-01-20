@@ -187,7 +187,6 @@ class JSCompiler{
   bool CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart,
                               jsbytecode *pcend, jsbytecode **newpc);
   bool CollectInfo(JSScript *script, jsbytecode *pcstart, jsbytecode *pcend);
-  uint32_t GetTagFromIntrinId(IntrinArgType);
   // Finish job.
   void Finish();
 };  // class JSCompiler

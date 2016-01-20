@@ -19,9 +19,4 @@ if (object.prop !== undefined) {
   $ERROR('#2: var object = new Object(); object.prop === undefined. Actual: ' + (object.prop));
 }
 
-//CHECK#3
-this.y++;
-if (isNaN(y) !== true) {
-  $ERROR('#3: this.y++; y === Not-a-Number. Actual: ' + (y));
-}
 
