@@ -443,7 +443,7 @@ BaseNode *JSCompiler::CompileOpCall(uint32_t argc) {
 
   // impnode: implicitethis - first arg for closure node if needed
   // funcnode: it is intervened with arg setup
-  BaseNode *impnode = Pop();
+  BaseNode *impnode = CheckConvertToJSValueType(Pop());
   BaseNode *funcnode = Pop();
   BaseNode *stmt = NULL;
   MIRSymbol *symbol;
@@ -678,10 +678,8 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
   if (jsstring_map_[chars])
     return jsstring_map_[chars];
   if (id != -1) {
-    BaseNode *data = CompileGeneric1((MIRIntrinsicId)INTRN_JS_GET_BUILTIN_STRING,
+    BaseNode *expr = CompileGeneric1((MIRIntrinsicId)INTRN_JS_GET_BUILTIN_STRING,
                            jsbuilder_->GetConstUInt32(id), false);
-    BaseNode *expr = jsbuilder_->CreateExprTypeCvt(OP_cvt, jsbuilder_->GetDynstr(),
-                                                 jsbuilder_->GetPrimType(data->ptyp), data);
     jsstring_map_[chars] = expr;
     return expr;
   }
@@ -751,9 +749,8 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
     init->const_vec.push_back(int_const);
   }
   var->value_.const_ = init;
-  BaseNode *data = jsbuilder_->CreateExprAddrof(0, var);
-  BaseNode *expr = jsbuilder_->CreateExprTypeCvt(OP_cvt, jsbuilder_->GetDynstr(),
-                                                 jsbuilder_->GetPrimType(data->ptyp), data);
+  BaseNode *expr = jsbuilder_->CreateExprAddrof(0, var);
+  expr->ptyp = PTY_simplestr;
   jsstring_map_[chars] = expr;
   return expr;
 }
@@ -954,7 +951,7 @@ bool JSCompiler::CompileOpSetElem(BaseNode *obj, BaseNode *index, BaseNode *val)
 }
 
 bool JSCompiler::CompileOpInitPropGetter(BaseNode *obj, JSString *str, BaseNode *val) {
-  BaseNode *name = CompileOpString(str);
+  BaseNode *name = CheckConvertToJSValueType(CompileOpString(str));
   BaseNode *stmt = jsbuilder_->CreateStmtIntrinsicCall3(INTRN_JSOP_INITPROP_GETTER,
                                                         obj, name, val);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
@@ -962,7 +959,7 @@ bool JSCompiler::CompileOpInitPropGetter(BaseNode *obj, JSString *str, BaseNode 
 }
 
 bool JSCompiler::CompileOpInitPropSetter(BaseNode *obj, JSString *str, BaseNode *val) {
-  BaseNode *name = CompileOpString(str);
+  BaseNode *name = CheckConvertToJSValueType(CompileOpString(str));
   BaseNode *stmt = jsbuilder_->CreateStmtIntrinsicCall3(INTRN_JSOP_INITPROP_SETTER,
                                                         obj, name, val);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
@@ -988,7 +985,7 @@ bool JSCompiler::CompileOpInitElemSetter(BaseNode *obj, BaseNode *index, BaseNod
 // JSOP_SETPROP 54
 bool JSCompiler::CompileOpSetProp(BaseNode *obj, JSString *str,
                                   BaseNode *val) {
-  BaseNode *name = CompileOpString(str);
+  BaseNode *name = CheckConvertToJSValueType(CompileOpString(str));
   BaseNode *stmt = jsbuilder_->CreateStmtIntrinsicCall3(INTRN_JSOP_SETPROP, obj,
                                                         name,
                                                         CheckConvertToJSValueType(val));
@@ -1517,6 +1514,9 @@ BaseNode *JSCompiler::CheckConvertToJSValueType(BaseNode *data)
     case PTY_u32:
       to_type = jsbuilder_->GetDyni32();
       break;
+    case PTY_simplestr:
+      to_type = jsbuilder_->GetDynstr();
+      break;
     default:
       assert("NIY");
       break;
@@ -1537,7 +1537,7 @@ void JSCompiler::CompileOpCase(jsbytecode *pc, int offset, BaseNode *rval, BaseN
   MIRIntrinsicId idx = (MIRIntrinsicId)FindIntrinsicForOp(JSOP_STRICTEQ);
   IntrinDesc *intrindesc = &IntrinDesc::intrintable[idx];
   MIRType *retty = intrindesc->GetReturnType();
-  BaseNode *expr = jsbuilder_->CreateExprIntrinsicop2(idx, retty, rval, lval);
+  BaseNode *expr = jsbuilder_->CreateExprIntrinsicop2(idx, retty, CheckConvertToJSValueType(rval), CheckConvertToJSValueType(lval));
   BaseNode *cond = CheckConvertToBoolean(expr);
 
   labidx_t mirlabel = GetorCreateLabelofPc(pc + offset);
@@ -2096,7 +2096,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_DELNAME: /*36, 5, 0, 1*/  { SIMULATESTACK(0, 1); break; }
       case JSOP_DELPROP: /*37, 5, 1, 1*/  {
         JSString *str = script->getAtom(pc);
-        BaseNode *nameIndex = CompileOpString(str);
+        BaseNode *nameIndex = CheckConvertToJSValueType(CompileOpString(str));
         BaseNode *obj = Pop();
         BaseNode *res = CompileGeneric2(INTRN_JSOP_DELPROP, obj, nameIndex, true);
         Push(res);
@@ -2131,8 +2131,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_GETPROP: /*53, 5, 1, 1*/
       case JSOP_CALLPROP: /*184, 5, 1, 1*/  {
         JSString *str = script->getAtom(pc);
-        BaseNode *obj = Pop();
-        BaseNode *name = CompileOpString(str);
+        BaseNode *obj = CheckConvertToJSValueType(Pop());
+        BaseNode *name = CheckConvertToJSValueType(CompileOpString(str));
         BaseNode *val = CompileGeneric2(INTRN_JSOP_GETPROP, obj, name, false);
         Push(val);
         break;
@@ -2147,7 +2147,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         break;
       }
       case JSOP_LENGTH: /*217, 5, 1, 1*/  {
-        BaseNode *array = Pop();
+        BaseNode *array = CheckConvertToJSValueType(Pop());
         BaseNode *length = CheckConvertToJSValueType(CompileGeneric1(INTRN_JSOP_LENGTH, array, false));
         Push(length);
         break;
@@ -2165,7 +2165,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       }
       case JSOP_GETELEM: /*55, 1, 2, 1*/  {
         BaseNode *index = Pop();
-        BaseNode *obj = Pop();
+        BaseNode *obj = CheckConvertToJSValueType(Pop());
         index = CheckConvertToJSValueType(index);
         BaseNode *elem = CompileGeneric2(INTRN_JSOP_GETPROP, obj, index, false);
         Push(elem);
