@@ -171,10 +171,7 @@ uint32_t JSCompiler::FindIntrinsicForOp(JSOp opcode) {
     {JSOP_STRICTNE, INTRN_JSOP_STRICTNE},
     {JSOP_INSTANCEOF, INTRN_JSOP_INSTANCEOF},
     {JSOP_IN, INTRN_JSOP_IN},
-    {JSOP_NOT, INTRN_JSOP_NOT},
-    {JSOP_BITNOT, INTRN_JSOP_BITNOT},
-    {JSOP_NEG, INTRN_JSOP_NEG},
-    {JSOP_POS, INTRN_JSOP_POS},
+    {JSOP_POS, INTRN_JS_NUMBER},
     {JSOP_OR, INTRN_JSOP_OR},
     {JSOP_AND, INTRN_JSOP_AND},
     {JSOP_TYPEOF, INTRN_JSOP_TYPEOF}};
@@ -200,28 +197,26 @@ BaseNode *JSCompiler::CompileOpBinary(JSOp opcode,
   Opcode mop = (Opcode)0;
   MIRType *restype = jsbuilder_->GetDynany();
   switch (opcode) {
-    case JSOP_BITOR: mop = OP_bior; restype = jsbuilder_->GetUInt32(); break;
-    case JSOP_BITXOR: mop = OP_bxor; restype = jsbuilder_->GetUInt32(); break;
-    case JSOP_BITAND: mop = OP_band; restype = jsbuilder_->GetUInt32(); break;
+    case JSOP_BITOR: mop = OP_bior; restype = jsbuilder_->GetInt32(); break;
+    case JSOP_BITXOR: mop = OP_bxor; restype = jsbuilder_->GetInt32(); break;
+    case JSOP_BITAND: mop = OP_band; restype = jsbuilder_->GetInt32(); break;
     case JSOP_EQ: mop = OP_eq; restype = jsbuilder_->GetUInt1(); break;
     case JSOP_NE: mop = OP_ne; restype = jsbuilder_->GetUInt1(); break;
     case JSOP_LT: mop = OP_lt; restype = jsbuilder_->GetUInt1(); break;
     case JSOP_LE: mop = OP_le; restype = jsbuilder_->GetUInt1(); break;
     case JSOP_GT: mop = OP_gt; restype = jsbuilder_->GetUInt1(); break;
     case JSOP_GE: mop = OP_ge; restype = jsbuilder_->GetUInt1(); break;
-    case JSOP_LSH: mop = OP_shl; restype = jsbuilder_->GetUInt32(); break;
-    case JSOP_RSH: mop = OP_ashr; restype = jsbuilder_->GetUInt32(); break;
+    case JSOP_LSH: mop = OP_shl; restype = jsbuilder_->GetInt32(); break;
+    case JSOP_RSH: mop = OP_ashr; restype = jsbuilder_->GetInt32(); break;
     case JSOP_URSH: mop = OP_lshr; restype = jsbuilder_->GetUInt32(); break;
     case JSOP_ADD: mop = OP_add; break;
-    case JSOP_SUB: mop = OP_sub; break;
-    case JSOP_MUL: mop = OP_mul; break;
-    case JSOP_DIV: mop = OP_div; break;
-    case JSOP_MOD: mop = OP_rem; break;
+    case JSOP_SUB: mop = OP_sub; restype = jsbuilder_->GetInt32(); break;
+    case JSOP_MUL: mop = OP_mul; restype = jsbuilder_->GetInt32(); break;
+    case JSOP_DIV: mop = OP_div; restype = jsbuilder_->GetInt32(); break;
+    case JSOP_MOD: mop = OP_rem; restype = jsbuilder_->GetInt32(); break;
     default: break;
   }
   if (mop != 0) {
-    if (op0->ptyp == op1->ptyp)
-      restype = module_->GetTypeFromTyIdx((tyidx_t)op0->ptyp);
     return jsbuilder_->CreateExprBinary(mop, restype,
            CheckConvertToJSValueType(op0), CheckConvertToJSValueType(op1));
   }
@@ -240,7 +235,7 @@ BaseNode *JSCompiler::CompileOpUnary(JSOp opcode, BaseNode *val) {
   switch (opcode) {
     case JSOP_NOT: mop = OP_lnot; restype = jsbuilder_->GetUInt1(); break;
     case JSOP_BITNOT: mop = OP_bnot; restype = jsbuilder_->GetUInt32(); break;
-    case JSOP_NEG: mop = OP_neg; break;
+    case JSOP_NEG: mop = OP_neg; restype = jsbuilder_->GetInt32();break;
     default: break;
   }
   if (mop != 0)
@@ -441,7 +436,7 @@ BaseNode *JSCompiler::CompileOpCall(uint32_t argc) {
   std::vector<BaseNode *> argsvec;
   for (uint32_t i = 0; i < argc; i++) {
     // argsvec.insert(argsvec.begin(), Pop());
-    argsvec.push_back(Pop());
+    argsvec.push_back(CheckConvertToJSValueType(Pop()));
   }
 
   MIRSymbol *var;
@@ -953,7 +948,7 @@ bool JSCompiler::CompileOpSetElem(BaseNode *obj, BaseNode *index, BaseNode *val)
   index = CheckConvertToJSValueType(index);
   BaseNode *stmt = jsbuilder_->CreateStmtIntrinsicCall3(
                      INTRN_JSOP_SETPROP,
-                     obj, index, val);
+                     obj, index, CheckConvertToJSValueType(val));
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return true;
 }
@@ -996,7 +991,7 @@ bool JSCompiler::CompileOpSetProp(BaseNode *obj, JSString *str,
   BaseNode *name = CompileOpString(str);
   BaseNode *stmt = jsbuilder_->CreateStmtIntrinsicCall3(INTRN_JSOP_SETPROP, obj,
                                                         name,
-                                                        val);
+                                                        CheckConvertToJSValueType(val));
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return true;
 }
@@ -2185,7 +2180,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         index = CheckConvertToJSValueType(index);
         BaseNode *stmt = jsbuilder_->CreateStmtIntrinsicCall3(INTRN_JSOP_SETPROP, obj,
                                                               index,
-                                                              val);
+                                                              CheckConvertToJSValueType(val));
         jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
         Push(obj);
         break;
