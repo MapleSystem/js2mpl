@@ -2334,7 +2334,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         //  break;
         //}
         uint32_t i = GET_LOCALNO(pc);
-        BaseNode *src = Pop();
+        BaseNode *src = CheckConvertToJSValueType(Pop());
         BaseNode *bn = CompileOpSetLocal(i, src);
         Push(bn);
         break;
