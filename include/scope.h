@@ -12,6 +12,8 @@
 #include "../include/util.h"
 
 namespace mapleir {
+using namespace std;
+
 class ScopeNode {
   private:
     ScopeNode *root_;
@@ -19,7 +21,7 @@ class ScopeNode {
     JSMIRFunction *func_;
     char *name_;
     ScopeNode *parent_;
-    std::list<ScopeNode *> children_;
+    list<ScopeNode *> children_;
     bool isLeaf_;
     bool isTopLevel_;
     bool useAliased_;
@@ -40,7 +42,7 @@ class ScopeNode {
     char * GetName() { return name_; }
     ScopeNode * GetParent() { return parent_; }
     void SetParent(ScopeNode *node);
-    std::list<ScopeNode *> GetChildren() { return children_; }
+    list<ScopeNode *> GetChildren() { return children_; }
     void AddChild(ScopeNode *node);
     bool SetChild(ScopeNode *node);
     void SetUseAliased() { useAliased_ = true; }
@@ -59,25 +61,33 @@ class ScopeNode {
     void PropWithEnv();
 };
 
-typedef std::list<ScopeNode *> ScopeNodeList;
+typedef list<ScopeNode *> ScopeNodeList;
+
+struct EHstruct {
+  jsbytecode *trypc;
+  jsbytecode *catchpc;
+  jsbytecode *finallypc;
+  jsbytecode *endtrypc;
+};
 
 class Scope {
   private:
     JSContext *ctx_;
     JSScript *jsscript_;
     MemPool *mp_;
-    std::vector<char *> funcNames_;
-    std::stack<char *> funcstack_;
-    std::stack<std::pair<JSScript *, char *>> scriptstack_;
+    vector<char *> funcNames_;
+    stack<char *> funcstack_;
+    stack<pair<JSScript *, char *>> scriptstack_;
 
-    std::stack<jsbytecode *> trystack_;
-    std::stack<jsbytecode *> tryendstack_;
+    stack<jsbytecode *> trystack_;
+    stack<jsbytecode *> endtrystack_;
+    vector<EHstruct *> EHstructvec_;
 
     uint32_t anon_func_no_;
     int stackDepth;
 
-    std::map<JSFunction *, unsigned> funcToAnonyidx_;
-    std::vector<std::pair<char *, JSFunction *>> nameJSfunc_;
+    map<JSFunction *, unsigned> funcToAnonyidx_;
+    vector<pair<char *, JSFunction *>> nameJSfunc_;
 
   public:
     Scope(JSContext *context, JSScript *script, mapleir::MIRModule *module) : 
@@ -94,9 +104,8 @@ class Scope {
     unsigned GetAnonyidx(JSFunction *jsfun) { return funcToAnonyidx_[jsfun]; }
     void SetAnonyidx(JSFunction *jsfun, unsigned idx) { funcToAnonyidx_[jsfun] = idx; }
 
-    std::list<std::pair<char *, ScopeNode *>> scopeChain;
-    std::list<std::pair<jsbytecode *, char *>> bytecodeAnonyFunc;
-    std::map<jsbytecode *, jsbytecode *> tryFinallyMap;
+    list<pair<char *, ScopeNode *>> scopeChain;
+    list<pair<jsbytecode *, char *>> bytecodeAnonyFunc;
 
     ScopeNode *GetOrCreateSN(char *name);
     void SetSNParent(char *name, char *parent);
@@ -115,6 +124,12 @@ class Scope {
     char *GetAnonyFunctionName(jsbytecode *pc);
     bool IsFunction(char *name);
     int GetDepth() { return stackDepth; }
+
+    // passing 0 to skip search fields
+    EHstruct *GetEHstruct(jsbytecode *tryop, jsbytecode *catchop,
+                          jsbytecode *finallyop, jsbytecode *endtryop);
+    void DumpEHstruct();
+    bool IsInEHrange(jsbytecode *pc);
 };
 
 }  // namespace mapleir

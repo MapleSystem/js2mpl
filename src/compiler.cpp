@@ -593,7 +593,7 @@ BaseNode *JSCompiler::CompileBuiltinName(char *name) {
 }
 
 // JSOP_NAME 59
-BaseNode *JSCompiler::CompileOpName(JSAtom *atom) {
+BaseNode *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc) {
   char *name = Util::GetString(atom, mp_, jscontext_);
   JS_ASSERT(!name && "empty name");
   BaseNode *undefined = CompileOpConstValue(JSTYPE_UNDEFINED, 0);
@@ -643,7 +643,7 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom) {
 
   bn = jsbuilder_->CreateExprDread(jsvalue_type_, var);
 
-  if (created && opstack_->flag_in_try_block) {
+  if (created && scope_->IsInEHrange(pc)) {
     BaseNode *throwstmt = jsbuilder_->CreateStmtThrow(bn);
     jsbuilder_->AddStmtInCurrentFunctionBody(throwstmt);
   }
@@ -1770,15 +1770,25 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       BaseNode *stmt = jsbuilder_->CreateStmtLabel(labidx);
       jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
 
-      // jump to finally for catch
-      if (scope_->tryFinallyMap[pc] != 0) {
+      // jump to finally for catch = pc
+      EHstruct *combo = scope_->GetEHstruct(0, pc, 0, 0);
+      if (combo) {
         labidx_t mirlabel;
-        if (scope_->tryFinallyMap[pc] != (jsbytecode *)0xdeadbeef)
-          mirlabel = GetorCreateLabelofPc(scope_->tryFinallyMap[pc], "f@");
+        if (combo->finallypc)
+          mirlabel = GetorCreateLabelofPc(combo->finallypc, "f@");
         else
           mirlabel = GetorCreateLabelofPc(pc);
         BaseNode* trynode = jsbuilder_->CreateStmtGoto(OP_catch, mirlabel);
         jsbuilder_->AddStmtInCurrentFunctionBody(trynode);
+      }
+
+      // add endtry node
+      EHstruct *combo1 = scope_->GetEHstruct(0, 0, 0, pc);
+      if (combo1) {
+        labidx_t mirlabel;
+        mirlabel = GetorCreateLabelofPc(pc);
+        BaseNode* endtrynode = MP_NEW(mp_, StmtNode(OP_endtry));
+        jsbuilder_->AddStmtInCurrentFunctionBody(endtrynode);
       }
     }
 
@@ -1870,7 +1880,6 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         continue;
       }
       case JSOP_TRY: /*134, 1, 0, 0*/  { 
-        opstack_->flag_in_try_block = true;
         JSTryNote *tn = script->trynotes()->vector;
         JSTryNote *tnlimit = tn + script->trynotes()->length;
         for (; tn < tnlimit; tn++) {
@@ -1951,7 +1960,6 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       }
       case JSOP_GOTO: /*6, 5, 0, 0*/  {
         int offset = GET_JUMP_OFFSET(pc);
-        opstack_->flag_in_try_block = false;
         if (! opstack_->flag_has_iter && ! opstack_->Empty() && 
             ! opstack_->flag_after_throwing) {
           // in middle of conditional expression; save in a temp and associate
@@ -2162,7 +2170,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         // Actually I think it is a bug in SpiderMonkey.
         Pop();
         JSAtom *atom = script->getAtom(GET_UINT32_INDEX(pc));
-        BaseNode *bn = CompileOpName(atom);
+        BaseNode *bn = CompileOpName(atom, pc);
         Push(bn);
         break;
       }
@@ -2232,7 +2240,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_GETGNAME: /*154, 5, 0, 1*/
       case JSOP_NAME: /*59, 5, 0, 1*/  {
         JSAtom *atom = script->getAtom(GET_UINT32_INDEX(pc));
-        BaseNode *bn = CompileOpName(atom);
+        BaseNode *bn = CompileOpName(atom, pc);
         Push(bn);
         break;
       }

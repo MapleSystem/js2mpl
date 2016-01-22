@@ -161,7 +161,7 @@ class JSCompiler{
   BaseNode *CompileOpBindName(JSAtom *atom);
   BaseNode *CompileOpCall(uint32_t argc);
   BaseNode *CompileOpNew(uint32_t argc);
-  BaseNode *CompileOpName(JSAtom *atom);
+  BaseNode *CompileOpName(JSAtom *atom, jsbytecode *pc);
   BaseNode *CompileOpIfJump(JSOp op, BaseNode *cond, jsbytecode *pcend);
   
   labidx_t GetorCreateLabelofPc(jsbytecode *pc, char *pref = NULL);

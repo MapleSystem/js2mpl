@@ -30,7 +30,7 @@ try {
 }
 catch(e){}
 try{
-  e;
+  e1;
   $ERROR('#2.2: Deleting catching exception after ending "catch" block');
 }
 catch(err){}

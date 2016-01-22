@@ -31,7 +31,7 @@ namespace mapleir {
   }
 
   void ScopeNode::AddChild(ScopeNode *node) {
-    std::list<ScopeNode *>::iterator I;
+    list<ScopeNode *>::iterator I;
     for (I = children_.begin(); I != children_.end(); I++) {
       if (*I == node)
         return;
@@ -63,7 +63,7 @@ namespace mapleir {
     func_ = func;
     if (parent_)
       parent_->SetChild(this);
-    std::list<ScopeNode *>::iterator I;
+    list<ScopeNode *>::iterator I;
     for (I = children_.begin(); I != children_.end(); I++) {
       (*I)->SetParent(this);
     }
@@ -81,7 +81,7 @@ namespace mapleir {
     DEBUGPRINT2pure(useAliased_);
     DEBUGPRINT2pure(withEnv_);
     DEBUGPRINT2pure(parent_);
-    std::list<ScopeNode *>::iterator I;
+    list<ScopeNode *>::iterator I;
     ScopeNode *child;
     for (I = children_.begin(); I != children_.end(); I++) {
       child = *I;
@@ -91,7 +91,7 @@ namespace mapleir {
   }
 
 ScopeNode *Scope::GetOrCreateSN(char *name) {
-  std::list<std::pair<char *, ScopeNode *>>::iterator I;
+  list<pair<char *, ScopeNode *>>::iterator I;
   for(I = scopeChain.begin(); I != scopeChain.end(); I++) {
     if(strcmp(name, (*I).first) == 0) {
       return (*I).second;
@@ -100,7 +100,7 @@ ScopeNode *Scope::GetOrCreateSN(char *name) {
 
   // create new one
   ScopeNode *sn = MP_NEW(mp_, ScopeNode(name));
-  std::pair<char *, ScopeNode *> P(name, sn);
+  pair<char *, ScopeNode *> P(name, sn);
   scopeChain.push_back(P);
 
   return sn;
@@ -137,12 +137,12 @@ void Scope::AddSNChild(char *name, char *child) {
 
 void Scope::Init() {
   // set up anonymous function to anon_func_no_ mapping
-  typedef std::pair<JSFunction *, std::vector<JSAtom *>> funcVarVecPair;
-  std::vector<funcVarVecPair> formals = jsscript_->funcFormals;
+  typedef pair<JSFunction *, vector<JSAtom *>> funcVarVecPair;
+  vector<funcVarVecPair> formals = jsscript_->funcFormals;
   char *name;
   char *funcname;
-  std::vector<funcVarVecPair>::iterator I;
-  std::vector<char *> nameVec;
+  vector<funcVarVecPair>::iterator I;
+  vector<char *> nameVec;
   JSFunction *jsfun;
   for (I=formals.begin(); I!=formals.end(); I++) {
     jsfun = (*I).first;
@@ -157,13 +157,48 @@ void Scope::Init() {
   return;
 }
 
+EHstruct *Scope::GetEHstruct(jsbytecode *trypc, jsbytecode *catchpc,
+                             jsbytecode *finallypc, jsbytecode *endtrypc) {
+  vector<EHstruct *>::iterator I;
+  for(I = EHstructvec_.begin(); I != EHstructvec_.end(); I++) {
+    if((trypc && (*I)->trypc == trypc) ||
+       (catchpc && (*I)->catchpc == catchpc) ||
+       (finallypc && (*I)->finallypc == finallypc) ||
+       (endtrypc && (*I)->endtrypc == endtrypc)) {
+      return *I;
+    }
+  }
+  return NULL;
+}
+
+bool Scope::IsInEHrange(jsbytecode *pc) {
+  vector<EHstruct *>::iterator I;
+  for(I = EHstructvec_.begin(); I != EHstructvec_.end(); I++) {
+    if (pc >= (*I)->trypc && pc <= (*I)->endtrypc)
+      return true;
+  }
+  return false;
+}
+
+void Scope::DumpEHstruct() {
+  vector<EHstruct *>::iterator I;
+  for(I = EHstructvec_.begin(); I != EHstructvec_.end(); I++) {
+    cout << "EHstruct {" << endl;
+    cout << "  trypc     = " << (*I)->trypc << endl;
+    cout << "  catchpc   = " << (*I)->catchpc << endl;
+    cout << "  finallypc = " << (*I)->finallypc << endl;
+    cout << "  endtrypc  = " << (*I)->endtrypc << endl;
+    cout << "}\n" << endl;
+  }
+}
+
 bool Scope::Build(JSScript *script) {
   jsbytecode *start = script->code();
   jsbytecode *end = script->codeEnd();
 
   bool ret = BuildSection(script, start, end);
 
-  if (js2mplDebug>1) std::cout << "GetDepth() = " << GetDepth() << std::endl;
+  if (js2mplDebug>1) cout << "GetDepth() = " << GetDepth() << endl;
   return ret;
 }
 
@@ -186,7 +221,7 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
           Build(scr);
         }
       }
-      std::cout << Util::getOpcodeName[op] << std::endl;
+      cout << Util::getOpcodeName[op] << endl;
       pc = js::GetNextPc(pc);
     }
 
@@ -194,7 +229,7 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
 
     if (script == jsscript_) {
       funcstack_.push("main");
-      if (js2mplDebug>0) std::cout << "main {" << std::endl;
+      if (js2mplDebug>0) cout << "main {" << endl;
       ScopeNode * sn = GetOrCreateSN("main");
       sn->SetTopLevel();
     }
@@ -225,13 +260,13 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
               name = Util::GetString(atom, mp_, ctx_);
             } else {
               name = (char*)Util::GetSequentialName0("anonymous_func_", GetAnonyidx(jsfun), mp_);
-              std::pair<jsbytecode *, char *> P(pc, name);
+              pair<jsbytecode *, char *> P(pc, name);
               bytecodeAnonyFunc.push_back(P);
             }
             DEBUGPRINT3(name);
             funcNames_.push_back(name);
             SetJSFunc(name, jsfun);
-            std::pair<JSScript *, char *> P(scr, name);
+            pair<JSScript *, char *> P(scr, name);
             scriptstack_.push(P);
 
             parent = funcstack_.top();
@@ -239,7 +274,7 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
             break;
           }
         case JSOP_GETALIASEDVAR: /*136, 5, 0, 1*/
-        case JSOP_SETALIASEDVAR: /*137, 5, 1, 1*/
+        case JSOP_SETALIASEDVAR: /*137, 5, 11*/
           {
             name = funcstack_.top();
             SetSNClosure(name);
@@ -255,32 +290,45 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
           for (; tn < tnlimit; tn++) {
             if ((tn->start + script->mainOffset()) == (pc - script->code() + 1)) {
               jsbytecode *trythrow = pc + 1 + tn->length;
-              trystack_.push(trythrow);
-              tryFinallyMap[trythrow] = (jsbytecode *)0xdeadbeef;
+              trystack_.push(pc);
 
               // use the goto before trythrow to find the end of try combo
               jsbytecode *jumppc = trythrow - js_CodeSpec[JSOP_GOTO].length;
               assert(JSOp(*jumppc) == JSOP_GOTO);
               jsbytecode *aftertrypc = jumppc + GET_JUMP_OFFSET(jumppc);
-              tryendstack_.push(aftertrypc);
+              endtrystack_.push(aftertrypc);
+
+              EHstruct *combo = (EHstruct *)malloc(sizeof(EHstruct));
+              combo->trypc = pc;
+              combo->catchpc = trythrow;
+              combo->finallypc = 0;
+              combo->endtrypc = aftertrypc;
+              EHstructvec_.push_back(combo);
               break;
             }
           }
           break;
         }
         case JSOP_FINALLY: {
-          tryFinallyMap[trystack_.top()] = pc;
+          EHstruct *combo = GetEHstruct(trystack_.top(), 0, 0, 0);
+          assert(combo);
+          combo->finallypc = pc;
           // check if no catch (catch == finally)
-          if (trystack_.top() == pc)
-            tryFinallyMap[trystack_.top()] = 0;
+          if (combo->catchpc == pc) {
+            combo->catchpc = 0;
+          }
           break;
         }
       }
 
       // end of current try combo
-      if (tryendstack_.size() && pc >= tryendstack_.top()) {
+      if (endtrystack_.size() && pc == endtrystack_.top()) {
+        EHstruct *combo = GetEHstruct(trystack_.top(), 0, 0, 0);
+        assert(combo);
+        if (js2mplDebug>2) DumpEHstruct();
+
         trystack_.pop();
-        tryendstack_.pop();
+        endtrystack_.pop();
       }
 
       // calculate the expected stack size at the end
@@ -314,10 +362,10 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
         use = (use < 0) ? use0 : use;
         int inc = def - use;
 
-        if (js2mplDebug>3) std::cout << "line : " << lineNo << "  " << Util::getOpcodeName[op]
+        if (js2mplDebug>3) cout << "line : " << lineNo << "  " << Util::getOpcodeName[op]
                                      << "  stackDepth: " << stackDepth
                                      << " == (u" << use << ", d" << def << ")==>"
-                                     << stackDepth+inc << std::endl;
+                                     << stackDepth+inc << endl;
         stackDepth += inc;
       }
 
@@ -327,7 +375,7 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
 
     if (lastOp == JSOP_RETRVAL) {
       name = funcstack_.top();
-      if (js2mplDebug>0) std::cout << "}\n" << std::endl;
+      if (js2mplDebug>0) cout << "}\n" << endl;
       funcstack_.pop();
       DEBUGPRINT3((scriptstack_.size()));
       while (scriptstack_.size()) {
@@ -335,7 +383,7 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
         name = scriptstack_.top().second;
         scriptstack_.pop();
         funcstack_.push(name);
-        if (js2mplDebug>0) std::cout << name << " {" << std::endl;
+        if (js2mplDebug>0) cout << name << " {" << endl;
           Build(scr);
       }
     }
@@ -347,7 +395,7 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
 }
 
 char *Scope::GetAnonyFunctionName(jsbytecode *pc) {
-  std::list<std::pair<jsbytecode *, char *>>::iterator I;
+  list<pair<jsbytecode *, char *>>::iterator I;
   jsbytecode *bytecode;
   for(I = bytecodeAnonyFunc.begin(); I != bytecodeAnonyFunc.end(); I++) {
     bytecode = (*I).first;
@@ -358,7 +406,7 @@ char *Scope::GetAnonyFunctionName(jsbytecode *pc) {
 }
 
 bool Scope::IsFunction(char *name) {
-  std::vector<char *>::iterator I;
+  vector<char *>::iterator I;
   for(I = funcNames_.begin(); I != funcNames_.end(); I++) {
     if(strcmp(*I, name) == 0) {
       return true;
@@ -368,7 +416,7 @@ bool Scope::IsFunction(char *name) {
 }
 
 void Scope::DumpScopeChain() {
-  std::list<std::pair<char *, ScopeNode *>>::iterator I;
+  list<pair<char *, ScopeNode *>>::iterator I;
   ScopeNode *sn;
   for(I = scopeChain.begin(); I != scopeChain.end(); I++) {
     sn = (*I).second;
@@ -377,7 +425,7 @@ void Scope::DumpScopeChain() {
 }
 
 void Scope::PopulateSNInfo() {
-  std::list<std::pair<char *, ScopeNode *>>::iterator I;
+  list<pair<char *, ScopeNode *>>::iterator I;
   ScopeNode *sn;
   for(I = scopeChain.begin(); I != scopeChain.end(); I++) {
     sn = (*I).second;
@@ -397,7 +445,7 @@ void Scope::PopulateSNInfo() {
 }
 
 JSFunction *Scope::GetJSFunc(char *name) {
-  std::vector<std::pair<char *, JSFunction *>>::iterator I;
+  vector<pair<char *, JSFunction *>>::iterator I;
   for(I = nameJSfunc_.begin(); I != nameJSfunc_.end(); I++) {
     if(strcmp(name, (*I).first) == 0) {
       return (*I).second;
@@ -409,7 +457,7 @@ JSFunction *Scope::GetJSFunc(char *name) {
 void Scope::SetJSFunc(char *name, JSFunction *func) {
   if (GetJSFunc(name))
     return;
-  std::pair<char *, JSFunction *> P(name, func);
+  pair<char *, JSFunction *> P(name, func);
   nameJSfunc_.push_back(P);
 }
 
