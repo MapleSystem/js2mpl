@@ -17,8 +17,21 @@ int main(int argc, const char *argv[]) {
     fprintf(stderr, "usage: js2mpl javaScript");
     exit(1);
   }
-  if (argc == 3) {
-    js2mplDebug = atoi(argv[2]);
+  bool  isplugin = false;
+  if (argc >=3) {
+    for (int i = 2; i < argc; i++) {
+      if (!strcmp(argv[i], "-plugin"))
+        isplugin = true;
+      else {
+        char *end;
+        long value = strtol(argv[i], &end,10);
+        if (end == argv[i] ||*end !='\0' || errno == ERANGE) {
+          fprintf(stderr, "usage: js2mpl javascript [debug id | -plugin]");
+          exit(1);
+        } else
+          js2mplDebug = value;
+      }
+    }
   }
   const char *fn = argv[1];
   if (!mapleir::js2mpldriver(fn, &mapleir::themodule)) {
