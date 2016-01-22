@@ -35,7 +35,8 @@ catch(e){
 // CHECK#3
 var c3=0,x3=0;
 try{
-  x3=someValue;
+  //x3=someValue;
+  someValue1;
   $ERROR('#3.1: "x3=someValues" lead to throwing exception');
 }
 catch(err){  	
