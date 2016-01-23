@@ -10,9 +10,11 @@ build = output
 JS2MPL=$(JS2MPLDIR)/build/js2mpl
 BE = $(MAPLEALL)/build/maplebe/be/mplbe
 MAPLEINTERPRETER=$(MAPLEALL)/build/maplevm/interpreter32
-GEN_CMPL=$(MAPLEALL)/build/maplevm/binmir/gencmpl
-PRINT_CMPL=$(MAPLEALL)/build/maplevm/binmir/printcmpl
-VM_CMPL=$(MAPLEALL)/build/maplevm/compact/jsvm-cmpl
+GEN_CMPL=$(MAPLEALL)/build/maplevm/cmpl-v1/gencmpl-v1
+PRINT_CMPL=$(MAPLEALL)/build/maplevm/cmpl-v1/printcmpl-v1
+VM_CMPL=$(MAPLEALL)/build/maplevm/compact/jsvm-cmpl-v1
+GEN_CMPL_V2=$(MAPLEALL)/build/maplevm/cmpl/gencmpl
+PRINT_CMPL_V2=$(MAPLEALL)/build/maplevm/cmpl/printcmpl
 MEM_PROFILER_CMPL=./get-mem-usage.sh
 js2mpl=../build/js2mpl
 be = ../../mapleall/build/maplebe/be/mplbe
@@ -54,6 +56,7 @@ DIRECTORIES:
 	$(BE) $(BUILD)/$*.mpl > $(BUILD)/$*.log
 	@echo convert mmpl to cmpl
 	$(GEN_CMPL) $(BUILD)/$*.mmpl
+	cp $(BUILD)/$*.cmpl $(BUILD)/$*.cmpl.v1
 	#@echo test cmpl print
 	#$(PRINT_CMPL) $(BUILD)/$*.cmpl
 	@echo gdb --args $(mapleinterpreter) $(build)/$*.mmpl
@@ -65,6 +68,9 @@ DIRECTORIES:
 	@echo gdb --args $(VM_CMPL) $(build)/$*.cmpl
 	@echo profile memory usage of compact-vm for the app
 	$(MEM_PROFILER_CMPL) $(BUILD)/$*.cmpl 
+	@echo convert mmpl to cmpl-v2
+	$(GEN_CMPL_V2) $(BUILD)/$*.mmpl
+	cp $(BUILD)/$*.cmpl $(BUILD)/$*.cmpl.v2
 	@echo ""
 
 src:

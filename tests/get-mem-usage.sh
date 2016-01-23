@@ -24,7 +24,7 @@ APP_PATH=$(dirname $APP_CMPL)
 APP_NAME=$(basename $APP_CMPL)
 
 # here assume the script is under js2mpl-vm/tests
-JSVM_CMPL=../../mapleall/build/maplevm/compact/jsvm-cmpl
+JSVM_CMPL=../../mapleall/build/maplevm/compact/jsvm-cmpl-v1
 
 if [ ! -f $JSVM_CMPL ]; then 
   echo "$JSVM_CMPL doesn't exist!"
