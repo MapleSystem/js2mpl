@@ -393,8 +393,10 @@ void JSClosure::CloseFuncBookKeeping() {
 void JSClosure::Init() {
   jsmain_ = jsbuilder_->jsmain_;
   funcstack_.push(jsmain_);
-
-  scope_->GetOrCreateSN("main")->SetFunc(jsmain_);
+  char *name = jsbuilder_->mirjs_context_.isplugin_ ?
+             const_cast<char *>(jsbuilder_->mirjs_context_.wrapper_name_.c_str()) :const_cast<char *>("main");
+  // TODO: since GetOrCreateSN() doesn't change name, so we should declare the parameter as const name
+  scope_->GetOrCreateSN(name)->SetFunc(jsmain_);
 
   jsvalue_type_ = jsbuilder_->jsvalue_type_;
   jsvalue_ptr_ = jsbuilder_->jsvalue_ptr_;

@@ -11,10 +11,16 @@ MIRType *JSMIRBuilder::CreateJSValueType() {
 
 JSMIRFunction *JSMIRBuilder::CreateJSMain() {
   ArgVector arguments(module_->mp_allocator_.Adapter());
-  JSMIRFunction *jsmain = GetOrCreateFunction("main", GetInt32(), arguments, false);
-  BaseNode *stmt = CreateStmtIntrinsicCall0((MIRIntrinsicId)INTRN_JS_INIT_CONTEXT);
-  SetCurrentFunction(jsmain);
-  AddStmtInCurrentFunctionBody(stmt);
+  JSMIRFunction *jsmain = NULL;
+  if (mirjs_context_.isplugin_) {
+    jsmain = GetOrCreateFunction(mirjs_context_.wrapper_name_.c_str(), GetInt32(), arguments, false);
+    SetCurrentFunction(jsmain);
+  } else {
+    jsmain = GetOrCreateFunction("main", GetInt32(), arguments, false);
+    BaseNode *stmt = CreateStmtIntrinsicCall0((MIRIntrinsicId)INTRN_JS_INIT_CONTEXT);
+    SetCurrentFunction(jsmain);
+    AddStmtInCurrentFunctionBody(stmt);
+  }
   return jsmain;
 }
 

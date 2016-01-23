@@ -11,6 +11,7 @@
 #include "../include/compiler.h"
 
 maplemp::MemPoolCtrler Mpc;
+using namespace mapleir;
 mapleir::MIRModule mapleir::themodule(Mpc);
 int main(int argc, const char *argv[]) {
   if (argc < 2) {
@@ -34,7 +35,12 @@ int main(int argc, const char *argv[]) {
     }
   }
   const char *fn = argv[1];
-  if (!mapleir::js2mpldriver(fn, &mapleir::themodule)) {
+  std::string file_name(fn);
+  unsigned lastdot = file_name.find_last_of(".");
+  std::string prefixfile_name = file_name.substr(0, lastdot);
+  MirJsContext mirjscontx(isplugin, prefixfile_name);
+  
+  if (!mapleir::js2mpldriver(fn, &mapleir::themodule, mirjscontx)) {
     exit(1);
   }
   // use OPT_DUMPJSOPONLY to only dump JSOP code
@@ -45,8 +51,8 @@ int main(int argc, const char *argv[]) {
     mapleir::themodule.dump();
 
   // form output file name
-  std::string file_name(fn);
-  unsigned lastdot = file_name.find_last_of(".");
+  
+  
   std::string out_file_name;
   if (lastdot == std::string::npos)
     out_file_name = file_name.append(".mpl");
@@ -112,7 +118,7 @@ static void myErrReproter(JSContext *cx, const char *message, JSErrorReport *rep
   }
 }
 
-bool js2mpldriver(const char *fn, mapleir::MIRModule *module) {
+bool js2mpldriver(const char *fn, mapleir::MIRModule *module, MirJsContext &mirjscontx) {
   FILE *file = fopen(fn, "r");
   if (!file) {
     fprintf(stderr, "error input file.");
@@ -175,7 +181,7 @@ bool js2mpldriver(const char *fn, mapleir::MIRModule *module) {
     // Set Up JSMIRBuilder
     ///////////////////////////////////////////////
     DEBUGPRINTs("\n\n =====> Pass To Set Up JSMIRBuilder <===\n");
-    mapleir::JSMIRBuilder *jsbuilder = MP_NEW(module->mp_, mapleir::JSMIRBuilder(module));
+    mapleir::JSMIRBuilder *jsbuilder = MP_NEW(module->mp_, mapleir::JSMIRBuilder(module, mirjscontx));
     jsbuilder->Init();
 
     mapleir::OperandStack *opstack = MP_NEW(module->mp_, mapleir::OperandStack(50));
