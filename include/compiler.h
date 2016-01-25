@@ -65,7 +65,7 @@ class JSCompiler{
       temp_var_no_(1),
       jsbuilder_(jsbuilder),
       closure_(closure),
-      opstack_(opstack) {}
+      opstack_(opstack){}
 
   void Push(BaseNode *node) { opstack_->Push(node); }
   BaseNode *Pop() {

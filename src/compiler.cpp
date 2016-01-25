@@ -22,7 +22,10 @@ void JSCompiler::Init() {
   jsvalue_ptr_ = jsbuilder_->jsvalue_ptr_;
 
   // push main() on funcstack_
-  scope_->GetOrCreateSN("main")->SetFunc(jsmain_);
+  char *name = jsbuilder_->mirjs_context_.isplugin_ ?
+             const_cast<char *>(jsbuilder_->mirjs_context_.wrapper_name_.c_str()) :const_cast<char *>("main");
+  // TODO: scope_->GetOrCreateSN(name) was supposed to get a const parameter
+  scope_->GetOrCreateSN(name)->SetFunc(jsmain_);
   funcstack_.push(jsmain_);
   jsbuilder_->SetCurrentFunction(jsmain_);
   DEBUGPRINT2(jsmain_);

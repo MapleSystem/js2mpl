@@ -3,6 +3,7 @@
 #define JS2MPL_INCLUDE_JSMIRBUILDER_H_
 #include "mapleir/include/mirbuilder.h"
 #include "../include/scope.h"
+#include "js2mpl.h"
 namespace mapleir {
 
 class JSMIRBuilder : public MIRBuilder {
@@ -15,9 +16,10 @@ class JSMIRBuilder : public MIRBuilder {
   JSMIRFunction *jsmain_;
   MIRType *jsvalue_type_;
   MIRType *jsvalue_ptr_;
+  MirJsContext &mirjs_context_;
 
  public:
-  explicit JSMIRBuilder(MIRModule *module):MIRBuilder(module) {}
+  explicit JSMIRBuilder(MIRModule *module, MirJsContext &contx):MIRBuilder(module), mirjs_context_(contx){}
 
   JSMIRFunction *GetFunction(const char *name);
   JSMIRFunction *GetOrCreateFunction(const char *name,
