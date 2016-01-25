@@ -63,7 +63,7 @@ void JSCompiler::SetupMainFuncRet(BaseNode *rval){
   } else {
       jsbuilder_->CreateStmtReturn(jsbuilder_->GetConstInt(0), false);
   } */
-  jsbuilder_->CreateStmtReturn(jsbuilder_->GetConstInt(0), false);
+  jsbuilder_->CreateStmtReturn(rval, false);
 }
 
 MIRSymbol *JSCompiler::CreateTempVar(MIRType *type) {
@@ -1944,13 +1944,23 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_RETRVAL: /*153, 1, 0, 0*/  {
         if(true == opstack_->flag_has_rval){
           if (jsbuilder_->GetCurrentFunction() == jsmain_) {
-            SetupMainFuncRet(opstack_->rval);
+            if (jsbuilder_->mirjs_context_.isplugin_) {  // set to return exports anyway
+              BaseNode *id_node = jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_EXPORTS);
+              BaseNode *ret_expr = CompileGeneric1(INTRN_JS_GET_BUILTIN_VAR, id_node, false);
+              SetupMainFuncRet(ret_expr);
+            } else
+              SetupMainFuncRet(jsbuilder_->GetConstInt(0));  // main function always returns 0
           } else
             jsbuilder_->CreateStmtReturn(opstack_->rval, false);
           opstack_->flag_has_rval = false;
         }
         else{
           if (jsbuilder_->GetCurrentFunction() == jsmain_) {
+            if (jsbuilder_->mirjs_context_.isplugin_) {
+              BaseNode *id_node = jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_EXPORTS);
+              BaseNode *ret_expr = CompileGeneric1(INTRN_JS_GET_BUILTIN_VAR, id_node, false);
+              jsbuilder_->CreateStmtReturn(ret_expr, false);
+            } else
             jsbuilder_->CreateStmtReturn(jsbuilder_->GetConstInt(0), false);
           } else {
             BaseNode *undefined = CompileOpConstValue(JSTYPE_UNDEFINED, 0);
