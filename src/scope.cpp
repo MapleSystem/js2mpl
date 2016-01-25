@@ -183,12 +183,8 @@ bool Scope::IsInEHrange(jsbytecode *pc) {
 void Scope::DumpEHstruct() {
   vector<EHstruct *>::iterator I;
   for(I = EHstructvec_.begin(); I != EHstructvec_.end(); I++) {
-    cout << "EHstruct {" << endl;
-    cout << "  trypc     = " << (*I)->trypc << endl;
-    cout << "  catchpc   = " << (*I)->catchpc << endl;
-    cout << "  finallypc = " << (*I)->finallypc << endl;
-    cout << "  endtrypc  = " << (*I)->endtrypc << endl;
-    cout << "}\n" << endl;
+    printf("         EHstruct { try=0x%x, catch=0x%x, finally=0x%x, endtry=0x%x }\n",
+           (*I)->trypc, (*I)->catchpc, (*I)->finallypc, (*I)->endtrypc);
   }
 }
 
@@ -243,9 +239,7 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
       JSOp op = JSOp(*pc);
       unsigned lineNo = js::PCToLineNumber(script, pc);
 
-      Util::SetIndent(2);
-      DEBUGPRINTnn(lineNo, Util::getOpcodeName[op]);
-      DEBUGPRINT0;
+      if (js2mplDebug>0) printf("  %4d %-25s pc = 0x%x\n", lineNo, Util::getOpcodeName[op], pc);
       Util::SetIndent(4);
 
       switch (op) {
