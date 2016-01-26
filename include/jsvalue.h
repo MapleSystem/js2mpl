@@ -20,7 +20,7 @@ typedef enum JSType {
 // Bit is set for large strs whose length > 255 
 #define JSSTRING_LARGE ((uint8_t)0x04)
 
-typedef enum {
+typedef enum { // must in accordance with js_value.h:js_builtin_id in the runtime
   JS_BUILTIN_GLOBAL = 0,
   JS_BUILTIN_OBJECT,
   JS_BUILTIN_OBJECT_PROTOTYPE,
@@ -34,6 +34,7 @@ typedef enum {
   JS_BUILTIN_BOOLEAN_PROTOTYPE,
   JS_BUILTIN_NUMBER,
   JS_BUILTIN_NUMBER_PROTOTYPE,
+  JS_BUILTIN_EXPORTS,
   JS_BUILTIN_COUNT
 } js_builtin_id;
 }

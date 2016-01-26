@@ -13,7 +13,7 @@ JSMIRFunction *JSMIRBuilder::CreateJSMain() {
   ArgVector arguments(module_->mp_allocator_.Adapter());
   JSMIRFunction *jsmain = NULL;
   if (mirjs_context_.isplugin_) {
-    jsmain = GetOrCreateFunction(mirjs_context_.wrapper_name_.c_str(), GetInt32(), arguments, false);
+    jsmain = GetOrCreateFunction(mirjs_context_.wrapper_name_.c_str(), GetDynany(), arguments, false);
     SetCurrentFunction(jsmain);
   } else {
     jsmain = GetOrCreateFunction("main", GetInt32(), arguments, false);
