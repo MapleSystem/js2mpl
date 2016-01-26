@@ -1704,6 +1704,35 @@ void JSCompiler::EnvInit(JSMIRFunction *func) {
   return;
 }
 
+// created labels beforehand to avoid issue of missing labeled target for back edges
+bool JSCompiler::MarkLabels(JSScript *script, jsbytecode *pcstart, jsbytecode *pcend) {
+  jsbytecode *pc = pcstart;
+  while (pc < pcend) {
+    JSOp op = JSOp(*pc);
+    jsbytecode *target = NULL;
+    switch (op) {
+      case JSOP_IFEQ:
+      case JSOP_IFNE:
+      case JSOP_GOTO:
+      case JSOP_GOSUB:
+        target = pc + GET_JUMP_OFFSET(pc);
+        break;
+      case JSOP_LOOPHEAD:
+      case JSOP_LOOPENTRY:
+        target = pc;
+        break;
+    }
+
+    if (target) {
+      if (js2mplDebug>0) printf("      0x%x jump target: 0x%x\n", pc, target);
+      labidx_t mirlabel = GetorCreateLabelofPc(target);
+      label_map_[target] = mirlabel;
+    }
+
+    pc = js::GetNextPc(pc);
+  }
+}
+
 // The main entry to convert a js script to mapleir.
 bool JSCompiler::CompileScript(JSScript *script) {
   jsbytecode *start = script->code();
@@ -1711,6 +1740,9 @@ bool JSCompiler::CompileScript(JSScript *script) {
 
   JSMIRFunction *func = funcstack_.top();
   EnvInit(func);
+
+  // mark labels to avoid issue of missing labeled target for back edges
+  MarkLabels(script, start, end);
 
   bool ret = CompileScriptBytecodes(script, start, end, NULL);
 
@@ -1895,8 +1927,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         break; 
       }
       case JSOP_LOOPHEAD: /*109, 1, 0, 0*/  {
-        jsbytecode *headpc = pc;
-        CompileOpLoopHead(headpc);
+        //jsbytecode *headpc = pc;
+        //CompileOpLoopHead(headpc);
         break;
       }
       case JSOP_LABEL: /*106, 5, 0, 0*/  { NOTHANDLED; break; }

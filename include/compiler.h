@@ -186,6 +186,7 @@ class JSCompiler{
   bool CompileScript(JSScript *script);
   bool CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart,
                               jsbytecode *pcend, jsbytecode **newpc);
+  bool MarkLabels(JSScript *s, jsbytecode *pc0, jsbytecode *pc1);
   bool CollectInfo(JSScript *script, jsbytecode *pcstart, jsbytecode *pcend);
   // Finish job.
   void Finish();
