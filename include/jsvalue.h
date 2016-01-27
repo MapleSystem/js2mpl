@@ -35,6 +35,7 @@ enum js_builtin_id{ // must in accordance with js_value.h:js_builtin_id in the r
   JS_BUILTIN_NUMBER,
   JS_BUILTIN_NUMBER_PROTOTYPE,
   JS_BUILTIN_EXPORTS,
+  JS_BUILTIN_MODULE,
   JS_BUILTIN_COUNT
 };
 }

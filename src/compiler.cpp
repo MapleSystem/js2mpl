@@ -16,6 +16,13 @@
 mapleir::OpcodeTable mapleir::opcodeinfo;
 namespace mapleir {
 
+enum js_builtin_string_id{
+#define JSBUILTIN_STRING_DEF(id, length, str)  id,
+#include "../include/jsbuiltinstrings.inc.h"
+#undef JSBUILTIN_STRING_DEF
+    JSBUILTIN_STRING_ID_COUNT
+};
+
 void JSCompiler::Init() {
   jsmain_ = jsbuilder_->jsmain_;
   jsvalue_type_ = jsbuilder_->jsvalue_type_;
@@ -585,6 +592,7 @@ js_builtin_id JSCompiler::EcmaNameToId(char *name) {
   else if (!strcmp(name, "Number")) return JS_BUILTIN_NUMBER;
   else if (!strcmp(name, "Function")) return JS_BUILTIN_FUNCTION;
   else if (!strcmp(name, "exports"))  return JS_BUILTIN_EXPORTS;  // for plugin
+  else if (!strcmp(name, "module"))  return JS_BUILTIN_MODULE;
   else return JS_BUILTIN_COUNT;
 }
 
@@ -656,12 +664,6 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc) {
 }
 
 int32_t JSCompiler::GetBuiltinStringId(const jschar *chars, size_t length) {
-  enum js_builtin_string_id{
-#define JSBUILTIN_STRING_DEF(id, length, str)  id,
-#include "../include/jsbuiltinstrings.inc.h"
-#undef JSBUILTIN_STRING_DEF
-    JSBUILTIN_STRING_ID_COUNT
-  };
 
   static const struct {
     const char *chars;
@@ -1977,8 +1979,12 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         if(true == opstack_->flag_has_rval){
           if (jsbuilder_->GetCurrentFunction() == jsmain_) {
             if (jsbuilder_->mirjs_context_.isplugin_) {  // set to return exports anyway
-              BaseNode *id_node = jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_EXPORTS);
-              BaseNode *ret_expr = CompileGeneric1(INTRN_JS_GET_BUILTIN_VAR, id_node, false);
+              // BaseNode *id_node = jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE);
+              BaseNode *node1 = CompileGeneric1(INTRN_JS_GET_BUILTIN_VAR,
+                jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE), false);
+              BaseNode *node2 = CheckConvertToJSValueType(CompileGeneric1(INTRN_JS_GET_BUILTIN_STRING,
+                 jsbuilder_->GetConstUInt32((uint32_t)JSBUILTIN_STRING_EXPORTS), false));
+              BaseNode *ret_expr = CompileGeneric2(INTRN_JSOP_GETPROP, node1, node2, false);
               SetupMainFuncRet(ret_expr);
             } else
               SetupMainFuncRet(jsbuilder_->GetConstInt(0));  // main function always returns 0
@@ -1989,8 +1995,12 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         else{
           if (jsbuilder_->GetCurrentFunction() == jsmain_) {
             if (jsbuilder_->mirjs_context_.isplugin_) {
-              BaseNode *id_node = jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_EXPORTS);
-              BaseNode *ret_expr = CompileGeneric1(INTRN_JS_GET_BUILTIN_VAR, id_node, false);
+              // BaseNode *id_node = jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE);
+              BaseNode *node1 = CompileGeneric1(INTRN_JS_GET_BUILTIN_VAR,
+                jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE), false);
+              BaseNode *node2 = CheckConvertToJSValueType(CompileGeneric1(INTRN_JS_GET_BUILTIN_STRING,
+                 jsbuilder_->GetConstUInt32((uint32_t)JSBUILTIN_STRING_EXPORTS), false));
+              BaseNode *ret_expr = CompileGeneric2(INTRN_JSOP_GETPROP, node1, node2, false);
               jsbuilder_->CreateStmtReturn(ret_expr, false);
             } else
             jsbuilder_->CreateStmtReturn(jsbuilder_->GetConstInt(0), false);
