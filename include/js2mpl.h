@@ -5,13 +5,13 @@
 using namespace std;
 namespace mapleir {
   class MIRModule;
-  struct MirJsContext {
+  struct JSMIRContext {
     bool isplugin_;
     const string &wrapper_name_;
-    MirJsContext(bool isplugin, const string &name):
+    JSMIRContext(bool isplugin, const string &name):
       isplugin_(isplugin), wrapper_name_(name) {}
   };
-  bool js2mpldriver(const char *, MIRModule *, MirJsContext &);
+  bool js2mpldriver(const char *, MIRModule *, JSMIRContext &);
   
   
 }

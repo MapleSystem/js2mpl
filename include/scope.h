@@ -9,6 +9,7 @@
 #include "js/src/jsatom.h"
 #include "mapleir/include/mirnodes.h"
 #include "../include/jsfunction.h"
+#include "../include/jsmirbuilder.h"
 #include "../include/util.h"
 
 namespace mapleir {
@@ -75,6 +76,7 @@ class Scope {
     JSContext *ctx_;
     JSScript *jsscript_;
     MemPool *mp_;
+    JSMIRBuilder *jsbuilder_;
     vector<char *> funcNames_;
     stack<char *> funcstack_;
     stack<pair<JSScript *, char *>> scriptstack_;
@@ -90,11 +92,12 @@ class Scope {
     vector<pair<char *, JSFunction *>> nameJSfunc_;
 
   public:
-    Scope(JSContext *context, JSScript *script, mapleir::MIRModule *module) : 
+    Scope(JSContext *context, JSScript *script, mapleir::MIRModule *module, JSMIRBuilder *jsbuilder) : 
       mp_(module->mp_),
       anon_func_no_(0),
       stackDepth(0),
       ctx_(context),
+      jsbuilder_(jsbuilder),
       jsscript_(script) {}
 
     void Init();

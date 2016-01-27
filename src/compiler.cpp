@@ -29,8 +29,8 @@ void JSCompiler::Init() {
   jsvalue_ptr_ = jsbuilder_->jsvalue_ptr_;
 
   // push main() on funcstack_
-  char *name = jsbuilder_->mirjs_context_.isplugin_ ?
-             const_cast<char *>(jsbuilder_->mirjs_context_.wrapper_name_.c_str()) :const_cast<char *>("main");
+  char *name = jsbuilder_->jsmir_context_.isplugin_ ?
+             const_cast<char *>(jsbuilder_->jsmir_context_.wrapper_name_.c_str()) :const_cast<char *>("main");
   // TODO: scope_->GetOrCreateSN(name) was supposed to get a const parameter
   scope_->GetOrCreateSN(name)->SetFunc(jsmain_);
   funcstack_.push(jsmain_);
@@ -1999,7 +1999,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_RETRVAL: /*153, 1, 0, 0*/  {
         if(true == opstack_->flag_has_rval){
           if (jsbuilder_->GetCurrentFunction() == jsmain_) {
-            if (jsbuilder_->mirjs_context_.isplugin_) {  // set to return exports anyway
+            if (jsbuilder_->jsmir_context_.isplugin_) {  // set to return exports anyway
               // BaseNode *id_node = jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE);
               BaseNode *node1 = CompileGeneric1(INTRN_JS_GET_BIOBJECT,
                 jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE), false);
@@ -2015,7 +2015,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         }
         else{
           if (jsbuilder_->GetCurrentFunction() == jsmain_) {
-            if (jsbuilder_->mirjs_context_.isplugin_) {
+            if (jsbuilder_->jsmir_context_.isplugin_) {
               // BaseNode *id_node = jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE);
               BaseNode *node1 = CompileGeneric1(INTRN_JS_GET_BIOBJECT,
                 jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE), false);

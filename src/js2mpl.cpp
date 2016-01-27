@@ -15,19 +15,22 @@ using namespace mapleir;
 mapleir::MIRModule mapleir::themodule(Mpc);
 int main(int argc, const char *argv[]) {
   if (argc < 2) {
-    fprintf(stderr, "usage: js2mpl javaScript");
+    fprintf(stderr, "usage: js2mpl javaScript [-d=n | -plugin]\n");
     exit(1);
   }
   bool  isplugin = false;
   if (argc >=3) {
     for (int i = 2; i < argc; i++) {
-      if (!strcmp(argv[i], "-plugin"))
+      if (!strncmp(argv[i], "-d=", 3)) {
+        int value = atoi(argv[i]+3);
+        js2mplDebug = value;
+      } else if (!strcmp(argv[i], "-plugin")) {
         isplugin = true;
-      else {
+      } else {
         char *end;
         long value = strtol(argv[i], &end,10);
         if (end == argv[i] ||*end !='\0' || errno == ERANGE) {
-          fprintf(stderr, "usage: js2mpl javascript [debug id | -plugin]");
+          fprintf(stderr, "usage: js2mpl javascript [-d=n | -plugin]\n");
           exit(1);
         } else
           js2mplDebug = value;
@@ -38,9 +41,9 @@ int main(int argc, const char *argv[]) {
   std::string file_name(fn);
   unsigned lastdot = file_name.find_last_of(".");
   std::string prefixfile_name = file_name.substr(0, lastdot);
-  MirJsContext mirjscontx(isplugin, prefixfile_name);
+  JSMIRContext jsmircontx(isplugin, prefixfile_name);
   
-  if (!mapleir::js2mpldriver(fn, &mapleir::themodule, mirjscontx)) {
+  if (!mapleir::js2mpldriver(fn, &mapleir::themodule, jsmircontx)) {
     exit(1);
   }
   // use OPT_DUMPJSOPONLY to only dump JSOP code
@@ -118,7 +121,7 @@ static void myErrReproter(JSContext *cx, const char *message, JSErrorReport *rep
   }
 }
 
-bool js2mpldriver(const char *fn, mapleir::MIRModule *module, MirJsContext &mirjscontx) {
+bool js2mpldriver(const char *fn, mapleir::MIRModule *module, JSMIRContext &jsmircontx) {
   FILE *file = fopen(fn, "r");
   if (!file) {
     fprintf(stderr, "error input file.");
@@ -161,10 +164,19 @@ bool js2mpldriver(const char *fn, mapleir::MIRModule *module, MirJsContext &mirj
       exit(1);
 
     ///////////////////////////////////////////////
+    // Set Up JSMIRBuilder
+    ///////////////////////////////////////////////
+    DEBUGPRINTs("\n\n =====> Pass To Set Up JSMIRBuilder <===\n");
+    mapleir::JSMIRBuilder *jsbuilder = MP_NEW(module->mp_, mapleir::JSMIRBuilder(module, jsmircontx));
+    jsbuilder->Init();
+
+    mapleir::OperandStack *opstack = MP_NEW(module->mp_, mapleir::OperandStack(50));
+
+    ///////////////////////////////////////////////
     // Pass To Set Up Scope Chain
     ///////////////////////////////////////////////
     DEBUGPRINTs("\n\n =====> Pass To Set Up Scope Chain <====\n");
-    mapleir::Scope *scope = MP_NEW(module->mp_, mapleir::Scope(cx, script, module));
+    mapleir::Scope *scope = MP_NEW(module->mp_, mapleir::Scope(cx, script, module, jsbuilder));
     scope->Init();
     scope->Build(script);
 
@@ -176,15 +188,6 @@ bool js2mpldriver(const char *fn, mapleir::MIRModule *module, MirJsContext &mirj
       scope->DumpScopeChain();
       std::cout << "==================================" << std::endl;
     }
-
-    ///////////////////////////////////////////////
-    // Set Up JSMIRBuilder
-    ///////////////////////////////////////////////
-    DEBUGPRINTs("\n\n =====> Pass To Set Up JSMIRBuilder <===\n");
-    mapleir::JSMIRBuilder *jsbuilder = MP_NEW(module->mp_, mapleir::JSMIRBuilder(module, mirjscontx));
-    jsbuilder->Init();
-
-    mapleir::OperandStack *opstack = MP_NEW(module->mp_, mapleir::OperandStack(50));
 
     ///////////////////////////////////////////////
     // Pass To Set Up Closure Environment

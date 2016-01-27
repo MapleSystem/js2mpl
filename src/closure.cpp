@@ -111,12 +111,11 @@ void JSClosure::AddFuncFormalsToEnvType(JSMIRFunction *func) {
     jsfun = (*I).first;
     funcname = Util::GetString(jsfun->name(), mp_, jscontext_);
     DEBUGPRINT2(jsfun);
-    DEBUGPRINT2(funcname);
     // anonymous function.
     if (!funcname) {
       funcname = (char*)Util::GetSequentialName0("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_);
-      DEBUGPRINT2(funcname);
     }
+    DEBUGPRINT2(funcname);
     MIRSymbol *func_st = jsbuilder_->module_->symtab->GetSymbolFromStidx(func->stidx);
     if (func_st && strcmp(funcname, func_st->GetName().c_str()) == 0) {
       std::vector<JSAtom *> args = (*I).second;
@@ -248,12 +247,11 @@ bool JSClosure::IsLocalVar(JSMIRFunction *func, char *name) {
   for (I=locals.begin(); I!=locals.end(); I++) {
     jsfun = (*I).first;
     funcname = Util::GetString(jsfun->name(), mp_, jscontext_);
-    DEBUGPRINT2(funcname);
     // anonymous function.
     if (!funcname) {
       funcname = (char*)Util::GetSequentialName0("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_);
-      DEBUGPRINT2(funcname);
     }
+    DEBUGPRINT2(funcname);
     MIRSymbol *func_st = jsbuilder_->module_->symtab->GetSymbolFromStidx(func->stidx);
     if (func_st && strcmp(funcname, func_st->GetName().c_str()) == 0) {
       std::vector<JSAtom *> vars = (*I).second;
@@ -285,12 +283,11 @@ char *JSClosure::GetLocalVar(JSMIRFunction *func, uint32_t local_no) {
     jsfun = locals[i].first;
     funcname = Util::GetString(jsfun->name(), mp_, jscontext_);
     DEBUGPRINT2(jsfun);
-    DEBUGPRINT2(funcname);
     // set name for anonymous functions same as in jsscript_->funcLocals.
     if (!funcname) {
       funcname = (char*)Util::GetSequentialName0("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_);
-      DEBUGPRINT2(funcname);
     }
+    DEBUGPRINT2(funcname);
     // found the function
     MIRSymbol *func_st = jsbuilder_->module_->symtab->GetSymbolFromStidx(func->stidx);
     if (func_st && strcmp(funcname, func_st->GetName().c_str()) == 0) {
@@ -393,8 +390,8 @@ void JSClosure::CloseFuncBookKeeping() {
 void JSClosure::Init() {
   jsmain_ = jsbuilder_->jsmain_;
   funcstack_.push(jsmain_);
-  char *name = jsbuilder_->mirjs_context_.isplugin_ ?
-             const_cast<char *>(jsbuilder_->mirjs_context_.wrapper_name_.c_str()) :const_cast<char *>("main");
+  char *name = jsbuilder_->jsmir_context_.isplugin_ ?
+             const_cast<char *>(jsbuilder_->jsmir_context_.wrapper_name_.c_str()) :const_cast<char *>("main");
   // TODO: since GetOrCreateSN() doesn't change name, so we should declare the parameter as const name
   scope_->GetOrCreateSN(name)->SetFunc(jsmain_);
 
