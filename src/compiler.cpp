@@ -322,11 +322,11 @@ int32_t JSCompiler::GetBuiltinMethod(uint32_t argc, bool *need_this) {
 
 #define DEFBUILTINMETHOD(name, intrn_code, need_this)  \
 {#name, intrn_code, need_this},
-  typedef struct builtin_method_map {
+  struct builtin_method_map {
     const char *name;
     int32_t intrn_code;
     bool need_this;
-  }builtin_method_map;
+  };
   builtin_method_map map[18] = {
     #include "../include/builtinmethod.def"
   };
@@ -656,12 +656,12 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc) {
 }
 
 int32_t JSCompiler::GetBuiltinStringId(const jschar *chars, size_t length) {
-  typedef enum {
+  enum js_builtin_string_id{
 #define JSBUILTIN_STRING_DEF(id, length, str)  id,
 #include "../include/jsbuiltinstrings.inc.h"
 #undef JSBUILTIN_STRING_DEF
     JSBUILTIN_STRING_ID_COUNT
-  } js_builtin_string_id;
+  };
 
   static const struct {
     const char *chars;

@@ -2,7 +2,7 @@
 #define JSVALUE_H
 
 namespace mapleir {
-typedef enum JSType {
+enum JSType {
   JSTYPE_UNDEFINED = 0,
   JSTYPE_NULL,
   JSTYPE_BOOLEAN,
@@ -11,7 +11,7 @@ typedef enum JSType {
   JSTYPE_OBJECT,
   JSTYPE_UNKNOWN,
   JSTYPE_ELEMHOLE,
-}JSType;
+};
 
 // Bit is set for 16-bit code units
 #define JSSTRING_UNICODE ((uint8_t)0x01)
@@ -20,7 +20,7 @@ typedef enum JSType {
 // Bit is set for large strs whose length > 255 
 #define JSSTRING_LARGE ((uint8_t)0x04)
 
-typedef enum { // must in accordance with js_value.h:js_builtin_id in the runtime
+enum js_builtin_id{ // must in accordance with js_value.h:js_builtin_id in the runtime
   JS_BUILTIN_GLOBAL = 0,
   JS_BUILTIN_OBJECT,
   JS_BUILTIN_OBJECT_PROTOTYPE,
@@ -36,6 +36,6 @@ typedef enum { // must in accordance with js_value.h:js_builtin_id in the runtim
   JS_BUILTIN_NUMBER_PROTOTYPE,
   JS_BUILTIN_EXPORTS,
   JS_BUILTIN_COUNT
-} js_builtin_id;
+};
 }
 #endif
