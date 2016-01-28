@@ -29,7 +29,7 @@ void JSCompiler::Init() {
   jsvalue_ptr_ = jsbuilder_->jsvalue_ptr_;
 
   // push main() on funcstack_
-  char *name = "name";
+  char *name = "main";
   if (jsbuilder_->IsPlugin() && !jsbuilder_->WithMain())
      name = jsbuilder_->GetWrapperName();
   // TODO: scope_->GetOrCreateSN(name) was supposed to get a const parameter
