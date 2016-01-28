@@ -12,15 +12,15 @@ MIRType *JSMIRBuilder::CreateJSValueType() {
 JSMIRFunction *JSMIRBuilder::CreateJSMain() {
   ArgVector arguments(module_->mp_allocator_.Adapter());
   JSMIRFunction *jsmain = NULL;
-  if (jsmir_context_.isplugin_) {
-    jsmain = GetOrCreateFunction(jsmir_context_.wrapper_name_.c_str(), GetDynany(), arguments, false);
-    SetCurrentFunction(jsmain);
-  } else {
+  //if (jsmir_context_.isplugin_) {
+  //  jsmain = GetOrCreateFunction(jsmir_context_.wrapper_name_.c_str(), GetDynany(), arguments, false);
+  //  SetCurrentFunction(jsmain);
+  //} else {
     jsmain = GetOrCreateFunction("main", GetInt32(), arguments, false);
     BaseNode *stmt = CreateStmtIntrinsicCall0((MIRIntrinsicId)INTRN_JS_INIT_CONTEXT);
     SetCurrentFunction(jsmain);
     AddStmtInCurrentFunctionBody(stmt);
-  }
+  //}
   return jsmain;
 }
 
@@ -54,12 +54,10 @@ void JSMIRBuilder::Init() {
   // If the script is called by another program, the name should be jsmain.
   jsmain_ = CreateJSMain();
   InsertGlobalName("main");
-
-  SetMain(jsmain_);
 }
 
 JSMIRFunction *JSMIRBuilder::GetFunction(const char *name) {
-  JSMIRFunction *fn = GetNameFunc(name);
+  JSMIRFunction *fn = GetFunc(name);
   if (!fn) 
     assert(false && "function is not created");
   return fn;
@@ -70,7 +68,7 @@ JSMIRFunction *JSMIRBuilder::GetOrCreateFunction(const char *name,
                                                  ArgVector arguments,
                                                  bool isvarg) {
   DEBUGPRINTsv2("GetOrCreateFunction", name);
-  JSMIRFunction *fn = GetNameFunc(name);
+  JSMIRFunction *fn = GetFunc(name);
   if (fn) {
     DEBUGPRINTsv2("function is alread created: ", name);
     return fn;

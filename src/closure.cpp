@@ -390,8 +390,9 @@ void JSClosure::CloseFuncBookKeeping() {
 void JSClosure::Init() {
   jsmain_ = jsbuilder_->jsmain_;
   funcstack_.push(jsmain_);
-  char *name = jsbuilder_->jsmir_context_.isplugin_ ?
-             const_cast<char *>(jsbuilder_->jsmir_context_.wrapper_name_.c_str()) :const_cast<char *>("main");
+  char *name = "main";
+  if (jsbuilder_->IsPlugin() && !jsbuilder_->WithMain())
+     name = jsbuilder_->GetWrapperName();
   // TODO: since GetOrCreateSN() doesn't change name, so we should declare the parameter as const name
   scope_->GetOrCreateSN(name)->SetFunc(jsmain_);
 

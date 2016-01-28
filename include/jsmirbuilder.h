@@ -9,15 +9,14 @@ namespace mapleir {
 
 class JSMIRBuilder : public MIRBuilder {
  private:
-  JSMIRFunction *main_func_;
   JSMIRFunction *jscurrfunc;
   std::set<char *> global_vars;
+  JSMIRContext &jsmir_context_;
 
  public:
   JSMIRFunction *jsmain_;
   MIRType *jsvalue_type_;
   MIRType *jsvalue_ptr_;
-  JSMIRContext &jsmir_context_;
 
  public:
   explicit JSMIRBuilder(MIRModule *module, JSMIRContext &ctx):MIRBuilder(module), jsmir_context_(ctx){}
@@ -40,7 +39,7 @@ class JSMIRBuilder : public MIRBuilder {
 
   std::vector<std::pair<const char *, JSMIRFunction *>> name_func_vec_;
 
-  JSMIRFunction * GetNameFunc(const char *name ) {
+  JSMIRFunction *GetFunc(const char *name ) {
     std::vector<std::pair<const char *, JSMIRFunction *>>::iterator I;
     for (I = name_func_vec_.begin(); I != name_func_vec_.end(); I++)
       if (strcmp(name, I->first) == 0)
@@ -48,8 +47,25 @@ class JSMIRBuilder : public MIRBuilder {
     return NULL;
   }
 
+  char *GetName(JSMIRFunction *func) {
+    std::vector<std::pair<const char *, JSMIRFunction *>>::iterator I;
+    for (I = name_func_vec_.begin(); I != name_func_vec_.end(); I++)
+      if (func == I->second)
+        return (char*)I->first;
+    return NULL;
+  }
+
+  bool IsPluginFunc(JSMIRFunction *func) {
+    if (jsmir_context_.isplugin_) {
+      char *name = GetName(func);
+      if (name && strncmp(name, PLUGINPREFIX, 7) == 0)
+        return true;
+    }
+    return false;
+  }
+
   void AddNameFunc(const char *name, JSMIRFunction *func) {
-    JSMIRFunction * f = GetNameFunc(name);
+    JSMIRFunction * f= GetFunc(name);
     if (f) {
       assert (f==func && "error: function not match!");
     } else {
@@ -83,9 +99,14 @@ class JSMIRBuilder : public MIRBuilder {
   void InitBuiltinMethod();
   void Init();
 
-  bool IsMain(MIRFunction *func) { return func == (MIRFunction *)main_func_; }
-  bool SetMain(JSMIRFunction *func) { main_func_ = func; }
+  bool IsMain(JSMIRFunction *func) { return func == jsmain_; }
   JSMIRFunction *GetCurrentFunction() { (JSMIRFunction *)(MIRBuilder::GetCurrentFunction()); }
+
+  bool IsPlugin() { return jsmir_context_.isplugin_; }
+  char *GetWrapperName() { return (char*)jsmir_context_.wrapper_name_.c_str(); }
+  bool WithMain() { return jsmir_context_.with_main_; }
+  bool UseSimpCall() { return jsmir_context_.simp_call_; }
+  bool JSOPOnly() { return jsmir_context_.jsop_only_; }
 };
 }   // namespace mapleir
 #endif  // JS2MPL_INCLUDE_JSMIRBUILDER_H_

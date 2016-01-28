@@ -5,6 +5,7 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include <algorithm>
 #include "js/src/jsapi.h"
 #include "js/src/jscntxt.h"
 #include "../include/js2mpl.h"
@@ -12,13 +13,75 @@
 
 maplemp::MemPoolCtrler Mpc;
 using namespace mapleir;
+using namespace std;
 mapleir::MIRModule mapleir::themodule(Mpc);
+
+static void InsertWrapper(string infile, bool with_main, string &outfile) {
+  unsigned lastdot = infile.find_last_of(".");
+  unsigned lastslash = infile.find_last_of("/");
+  string name1 = infile.substr(lastslash+1, lastdot-lastslash-1);
+  string name = name1;
+
+  // replace - . in file name to _
+  replace(name.begin(), name.end(), '-', '_');
+  replace(name.begin(), name.end(), '.', '_');
+
+  // for add.js, the plugin file is add.js.p
+  outfile = infile + ".p";
+
+  string line;
+  ifstream src (infile.c_str());
+  ofstream des (outfile.c_str());
+  if (src.is_open() && des.is_open()) {
+    // add wrapper around the whole file
+    des << "function " << PLUGINPREFIX << name << "() {\n";
+    while (getline(src, line)) {
+      des << line << '\n';
+    }
+    des << "}\n";
+
+    // for testing purpose
+    if (with_main)
+      des << PLUGINPREFIX << name.c_str() << "();\n";
+
+    src.close();
+    des.close();
+  } else {
+    cout << "unable to open file";
+    exit(1);
+  }
+
+  return;
+}
+
+static void help() {
+  fprintf(stderr, "=============================================\n");
+  fprintf(stderr, " usage: js2mpl javascript [ options ]\n");
+  fprintf(stderr, " options:\n");
+  fprintf(stderr, "   -d=n    : debug print level n=1,2,3,...\n");
+  fprintf(stderr, "   -plugin : generate mpl file as plugin.\n");
+  fprintf(stderr, "   -main   : generate mpl file with main.\n");
+  fprintf(stderr, "   -nomain : generate mpl file without main.\n");
+  fprintf(stderr, "   -jsop   : dump JSOP only.\n");
+  fprintf(stderr, "   -help   : display this usage info.\n");
+  fprintf(stderr, "=============================================\n");
+}
+
 int main(int argc, const char *argv[]) {
+  if (!strcmp(argv[1], "-help")) {
+    help();
+    exit(1);
+  }
   if (argc < 2) {
     fprintf(stderr, "usage: js2mpl javaScript [-d=n | -plugin]\n");
     exit(1);
   }
-  bool  isplugin = false;
+  bool isplugin = false;
+  bool with_main = true;
+  bool jsop_only = false;
+  bool simp_call = true;
+  bool create_plugin_file = false;
+
   if (argc >=3) {
     for (int i = 2; i < argc; i++) {
       if (!strncmp(argv[i], "-d=", 3)) {
@@ -26,48 +89,68 @@ int main(int argc, const char *argv[]) {
         js2mplDebug = value;
       } else if (!strcmp(argv[i], "-plugin")) {
         isplugin = true;
+        with_main = false;
+        create_plugin_file = true;
+      } else if (!strcmp(argv[i], "-main")) {
+        with_main = true;
+      } else if (!strcmp(argv[i], "-nomain")) {
+        with_main = false;
+      } else if (!strcmp(argv[i], "-jsop")) {
+        jsop_only = true;
+      } else if (!strcmp(argv[i], "-nosimpcall")) {
+        simp_call = false;
+      } else if (!strcmp(argv[i], "-help")) {
+        help();
       } else {
         char *end;
         long value = strtol(argv[i], &end,10);
         if (end == argv[i] ||*end !='\0' || errno == ERANGE) {
-          fprintf(stderr, "usage: js2mpl javascript [-d=n | -plugin]\n");
+          help();
           exit(1);
         } else
           js2mplDebug = value;
       }
     }
   }
+
   const char *fn = argv[1];
-  std::string file_name(fn);
+  string orig_file_name(fn);
+  string file_name(fn);
+
+  if (create_plugin_file) {
+    string outfile;
+    InsertWrapper(file_name, with_main, outfile);
+    file_name = outfile;
+    fn = file_name.c_str();
+  }
+
   unsigned lastdot = file_name.find_last_of(".");
-  std::string prefixfile_name = file_name.substr(0, lastdot);
-  JSMIRContext jsmircontx(isplugin, prefixfile_name);
-  
-  if (!mapleir::js2mpldriver(fn, &mapleir::themodule, jsmircontx)) {
+  unsigned lastslash = file_name.find_last_of("/");
+  string prefixfile_name = file_name.substr(lastslash+1, lastdot-lastslash-1);
+  JSMIRContext jsmirctx(isplugin, prefixfile_name, with_main, jsop_only, simp_call);
+
+  if (!mapleir::js2mpldriver(fn, &mapleir::themodule, jsmirctx)) {
     exit(1);
   }
-  // use OPT_DUMPJSOPONLY to only dump JSOP code
-  if (js2mplDebug == OPT_DUMPJSOPONLY)
-    return 0;
 
   if (js2mplDebug > 0)
     mapleir::themodule.dump();
 
   // form output file name
-  
-  
-  std::string out_file_name;
-  if (lastdot == std::string::npos)
-    out_file_name = file_name.append(".mpl");
-  else out_file_name = file_name.substr(0, lastdot).append(".mpl");
-  std::ofstream mplfile;
-  mplfile.open(out_file_name.c_str(), std::ios::trunc);
+
+  string out_file_name;
+  lastdot = orig_file_name.find_last_of(".");
+  if (lastdot == string::npos)
+    out_file_name = orig_file_name.append(".mpl");
+  else out_file_name = orig_file_name.substr(0, lastdot).append(".mpl");
+  ofstream mplfile;
+  mplfile.open(out_file_name.c_str(), ios::trunc);
   // save and then change cout's buffer to that of mplfile
-  std::streambuf *backup = std::cout.rdbuf();
-  std::cout.rdbuf(mplfile.rdbuf());
+  streambuf *backup = cout.rdbuf();
+  cout.rdbuf(mplfile.rdbuf());
   mapleir::themodule.flavor_ = mapleir::FEproduced;
   mapleir::themodule.dump();  // write out generated Maple IR
-  std::cout.rdbuf(backup);  // restore cout's buffer
+  cout.rdbuf(backup);  // restore cout's buffer
   mplfile.close();
   return 0;
 }
@@ -109,19 +192,19 @@ static void myErrReproter(JSContext *cx, const char *message, JSErrorReport *rep
   js::PrintError(cx, errFile, message, report, reportWarnings);
   fclose(errFile);
 
-  std::string line;
-  std::ifstream errStream("/tmp/error.log");
+  string line;
+  ifstream errStream("/tmp/error.log");
   if (errStream.is_open()) {
     while ( getline (errStream,line) ) {
-      std::cout << line << '\n';
+      cout << line << '\n';
     }
     errStream.close();
   } else {
-    std::cout << "Unable to open file";
+    cout << "Unable to open file";
   }
 }
 
-bool js2mpldriver(const char *fn, mapleir::MIRModule *module, JSMIRContext &jsmircontx) {
+bool js2mpldriver(const char *fn, mapleir::MIRModule *module, JSMIRContext &jsmirctx) {
   FILE *file = fopen(fn, "r");
   if (!file) {
     fprintf(stderr, "error input file.");
@@ -167,7 +250,7 @@ bool js2mpldriver(const char *fn, mapleir::MIRModule *module, JSMIRContext &jsmi
     // Set Up JSMIRBuilder
     ///////////////////////////////////////////////
     DEBUGPRINTs("\n\n =====> Pass To Set Up JSMIRBuilder <===\n");
-    mapleir::JSMIRBuilder *jsbuilder = MP_NEW(module->mp_, mapleir::JSMIRBuilder(module, jsmircontx));
+    mapleir::JSMIRBuilder *jsbuilder = MP_NEW(module->mp_, mapleir::JSMIRBuilder(module, jsmirctx));
     jsbuilder->Init();
 
     mapleir::OperandStack *opstack = MP_NEW(module->mp_, mapleir::OperandStack(50));
@@ -180,13 +263,13 @@ bool js2mpldriver(const char *fn, mapleir::MIRModule *module, JSMIRContext &jsmi
     scope->Init();
     scope->Build(script);
 
-    if (js2mplDebug == OPT_DUMPJSOPONLY)
+    if (jsbuilder->JSOPOnly())
       goto finish;
 
     if (js2mplDebug>2) {
-      std::cout << "========== After Scope Chain  ====" << std::endl;
+      cout << "========== After Scope Chain  ====" << endl;
       scope->DumpScopeChain();
-      std::cout << "==================================" << std::endl;
+      cout << "==================================" << endl;
     }
 
     ///////////////////////////////////////////////
@@ -199,9 +282,9 @@ bool js2mpldriver(const char *fn, mapleir::MIRModule *module, JSMIRContext &jsmi
     closure->Build(script);
 
     if (js2mplDebug>2) {
-      std::cout << "==== After Closure Environment ===" << std::endl;
+      cout << "==== After Closure Environment ===" << endl;
       scope->DumpScopeChain();
-      std::cout << "==================================" << std::endl;
+      cout << "==================================" << endl;
     }
 
     ///////////////////////////////////////////////

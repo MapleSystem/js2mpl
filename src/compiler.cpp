@@ -29,8 +29,9 @@ void JSCompiler::Init() {
   jsvalue_ptr_ = jsbuilder_->jsvalue_ptr_;
 
   // push main() on funcstack_
-  char *name = jsbuilder_->jsmir_context_.isplugin_ ?
-             const_cast<char *>(jsbuilder_->jsmir_context_.wrapper_name_.c_str()) :const_cast<char *>("main");
+  char *name = "name";
+  if (jsbuilder_->IsPlugin() && !jsbuilder_->WithMain())
+     name = jsbuilder_->GetWrapperName();
   // TODO: scope_->GetOrCreateSN(name) was supposed to get a const parameter
   scope_->GetOrCreateSN(name)->SetFunc(jsmain_);
   funcstack_.push(jsmain_);
@@ -43,7 +44,7 @@ void JSCompiler::Init() {
 }
 
 void JSCompiler::Finish() {
-  if (js2mplDebug != OPT_DONOTDUMPMAIN) {
+  if (jsbuilder_->WithMain()) {
     module_->AddFunction(jsmain_);  // add jsmain_ in the end
   }
   // more forgiving about stack integrety
@@ -2003,36 +2004,38 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       }
       case JSOP_RETRVAL: /*153, 1, 0, 0*/  {
         if(true == opstack_->flag_has_rval){
-          if (jsbuilder_->GetCurrentFunction() == jsmain_) {
-            if (jsbuilder_->jsmir_context_.isplugin_) {  // set to return exports anyway
-              // BaseNode *id_node = jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE);
-              BaseNode *node1 = CheckConvertToJSValueType(CompileGeneric1(INTRN_JS_GET_BIOBJECT,
-                jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE), false));
-              BaseNode *node2 = CheckConvertToJSValueType(CompileGeneric1(INTRN_JS_GET_BISTRING,
-                 jsbuilder_->GetConstUInt32((uint32_t)JSBUILTIN_STRING_EXPORTS), false));
-              BaseNode *ret_expr = CompileGeneric2(INTRN_JSOP_GETPROP, node1, node2, false);
-              SetupMainFuncRet(ret_expr);
-            } else
-              SetupMainFuncRet(jsbuilder_->GetConstInt(0));  // main function always returns 0
-          } else
+          JSMIRFunction *func = jsbuilder_->GetCurrentFunction();
+          if (jsbuilder_->IsPluginFunc(func)) {
+            // set to return exports anyway
+            // BaseNode *id_node = jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE);
+            BaseNode *node1 = CheckConvertToJSValueType(CompileGeneric1(INTRN_JS_GET_BIOBJECT,
+                  jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE), false));
+            BaseNode *node2 = CheckConvertToJSValueType(CompileGeneric1(INTRN_JS_GET_BISTRING,
+                  jsbuilder_->GetConstUInt32((uint32_t)JSBUILTIN_STRING_EXPORTS), false));
+            BaseNode *ret_expr = CompileGeneric2(INTRN_JSOP_GETPROP, node1, node2, false);
+            SetupMainFuncRet(ret_expr);
+          } else if (func == jsmain_) {
+            SetupMainFuncRet(jsbuilder_->GetConstInt(0));  // main function always returns 0
+          } else {
             jsbuilder_->CreateStmtReturn(opstack_->rval, false);
+          }
           opstack_->flag_has_rval = false;
         }
         else{
-          if (jsbuilder_->GetCurrentFunction() == jsmain_) {
-            if (jsbuilder_->jsmir_context_.isplugin_) {
-              // BaseNode *id_node = jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE);
-              BaseNode *node1 = CheckConvertToJSValueType(CompileGeneric1(INTRN_JS_GET_BIOBJECT,
-                jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE), false));
-              BaseNode *node2 = CheckConvertToJSValueType(CompileGeneric1(INTRN_JS_GET_BISTRING,
-                 jsbuilder_->GetConstUInt32((uint32_t)JSBUILTIN_STRING_EXPORTS), false));
-              BaseNode *ret_expr = CompileGeneric2(INTRN_JSOP_GETPROP, node1, node2, false);
-              jsbuilder_->CreateStmtReturn(ret_expr, false);
-            } else
-            jsbuilder_->CreateStmtReturn(jsbuilder_->GetConstInt(0), false);
-          } else {
+          JSMIRFunction *func = jsbuilder_->GetCurrentFunction();
+          if (jsbuilder_->IsPluginFunc(func)) {
+            // BaseNode *id_node = jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE);
+            BaseNode *node1 = CheckConvertToJSValueType(CompileGeneric1(INTRN_JS_GET_BIOBJECT,
+                  jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE), false));
+            BaseNode *node2 = CheckConvertToJSValueType(CompileGeneric1(INTRN_JS_GET_BISTRING,
+                  jsbuilder_->GetConstUInt32((uint32_t)JSBUILTIN_STRING_EXPORTS), false));
+            BaseNode *ret_expr = CompileGeneric2(INTRN_JSOP_GETPROP, node1, node2, false);
+            jsbuilder_->CreateStmtReturn(ret_expr, false);
+          } else if (func == jsmain_) {
             BaseNode *undefined = CompileOpConstValue(JSTYPE_UNDEFINED, 0);
             jsbuilder_->CreateStmtReturn(undefined, false);
+          } else {
+            jsbuilder_->CreateStmtReturn(jsbuilder_->GetConstInt(0), false);
           }
         }
         break;

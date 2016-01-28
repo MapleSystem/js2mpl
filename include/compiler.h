@@ -86,9 +86,11 @@ class JSCompiler{
   }
 
   bool UseSimpleCall(char *name) { 
-    return name && scope_->IsFunction(name) &&
+    return jsbuilder_->UseSimpCall() &&
+           name && scope_->IsFunction(name) &&
            !closure_->FuncUseEnv(name) &&
-           !closure_->IsFuncModified(name); }
+           !closure_->IsFuncModified(name);
+  }
 
   char *GetFuncName(char *objname) {
     std::vector<std::pair<char*, char*>>::iterator I;

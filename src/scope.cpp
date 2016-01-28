@@ -203,8 +203,8 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
   jsbytecode *pc = pcstart;
   JSFunction *jsfun;
 
-  // use OPT_DUMPJSOPONLY to only dump JSOP code
-  if (js2mplDebug == OPT_DUMPJSOPONLY) {
+  // dump JSOP code only
+  if (jsbuilder_->JSOPOnly()) {
     while (pc < pcend) {
       JSOp op = JSOp(*pc);
       JSScript *scr;
