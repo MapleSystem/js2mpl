@@ -1,3 +1,3 @@
 // export a named function
-var fiz = require('fiz3').fiz;
+var fiz = require('required/fiz3').fiz;
 fiz();
