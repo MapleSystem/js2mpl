@@ -299,6 +299,11 @@ int32_t JSCompiler::GetBuiltinMethod(uint32_t argc, bool *need_this) {
     ConstvalNode *cval = static_cast<ConstvalNode *>(ion->Opnd(0));
     MIRIntConst *intconst = static_cast<MIRIntConst *>(cval->constval);
     switch (intconst->value_) {
+      case JS_BUILTIN_OBJECT:
+        if (argc == 0)
+          return INTRN_JS_NEW_OBJECT_0;
+        else
+          return INTRN_JS_OBJECT;
       case JS_BUILTIN_STRING:
         return INTRN_JS_STRING;
       case JS_BUILTIN_BOOLEAN:
