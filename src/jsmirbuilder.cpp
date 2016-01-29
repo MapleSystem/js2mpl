@@ -53,7 +53,10 @@ void JSMIRBuilder::Init() {
   // Now we create the main function as jsmain.
   // If the script is called by another program, the name should be jsmain.
   jsmain_ = CreateJSMain();
-  InsertGlobalName("main");
+  char *name = "main";
+  if (IsPlugin())
+    name = GetWrapperName();
+  InsertGlobalName(name);
 }
 
 JSMIRFunction *JSMIRBuilder::GetFunction(const char *name) {

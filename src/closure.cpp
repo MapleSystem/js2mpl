@@ -391,7 +391,7 @@ void JSClosure::Init() {
   jsmain_ = jsbuilder_->jsmain_;
   funcstack_.push(jsmain_);
   char *name = "main";
-  if (jsbuilder_->IsPlugin() && !jsbuilder_->WithMain())
+  if (jsbuilder_->IsPlugin())
      name = jsbuilder_->GetWrapperName();
   // TODO: since GetOrCreateSN() doesn't change name, so we should declare the parameter as const name
   scope_->GetOrCreateSN(name)->SetFunc(jsmain_);
