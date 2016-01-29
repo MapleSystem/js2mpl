@@ -16,25 +16,42 @@ using namespace mapleir;
 using namespace std;
 mapleir::MIRModule mapleir::themodule(Mpc);
 
-static void InsertWrapper(string infile, bool with_main, string &outfile) {
+// extract base name and plugin name from input js file name with path
+static void ProcessSrcInfo(string infile, string &basename,  string &pluginname) {
   unsigned lastdot = infile.find_last_of(".");
   unsigned lastslash = infile.find_last_of("/");
-  string name1 = infile.substr(lastslash+1, lastdot-lastslash-1);
-  string name = name1;
+  string dir = infile.substr(0, lastslash);
+  basename = infile.substr(lastslash+1, lastdot-lastslash-1);
 
   // replace - . in file name to _
-  replace(name.begin(), name.end(), '-', '_');
-  replace(name.begin(), name.end(), '.', '_');
+  replace(basename.begin(), basename.end(), '-', '_');
+  replace(basename.begin(), basename.end(), '.', '_');
 
-  // for add.js, the plugin file is add.js.p
-  outfile = infile + ".p";
+  // for add.js, the plugin file is add.jsp
+  pluginname = PLUGINPREFIX + basename;
 
-  string line;
+  return;
+}
+
+// create a new src file with a plugin wrapper
+static void GenJSFile(string infile, bool with_main, string &outfile) {
+  string basename;
+  string pluginname;
+  ProcessSrcInfo(infile, basename, pluginname); 
+
+  unsigned lastdot = infile.find_last_of(".");
+  unsigned lastslash = infile.find_last_of("/");
+  string dir = infile.substr(0, lastslash);
+
+  outfile = dir + "/" +  PLUGINPREFIX + basename + ".js";
+
   ifstream src (infile.c_str());
   ofstream des (outfile.c_str());
   if (src.is_open() && des.is_open()) {
     // add wrapper around the whole file
-    des << "function " << PLUGINPREFIX << name << "() {\n";
+    des << "function " << pluginname << "() {\n";
+
+    string line;
     while (getline(src, line)) {
       des << line << '\n';
     }
@@ -42,7 +59,7 @@ static void InsertWrapper(string infile, bool with_main, string &outfile) {
 
     // for testing purpose
     if (with_main)
-      des << PLUGINPREFIX << name.c_str() << "();\n";
+      des << pluginname.c_str() << "();\n";
 
     src.close();
     des.close();
@@ -50,7 +67,6 @@ static void InsertWrapper(string infile, bool with_main, string &outfile) {
     cout << "unable to open file";
     exit(1);
   }
-
   return;
 }
 
@@ -80,7 +96,6 @@ int main(int argc, const char *argv[]) {
   bool with_main = true;
   bool jsop_only = false;
   bool simp_call = true;
-  bool create_plugin_file = false;
 
   if (argc >=3) {
     for (int i = 2; i < argc; i++) {
@@ -90,7 +105,6 @@ int main(int argc, const char *argv[]) {
       } else if (!strcmp(argv[i], "-plugin")) {
         isplugin = true;
         with_main = false;
-        create_plugin_file = true;
       } else if (!strcmp(argv[i], "-main")) {
         with_main = true;
       } else if (!strcmp(argv[i], "-nomain")) {
@@ -114,20 +128,18 @@ int main(int argc, const char *argv[]) {
   }
 
   const char *fn = argv[1];
-  string orig_file_name(fn);
   string file_name(fn);
 
-  if (create_plugin_file) {
-    string outfile;
-    InsertWrapper(file_name, with_main, outfile);
-    file_name = outfile;
-    fn = file_name.c_str();
+  string name;
+  string pluginname;
+  ProcessSrcInfo(file_name, name, pluginname);
+
+  if (isplugin) {
+    name = pluginname;
   }
 
-  unsigned lastdot = file_name.find_last_of(".");
-  unsigned lastslash = file_name.find_last_of("/");
-  string prefixfile_name = file_name.substr(lastslash+1, lastdot-lastslash-1);
-  JSMIRContext jsmirctx(isplugin, prefixfile_name, with_main, jsop_only, simp_call);
+  JSMIRContext jsmirctx(isplugin, name, with_main, jsop_only, simp_call);
+  cout << "naem = " << name << "\n";
 
   if (!mapleir::js2mpldriver(fn, &mapleir::themodule, jsmirctx)) {
     exit(1);
@@ -137,12 +149,12 @@ int main(int argc, const char *argv[]) {
     mapleir::themodule.dump();
 
   // form output file name
-
   string out_file_name;
-  lastdot = orig_file_name.find_last_of(".");
+  unsigned lastdot = file_name.find_last_of(".");
   if (lastdot == string::npos)
-    out_file_name = orig_file_name.append(".mpl");
-  else out_file_name = orig_file_name.substr(0, lastdot).append(".mpl");
+    out_file_name = file_name.append(".mpl");
+  else
+    out_file_name = file_name.substr(0, lastdot).append(".mpl");
   ofstream mplfile;
   mplfile.open(out_file_name.c_str(), ios::trunc);
   // save and then change cout's buffer to that of mplfile

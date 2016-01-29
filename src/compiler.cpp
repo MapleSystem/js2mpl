@@ -44,9 +44,8 @@ void JSCompiler::Init() {
 }
 
 void JSCompiler::Finish() {
-  if (jsbuilder_->WithMain()) {
-    module_->AddFunction(jsmain_);  // add jsmain_ in the end
-  }
+  module_->AddFunction(jsmain_);  // add jsmain_ in the end
+
   // more forgiving about stack integrety
   int expected = scope_->GetDepth();
   DEBUGPRINT2(opstack_->GetDepth());

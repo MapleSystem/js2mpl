@@ -224,9 +224,12 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
   } else {
 
     if (script == jsscript_) {
-      funcstack_.push("main");
-      if (js2mplDebug>0) cout << "main {" << endl;
-      ScopeNode * sn = GetOrCreateSN("main");
+      char *name = "main";
+      if (jsbuilder_->IsPlugin() && !jsbuilder_->WithMain())
+        name = jsbuilder_->GetWrapperName();
+      funcstack_.push(name);
+      if (js2mplDebug>0) cout << name << " {" << endl;
+      ScopeNode * sn = GetOrCreateSN(name);
       sn->SetTopLevel();
     }
 
