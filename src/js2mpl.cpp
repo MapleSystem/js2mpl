@@ -104,7 +104,6 @@ int main(int argc, const char *argv[]) {
         js2mplDebug = value;
       } else if (!strcmp(argv[i], "-plugin")) {
         isplugin = true;
-        with_main = false;
       } else if (!strcmp(argv[i], "-main")) {
         with_main = true;
       } else if (!strcmp(argv[i], "-nomain")) {
@@ -139,7 +138,6 @@ int main(int argc, const char *argv[]) {
   }
 
   JSMIRContext jsmirctx(isplugin, name, with_main, jsop_only, simp_call);
-  cout << "naem = " << name << "\n";
 
   if (!mapleir::js2mpldriver(fn, &mapleir::themodule, jsmirctx)) {
     exit(1);

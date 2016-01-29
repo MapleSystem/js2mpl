@@ -30,7 +30,7 @@ void JSCompiler::Init() {
 
   // push main() on funcstack_
   char *name = "main";
-  if (jsbuilder_->IsPlugin() && !jsbuilder_->WithMain())
+  if (jsbuilder_->IsPlugin())
      name = jsbuilder_->GetWrapperName();
   // TODO: scope_->GetOrCreateSN(name) was supposed to get a const parameter
   scope_->GetOrCreateSN(name)->SetFunc(jsmain_);
@@ -44,7 +44,8 @@ void JSCompiler::Init() {
 }
 
 void JSCompiler::Finish() {
-  module_->AddFunction(jsmain_);  // add jsmain_ in the end
+  if (jsbuilder_->WithMain())
+    module_->AddFunction(jsmain_);  // add jsmain_ in the end
 
   // more forgiving about stack integrety
   int expected = scope_->GetDepth();
