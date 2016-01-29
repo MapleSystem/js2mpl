@@ -1,4 +1,4 @@
-﻿function myFunction(var1, var2)
+function myFunction(var1, var2)
 {
   return (var1 + var2) + 1;
 }
