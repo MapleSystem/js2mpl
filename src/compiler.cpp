@@ -2001,8 +2001,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
           if (jsbuilder_->GetCurrentFunction() == jsmain_) {
             if (jsbuilder_->jsmir_context_.isplugin_) {  // set to return exports anyway
               // BaseNode *id_node = jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE);
-              BaseNode *node1 = CompileGeneric1(INTRN_JS_GET_BIOBJECT,
-                jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE), false);
+              BaseNode *node1 = CheckConvertToJSValueType(CompileGeneric1(INTRN_JS_GET_BIOBJECT,
+                jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE), false));
               BaseNode *node2 = CheckConvertToJSValueType(CompileGeneric1(INTRN_JS_GET_BISTRING,
                  jsbuilder_->GetConstUInt32((uint32_t)JSBUILTIN_STRING_EXPORTS), false));
               BaseNode *ret_expr = CompileGeneric2(INTRN_JSOP_GETPROP, node1, node2, false);
@@ -2017,8 +2017,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
           if (jsbuilder_->GetCurrentFunction() == jsmain_) {
             if (jsbuilder_->jsmir_context_.isplugin_) {
               // BaseNode *id_node = jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE);
-              BaseNode *node1 = CompileGeneric1(INTRN_JS_GET_BIOBJECT,
-                jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE), false);
+              BaseNode *node1 = CheckConvertToJSValueType(CompileGeneric1(INTRN_JS_GET_BIOBJECT,
+                jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE), false));
               BaseNode *node2 = CheckConvertToJSValueType(CompileGeneric1(INTRN_JS_GET_BISTRING,
                  jsbuilder_->GetConstUInt32((uint32_t)JSBUILTIN_STRING_EXPORTS), false));
               BaseNode *ret_expr = CompileGeneric2(INTRN_JSOP_GETPROP, node1, node2, false);
