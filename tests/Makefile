@@ -81,21 +81,25 @@ tt:
 	cp $(BUILD)/$*.cmpl $(BUILD)/$*.cmpl.v1
 	@#@echo test cmpl print
 	@#$(PRINT_CMPL) $(BUILD)/$*.cmpl
-	@echo gdb --args $(mapleinterpreter) $(build)/$*.mmpl
-	$(MAPLEINTERPRETER) $(BUILD)/$*.mmpl
-	@echo gdb --args $(mapleinterpreter) $(build)/$*.mmpl
+	@echo "(cd $(BUILD); gdb --args $(mapleinterpreter) $*.mmpl)"
+	@#$(MAPLEINTERPRETER) $(BUILD)/$*.mmpl
+	(cd $(BUILD); $(MAPLEINTERPRETER) $*.mmpl)
+	@echo "(cd $(BUILD); gdb --args $(mapleinterpreter) $*.mmpl)"
 	@echo to debug compact-vm, set DEBUG=1 when "make compact-vm"
-	@echo gdb --args $(VM_CMPL) $(build)/$*.cmpl
-	$(VM_CMPL) $(BUILD)/$*.cmpl
-	@echo gdb --args $(VM_CMPL) $(build)/$*.cmpl
+	@echo "(cd $(BUILD); gdb --args $(VM_CMPL) $*.cmpl)"
+	@#$(VM_CMPL) $(BUILD)/$*.cmpl
+	(cd $(BUILD); $(VM_CMPL) $*.cmpl)
+	@echo "(cd $(BUILD); gdb --args $(VM_CMPL) $*.cmpl)"
 	@echo profile memory usage of compact-vm for the app
-	$(MEM_PROFILER_CMPL) $(BUILD)/$*.cmpl 
+	$(MEM_PROFILER_CMPL) $(BUILD)/$*.cmpl
 	@echo convert mmpl to cmpl-v2
-	$(GEN_CMPL_V2) $(BUILD)/$*.mmpl
+	@#$(GEN_CMPL_V2) $(BUILD)/$*.mmpl
+	(cd $(BUILD); $(GEN_CMPL_V2) $*.mmpl)
 	cp $(BUILD)/$*.cmpl $(BUILD)/$*.cmpl.v2
 	@echo ""
 
 %.p : %.js $(REQ) $(JS2MPL) $(BE) $(MAPLEINTERPRETER) DIRECTORIES
+	echo "processing plugin"
 	cp $< $(BUILD)/$*.js
 	@echo gdb --args $(js2mpl) $(build)/$*.js $(OPT)
 	$(JS2MPL) $(BUILD)/$*.js $(OPT)
@@ -107,21 +111,22 @@ tt:
 	cp $(BUILD)/$*.cmpl $(BUILD)/$*.cmpl.v1
 	@#@echo test cmpl print
 	@#$(PRINT_CMPL) $(BUILD)/$*.cmpl
-	@echo gdb --args $(mapleinterpreter) $*.mmpl
+	echo "(cd $(BUILD); gdb --args $(mapleinterpreter) $*.mmpl)"
 	(cd $(BUILD); $(MAPLEINTERPRETER) $*.mmpl)
-	@echo gdb --args $(mapleinterpreter) $*.mmpl
-	@#@echo to debug compact-vm, set DEBUG=1 when "make compact-vm"
-	@#@echo gdb --args $(VM_CMPL) $(build)/$*.cmpl
-	@#$(VM_CMPL) $(BUILD)/$*.cmpl
-	@#@echo gdb --args $(VM_CMPL) $(build)/$*.cmpl
-	@#@echo profile memory usage of compact-vm for the app
-	@#$(MEM_PROFILER_CMPL) $(BUILD)/$*.cmpl 
-	@#@echo convert mmpl to cmpl-v2
-	@#$(GEN_CMPL_V2) $(BUILD)/$*.mmpl
-	@#cp $(BUILD)/$*.cmpl $(BUILD)/$*.cmpl.v2
+	echo "(cd $(BUILD); gdb --args $(mapleinterpreter) $*.mmpl)"
+	@echo to debug compact-vm, set DEBUG=1 when "make compact-vm"
+	@echo "(cd $(BUILD); gdb --args $(VM_CMPL) $*.cmpl)"
+	(cd $(BUILD); $(VM_CMPL) $*.cmpl)
+	@echo "(cd $(BUILD); gdb --args $(VM_CMPL) $*.cmpl)"
+	@echo profile memory usage of compact-vm for the app
+	$(MEM_PROFILER_CMPL) $(BUILD)/$*.cmpl
+	@echo convert mmpl to cmpl-v2
+	$(GEN_CMPL_V2) $(BUILD)/$*.mmpl
+	cp $(BUILD)/$*.cmpl $(BUILD)/$*.cmpl.v2
 	@echo ""
 
 %.r : %.js $(JS2MPL) $(BE) DIRECTORIES
+	echo "processing required"
 	cp $< $(REQUIRED)/$*.js
 	@echo gdb --args $(js2mpl) $(required)/$*.js -plungin
 	$(JS2MPL) $(required)/$*.js -plugin
@@ -130,21 +135,21 @@ tt:
 	$(BE) $(REQUIRED)/$*.mpl > $(REQUIRED)/$*.log
 	@echo convert mmpl to cmpl
 	$(GEN_CMPL) $(REQUIRED)/$*.mmpl
-	@#cp $(REQUIRED)/$*.cmpl $(REQUIRED)/$*.cmpl.v1
+	cp $(REQUIRED)/$*.cmpl $(REQUIRED)/$*.cmpl.v1
 	@#@echo test cmpl print
-	@#$(PRINT_CMPL) $(BUILD)/$*.cmpl
-	@#@echo gdb --args $(mapleinterpreter) $(required)/$*.mmpl
-	@#$(MAPLEINTERPRETER) $(REQUIRED)/$*.mmpl
-	@#@echo gdb --args $(mapleinterpreter) $(required)/$*.mmpl
+	@#$(PRINT_CMPL) $(REQUIRED)/$*.cmpl
+	@#@echo "(cd $(REQUIRED); gdb --args $(mapleinterpreter) $*.mmpl)"
+	@#(cd $(REQUIRED); $(MAPLEINTERPRETER) $*.mmpl)
+	@#@echo "(cd $(REQUIRED); gdb --args $(mapleinterpreter) $*.mmpl)"
 	@#@echo to debug compact-vm, set DEBUG=1 when "make compact-vm"
-	@#@echo gdb --args $(VM_CMPL) $(required)/$*.cmpl
-	@#$(VM_CMPL) $(REQUIRED)/$*.cmpl
-	@#@echo gdb --args $(VM_CMPL) $(required)/$*.cmpl
-	@#@echo profile memory usage of compact-vm for the app
-	@#$(MEM_PROFILER_CMPL) $(REQUIRED)/$*.cmpl 
-	@#@echo convert mmpl to cmpl-v2
-	@#$(GEN_CMPL_V2) $(REQUIRED)/$*.mmpl
-	@#cp $(REQUIRED)/$*.cmpl $(REQUIRED)/$*.cmpl.v2
+	@#@echo "(cd $(REQUIRED); gdb --args $(VM_CMPL) $*.cmpl)"
+	@#(cd $(REQUIRED); $(VM_CMPL) $*.cmpl)
+	@#@echo "(cd $(REQUIRED); gdb --args $(VM_CMPL) $*.cmpl)"
+	@echo profile memory usage of compact-vm for the app
+	$(MEM_PROFILER_CMPL) $(REQUIRED)/$*.cmpl
+	@echo convert mmpl to cmpl-v2
+	$(GEN_CMPL_V2) $(REQUIRED)/$*.mmpl
+	cp $(REQUIRED)/$*.cmpl $(REQUIRED)/$*.cmpl.v2
 	@cp $(REQUIRED)/$*.mmpl $(REQUIRED)/$*.r
 	@echo ""
 
@@ -164,4 +169,4 @@ regression:
 	@./runtests.pl regression-tests $(OPT)
 
 clean:
-	rm -f $(BUILD)/*
+	rm -rf $(BUILD)
