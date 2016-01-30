@@ -236,13 +236,13 @@ BaseNode *JSCompiler::CompileOpBinary(JSOp opcode,
       if (IsPrimitiveInteger(pty0) && IsPrimitiveInteger(pty1))
         return jsbuilder_->CreateExprBinary(mop, restype, op0, op1);
       if (IsPrimitiveInteger(pty0) && op1->op == OP_constval) {
-          if (IsPrimitiveDynInteger(pty1)) {
+          if (pty1 == PTY_dyni32) {
             op1->ptyp = PTY_i32;
           return jsbuilder_->CreateExprBinary(mop, restype, op0, op1);
           }
       }
       if (IsPrimitiveInteger(pty1) && op0->op == OP_constval) {
-          if (IsPrimitiveDynInteger(pty0)) {
+          if (pty0 == PTY_dyni32) {
             op0->ptyp = PTY_i32;
           return jsbuilder_->CreateExprBinary(mop, restype, op0, op1);
           }
@@ -283,7 +283,7 @@ BaseNode *JSCompiler::CompileOpUnary(JSOp opcode, BaseNode *val) {
       pty = type->GetPrimType();
     }
 
-    if (IsPrimitiveDynInteger (pty) || IsPrimitiveInteger (pty))
+    if (pty == PTY_dyni32 || IsPrimitiveInteger (pty))
       return val;
   }
 
