@@ -304,7 +304,7 @@ int32_t JSCompiler::GetBuiltinMethod(uint32_t argc, bool *need_this) {
         if (argc == 0)
           return INTRN_JS_NEW_OBJECT_0;
         else
-          return INTRN_JS_OBJECT;
+          return INTRN_JS_NEW_OBJECT_1;
       case JS_BUILTIN_STRING:
         return INTRN_JS_STRING;
       case JS_BUILTIN_BOOLEAN:
@@ -894,7 +894,6 @@ BaseNode *JSCompiler::CompileOpGetLocal(uint32_t local_no) {
 BaseNode *JSCompiler::CompileOpSetLocal(uint32_t local_no, BaseNode *src) {
   JSMIRFunction *func = jsbuilder_->GetCurrentFunction();
   char *name = closure_->GetLocalVar(func, local_no);
-  MIRType *type = DetermineTypeFromNode(src);
   bool created;
   MIRSymbol *var;
 
@@ -905,9 +904,9 @@ BaseNode *JSCompiler::CompileOpSetLocal(uint32_t local_no, BaseNode *src) {
       std::pair<char*, char*> P(objname, name);
       objFuncMap.push_back(P);
     }
-    var = jsbuilder_->GetOrCreateGlobalDecl(objname, type, created);
+    var = jsbuilder_->GetOrCreateGlobalDecl(objname, jsvalue_type_, created);
   } else {
-    var = jsbuilder_->GetOrCreateLocalDecl(name, type, created);
+    var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_, created);
   }
 
   // if the stack is not empty, for each stack item that contains the 
@@ -2442,10 +2441,6 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         break;
       }
       case JSOP_SETLOCAL: /*87, 4, 1, 1*/  {
-        //if (JSOp(*(js::GetNextPc(pc))) == JSOP_POP) {
-        //  DEBUGPRINT2(JSOP_SETLOCAL);
-        //  break;
-        //}
         uint32_t i = GET_LOCALNO(pc);
         BaseNode *src = CheckConvertToJSValueType(Pop());
         BaseNode *bn = CompileOpSetLocal(i, src);
@@ -2564,8 +2559,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_INITPROP_GETTER: /*97, 5, 2, 1*/  {
         JSString *str = script->getAtom(pc);
         DEBUGPRINT2(str);
-        BaseNode *val = Pop();
-        BaseNode *obj = Pop();
+        BaseNode *val = CheckConvertToJSValueType(Pop());
+        BaseNode *obj = CheckConvertToJSValueType(Pop());
         if (!CompileOpInitPropGetter(obj, str, val))
           return false;
         Push(obj);
@@ -2574,26 +2569,26 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_INITPROP_SETTER: /*98, 5, 2, 1*/  { 
         JSString *str = script->getAtom(pc);
         DEBUGPRINT2(str);
-        BaseNode *val = Pop();
-        BaseNode *obj = Pop();
+        BaseNode *val = CheckConvertToJSValueType(Pop());
+        BaseNode *obj = CheckConvertToJSValueType(Pop());
         if (!CompileOpInitPropSetter(obj, str, val))
           return false;
         Push(obj);
         break;
       }
       case JSOP_INITELEM_GETTER: /*99, 1, 3, 1*/  {
-        BaseNode *val = Pop();
+        BaseNode *val = CheckConvertToJSValueType(Pop());
         BaseNode *id = Pop();
-        BaseNode *obj = Pop();
+        BaseNode *obj = CheckConvertToJSValueType(Pop());
         if (!CompileOpInitElemGetter(obj, id, val))
           return false;
         Push(obj);
         break;
       }
       case JSOP_INITELEM_SETTER: /*100, 1, 3, 1*/  {
-        BaseNode *val = Pop();
+        BaseNode *val = CheckConvertToJSValueType(Pop());
         BaseNode *id = Pop();
-        BaseNode *obj = Pop();
+        BaseNode *obj = CheckConvertToJSValueType(Pop());
         if (!CompileOpInitElemSetter(obj, id, val))
           return false;
         Push(obj);
