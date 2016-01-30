@@ -741,10 +741,10 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
   uint32_t string_class = 0;
   if (IsAsciiChars(chars, length)) {
     unit_type = jsbuilder_->GetUInt8();
-    pad = 2;
+    pad = length > 256 ? 4 : 2;
   } else {
       unit_type = jsbuilder_->GetUInt16();
-      pad = 1;
+      pad = length > 256 ? 2 : 1;
       string_class |= JSSTRING_UNICODE;
   }
     
@@ -766,7 +766,7 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
       cl[2] = (length & 0x00fff00) >> 8;
       cl[3] = length & 0xff;
   }
-  if (pad == 2) {
+  if ((string_class & JSSTRING_UNICODE) == 0) {
     uint64_t val = (uint64_t)(cl[0]);
     MIRIntConst *int_const = MP_NEW(mp_, MIRIntConst(val, unit_type));
     init->const_vec.push_back(int_const);
