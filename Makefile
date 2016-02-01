@@ -1,9 +1,5 @@
 include Makefile.in
 
-ifndef OPT
-	OPT = 0
-endif
-
 TARGS = mapleall mozjs src tests
 TARGS = mapleall src tests
 
@@ -21,7 +17,7 @@ src:
 	$(MAKE) -C $@
 
 tests:
-	$(MAKE) -C $@ regression OPT=$(OPT)
+	$(MAKE) -C $@ regression
 
 todo:
 	$(MAKE) -C tests todo
