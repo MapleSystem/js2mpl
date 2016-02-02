@@ -283,6 +283,13 @@ bool js2mpldriver(const char *fn, mapleir::MIRModule *module, JSMIRContext &jsmi
     }
 
     ///////////////////////////////////////////////
+    // Pass To Set Up Exception Handling
+    ///////////////////////////////////////////////
+    DEBUGPRINTs("\n\n =====> Pass To Set Up Exception Handling <====\n");
+    mapleir::EH *eh = MP_NEW(module->mp_, mapleir::EH(cx, script, module, jsbuilder, scope));
+    eh->Build(script);
+
+    ///////////////////////////////////////////////
     // Pass To Set Up Closure Environment
     ///////////////////////////////////////////////
     DEBUGPRINTs("\n\n =====> Pass To Set Up Closure Env <====\n");
@@ -302,7 +309,7 @@ bool js2mpldriver(const char *fn, mapleir::MIRModule *module, JSMIRContext &jsmi
     ///////////////////////////////////////////////
     DEBUGPRINTs("\n\n =====> Pass To Build MapleIR <=========\n");
     mapleir::JSCompiler *compiler = MP_NEW(module->mp_,
-        mapleir::JSCompiler(fn, cx, script, module, scope, jsbuilder, closure, opstack));
+        mapleir::JSCompiler(fn, cx, script, module, jsbuilder, scope, eh, closure, opstack));
 
     compiler->Init();
 

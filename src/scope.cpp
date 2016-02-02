@@ -157,37 +157,6 @@ void Scope::Init() {
   return;
 }
 
-EHstruct *Scope::GetEHstruct(jsbytecode *trypc, jsbytecode *catchpc,
-                             jsbytecode *finallypc, jsbytecode *endtrypc) {
-  vector<EHstruct *>::iterator I;
-  for(I = EHstructvec_.begin(); I != EHstructvec_.end(); I++) {
-    if((trypc && (*I)->trypc == trypc) ||
-       (catchpc && (*I)->catchpc == catchpc) ||
-       (finallypc && (*I)->finallypc == finallypc) ||
-       (endtrypc && (*I)->endtrypc == endtrypc)) {
-      return *I;
-    }
-  }
-  return NULL;
-}
-
-bool Scope::IsInEHrange(jsbytecode *pc) {
-  vector<EHstruct *>::iterator I;
-  for(I = EHstructvec_.begin(); I != EHstructvec_.end(); I++) {
-    if (pc >= (*I)->trypc && pc <= (*I)->endtrypc)
-      return true;
-  }
-  return false;
-}
-
-void Scope::DumpEHstruct() {
-  vector<EHstruct *>::iterator I;
-  for(I = EHstructvec_.begin(); I != EHstructvec_.end(); I++) {
-    printf("         EHstruct { try=0x%x, catch=0x%x, finally=0x%x, endtry=0x%x }\n",
-           (*I)->trypc, (*I)->catchpc, (*I)->finallypc, (*I)->endtrypc);
-  }
-}
-
 bool Scope::Build(JSScript *script) {
   jsbytecode *start = script->code();
   jsbytecode *end = script->codeEnd();
@@ -197,7 +166,6 @@ bool Scope::Build(JSScript *script) {
   if (js2mplDebug>1) cout << "GetDepth() = " << GetDepth() << endl;
   return ret;
 }
-
 
 bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcend) {
   jsbytecode *pc = pcstart;
@@ -279,55 +247,6 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
           }
       }
 
-      // collecting EH info
-      switch (op) {
-        case JSOP_TRY: {
-          JSTryNote *tn = script->trynotes()->vector;
-          JSTryNote *tnlimit = tn + script->trynotes()->length;
-          for (; tn < tnlimit; tn++) {
-            if ((tn->start + script->mainOffset()) == (pc - script->code() + 1)) {
-              jsbytecode *trythrow = pc + 1 + tn->length;
-              trystack_.push(pc);
-
-              // use the goto before trythrow to find the end of try combo
-              jsbytecode *jumppc = trythrow - js_CodeSpec[JSOP_GOTO].length;
-              assert(JSOp(*jumppc) == JSOP_GOTO);
-              jsbytecode *aftertrypc = jumppc + GET_JUMP_OFFSET(jumppc);
-              endtrystack_.push(aftertrypc);
-
-              EHstruct *combo = (EHstruct *)malloc(sizeof(EHstruct));
-              combo->trypc = pc;
-              combo->catchpc = trythrow;
-              combo->finallypc = 0;
-              combo->endtrypc = aftertrypc;
-              EHstructvec_.push_back(combo);
-              break;
-            }
-          }
-          break;
-        }
-        case JSOP_FINALLY: {
-          EHstruct *combo = GetEHstruct(trystack_.top(), 0, 0, 0);
-          assert(combo);
-          combo->finallypc = pc;
-          // check if no catch (catch == finally)
-          if (combo->catchpc == pc) {
-            combo->catchpc = 0;
-          }
-          break;
-        }
-      }
-
-      // end of current try combo
-      if (endtrystack_.size() && pc == endtrystack_.top()) {
-        EHstruct *combo = GetEHstruct(trystack_.top(), 0, 0, 0);
-        assert(combo);
-        if (js2mplDebug>2) DumpEHstruct();
-
-        trystack_.pop();
-        endtrystack_.pop();
-      }
-
       // calculate the expected stack size at the end
       {
         // get def/use for each op from mozjs js/src/vm/Opcodes.h
@@ -381,7 +300,7 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
         scriptstack_.pop();
         funcstack_.push(name);
         if (js2mplDebug>0) cout << name << " {" << endl;
-          Build(scr);
+        Build(scr);
       }
     }
 
@@ -439,6 +358,16 @@ void Scope::PopulateSNInfo() {
     if (sn->IsWithEnv() || sn->UseAliased())
       sn->PropWithEnv();
   }
+}
+
+char *Scope::GetJSFuncName(JSFunction *func) {
+  vector<pair<char *, JSFunction *>>::iterator I;
+  for(I = nameJSfunc_.begin(); I != nameJSfunc_.end(); I++) {
+    if(func == (*I).second) {
+      return (*I).first;
+    }
+  }
+  return NULL;
 }
 
 JSFunction *Scope::GetJSFunc(char *name) {

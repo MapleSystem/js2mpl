@@ -679,7 +679,7 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc) {
 
   bn = jsbuilder_->CreateExprDread(jsvalue_type_, var);
 
-  if (created && scope_->IsInEHrange(pc)) {
+  if (created && eh_->IsInEHrange(pc)) {
     BaseNode *throwstmt = jsbuilder_->CreateStmtThrow(bn);
     jsbuilder_->AddStmtInCurrentFunctionBody(throwstmt);
   }
@@ -1135,6 +1135,7 @@ bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
 
   funcstack_.push(mfun);
   jsbuilder_->SetCurrentFunction(mfun);
+  DEBUGPRINTfunc(funcname);
 
   CompileScript(scr);
   return true;
@@ -1499,20 +1500,41 @@ BaseNode *JSCompiler::CompileOpTableSwitch(BaseNode *opnd, int32_t len,
   return stmt;
 }
 
+labidx_t JSCompiler::CreateLabel(char *pref) {
+  const char *temp_name = Util::GetSequentialName(pref ? pref : "label", temp_var_no_, mp_);
+  labidx_t labidx = jsbuilder_->GetorCreateMIRLabel(temp_name);
+  return labidx;
+}
+
 labidx_t JSCompiler::GetorCreateLabelofPc(jsbytecode *pc, char *pref) {
   labidx_t labidx;
   if (label_map_[pc] != 0) {
     labidx = label_map_[pc];
   } else {
-    const char *temp_name = Util::GetSequentialName(pref ? pref : "label", temp_var_no_, mp_);
-    labidx = jsbuilder_->GetorCreateMIRLabel(temp_name);
+    labidx = CreateLabel(pref);
     label_map_[pc] = labidx;
   }
   return labidx;
 }
 
-BaseNode *JSCompiler::CompileOpGoto(jsbytecode *pc, MIRSymbol *tempvar) {
-  labidx_t labidx = GetorCreateLabelofPc(pc);
+BaseNode *JSCompiler::CompileOpGoto(jsbytecode *pc, jsbytecode *jumptopc, MIRSymbol *tempvar) {
+  // check if it iss in try range and will jump out of it, add exittry stmt
+  EHstruct *eh = eh_->GetEHstruct(pc);
+  EHstruct *ehjump = eh_->GetEHstruct(jumptopc);
+  if (eh && eh != ehjump) {
+    DEBUGPRINTs("creating exittry");
+    BaseNode* exittrynode = MP_NEW(mp_, StmtNode(OP_exittry));
+    jsbuilder_->AddStmtInCurrentFunctionBody(exittrynode);
+  }
+
+  // use special endtry label for goto within the try range
+  // to simplify interpreting endtry
+  labidx_t labidx;
+  if (eh && jumptopc == eh->endtrypc)
+    labidx = eh->label;
+  else
+    labidx = GetorCreateLabelofPc(jumptopc);
+
   BaseNode* gotonode = jsbuilder_->CreateStmtGoto(OP_goto, labidx);
   jsbuilder_->AddStmtInCurrentFunctionBody(gotonode);
   if (tempvar)  // the label will be the merge point of a conditional expression
@@ -1528,9 +1550,19 @@ BaseNode *JSCompiler::CompileOpGosub(jsbytecode *pc) {
 }
 
 BaseNode *JSCompiler::CompileOpTry(jsbytecode *pc) {
+  eh_->DumpEHstructVec();
   labidx_t mirlabel = GetorCreateLabelofPc(pc, "h@");
   BaseNode* trynode = jsbuilder_->CreateStmtGoto(OP_try, mirlabel);
   jsbuilder_->AddStmtInCurrentFunctionBody(trynode);
+
+  // set up label for endtry
+  mirlabel = CreateLabel();
+  DEBUGPRINT3(mirlabel);
+  // passed in is the catchpc which could also be finallypc in case there is no catch
+  EHstruct *eh = eh_->GetEHstruct(0, pc, pc, 0);
+  MIR_ASSERT(eh);
+  eh_->SetEHLabel(eh, mirlabel);
+  eh_->DumpEHstruct(eh);
   return trynode;
 }
 
@@ -1792,7 +1824,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
     JSOp op = JSOp(*pc); //Convert *pc to JSOP
     unsigned lineNo = js::PCToLineNumber(script, pc);
     Util::SetIndent(2);
-    DEBUGPRINTnn(lineNo, Util::getOpcodeName[op]);
+    //DEBUGPRINTnn(lineNo, Util::getOpcodeName[op]);
+    if (js2mplDebug>0) printf("  %4d %-25s pc = 0x%x\n", lineNo, Util::getOpcodeName[op], pc);
     if (lastLineNo != lineNo && module_->curfunction != NULL) {
       sprintf(linenoText, "LINE %d: ", lineNo);
 
@@ -1811,7 +1844,17 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       lastLineNo = lineNo;
     }
     Util::SetIndent(4);
-    DEBUGPRINT0;
+
+    // add endtry node
+    EHstruct *eh = eh_->GetEHstruct(0, 0, 0, pc);
+    if (eh) {
+      labidx_t labidx;
+      labidx = eh->label;
+      BaseNode *stmt = jsbuilder_->CreateStmtLabel(labidx);
+      jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
+      BaseNode* endtrynode = MP_NEW(mp_, StmtNode(OP_endtry));
+      jsbuilder_->AddStmtInCurrentFunctionBody(endtrynode);
+    }
 
     if (label_map_[pc] != 0) {
       labidx_t labidx = label_map_[pc];
@@ -1835,25 +1878,17 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
 
       // jump to finally for catch = pc
-      EHstruct *combo = scope_->GetEHstruct(0, pc, 0, 0);
-      if (combo) {
+      eh = eh_->GetEHstruct(0, pc, 0, 0);
+      if (eh) {
         labidx_t mirlabel;
-        if (combo->finallypc)
-          mirlabel = GetorCreateLabelofPc(combo->finallypc, "f@");
+        if (eh->finallypc)
+          mirlabel = GetorCreateLabelofPc(eh->finallypc, "f@");
         else
           mirlabel = GetorCreateLabelofPc(pc);
         BaseNode* trynode = jsbuilder_->CreateStmtGoto(OP_catch, mirlabel);
         jsbuilder_->AddStmtInCurrentFunctionBody(trynode);
       }
 
-      // add endtry node
-      EHstruct *combo1 = scope_->GetEHstruct(0, 0, 0, pc);
-      if (combo1) {
-        labidx_t mirlabel;
-        mirlabel = GetorCreateLabelofPc(pc);
-        BaseNode* endtrynode = MP_NEW(mp_, StmtNode(OP_endtry));
-        jsbuilder_->AddStmtInCurrentFunctionBody(endtrynode);
-      }
     }
 
     switch (op) {
@@ -2051,9 +2086,9 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
           // TODO should not pop from opstack_
           BaseNode *expr = Top();
           MIRSymbol *tempvar = SymbolFromSavingInATemp(expr);
-          CompileOpGoto(pc + offset, tempvar);
+          CompileOpGoto(pc, pc + offset, tempvar);
         }
-        else CompileOpGoto(pc + offset, NULL);
+        else CompileOpGoto(pc, pc + offset, NULL);
         break;
       }
       

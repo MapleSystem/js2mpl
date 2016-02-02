@@ -64,13 +64,6 @@ class ScopeNode {
 
 typedef list<ScopeNode *> ScopeNodeList;
 
-struct EHstruct {
-  jsbytecode *trypc;
-  jsbytecode *catchpc;
-  jsbytecode *finallypc;
-  jsbytecode *endtrypc;
-};
-
 class Scope {
   private:
     JSContext *ctx_;
@@ -80,10 +73,6 @@ class Scope {
     vector<char *> funcNames_;
     stack<char *> funcstack_;
     stack<pair<JSScript *, char *>> scriptstack_;
-
-    stack<jsbytecode *> trystack_;
-    stack<jsbytecode *> endtrystack_;
-    vector<EHstruct *> EHstructvec_;
 
     uint32_t anon_func_no_;
     int stackDepth;
@@ -117,6 +106,7 @@ class Scope {
     void GetSNFlag(char *name);
     void AddSNChild(char *name, char *child);
 
+    char *GetJSFuncName(JSFunction *func);
     JSFunction *GetJSFunc(char *name);
     void SetJSFunc(char *name, JSFunction *func);
 
@@ -127,12 +117,6 @@ class Scope {
     char *GetAnonyFunctionName(jsbytecode *pc);
     bool IsFunction(char *name);
     int GetDepth() { return stackDepth; }
-
-    // passing 0 to skip search fields
-    EHstruct *GetEHstruct(jsbytecode *tryop, jsbytecode *catchop,
-                          jsbytecode *finallyop, jsbytecode *endtryop);
-    void DumpEHstruct();
-    bool IsInEHrange(jsbytecode *pc);
 };
 
 }  // namespace mapleir

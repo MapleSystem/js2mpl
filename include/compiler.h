@@ -9,6 +9,7 @@
 #include "../include/closure.h"
 #include "../include/operandstack.h"
 #include "../include/scope.h"
+#include "../include/eh.h"
 #include "../include/util.h"
 
 namespace mapleir {
@@ -18,7 +19,6 @@ class JSCompiler{
   JSContext *jscontext_;
   JSScript *jsscript_;
   JSMIRBuilder *jsbuilder_;
-  JSClosure *closure_;
 
   MIRType *jsvalue_type_;
   MIRType *jsvalue_ptr_;
@@ -42,6 +42,8 @@ class JSCompiler{
   uint32_t temp_var_no_;
 
   Scope *scope_;
+  EH *eh_;
+  JSClosure *closure_;
 
   typedef std::pair<JSMIRFunction *, std::vector<char *>> funcArgPair;
   std::vector<funcArgPair> funcFormals;
@@ -52,18 +54,20 @@ class JSCompiler{
                       JSContext *context,
                       JSScript *script, 
                       mapleir::MIRModule *module, 
-                      Scope *scope,
                       JSMIRBuilder *jsbuilder,
+                      Scope *scope,
+                      EH *eh,
                       JSClosure *closure,
                       OperandStack *opstack):
       filename_(filename),
       jscontext_(context),
       jsscript_(script),
-      scope_(scope),
       module_(module),
       mp_(module->mp_),
       temp_var_no_(1),
       jsbuilder_(jsbuilder),
+      scope_(scope),
+      eh_(eh),
       closure_(closure),
       opstack_(opstack){}
 
@@ -166,13 +170,14 @@ class JSCompiler{
   BaseNode *CompileOpName(JSAtom *atom, jsbytecode *pc);
   BaseNode *CompileOpIfJump(JSOp op, BaseNode *cond, jsbytecode *pcend);
   
+  labidx_t CreateLabel(char *pref = NULL);
   labidx_t GetorCreateLabelofPc(jsbytecode *pc, char *pref = NULL);
   int64_t GetIntValue(jsbytecode *pc);
   BaseNode *CompileOpCondSwitch(BaseNode *opnd, JSScript *script,
                                 jsbytecode *pcstart, jsbytecode *pcend);
   BaseNode *CompileOpTableSwitch(BaseNode *opnd, int32_t len,
                                  JSScript *script, jsbytecode *pc);
-  BaseNode *CompileOpGoto(jsbytecode *pc, MIRSymbol *tempvar);
+  BaseNode *CompileOpGoto(jsbytecode *pc, jsbytecode *jumptopc, MIRSymbol *tempvar);
   BaseNode *CompileOpGosub(jsbytecode *pc);
   BaseNode *CompileOpTry(jsbytecode *pc);
   BaseNode *CompileOpLoopHead(jsbytecode *pc);
