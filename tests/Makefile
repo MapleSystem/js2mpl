@@ -81,10 +81,10 @@ tt:
 	cp $(BUILD)/$*.cmpl $(BUILD)/$*.cmpl.v1
 	@#@echo test cmpl print
 	@#$(PRINT_CMPL) $(BUILD)/$*.cmpl
-	@echo "(cd $(BUILD); gdb --args $(mapleinterpreter) $*.mmpl)"
+	@echo "(cd $(BUILD); gdb --args ../$(mapleinterpreter) $*.mmpl)"
 	@#$(MAPLEINTERPRETER) $(BUILD)/$*.mmpl
 	(cd $(BUILD); $(MAPLEINTERPRETER) $*.mmpl)
-	@echo "(cd $(BUILD); gdb --args $(mapleinterpreter) $*.mmpl)"
+	@echo "(cd $(BUILD); gdb --args ../$(mapleinterpreter) $*.mmpl)"
 	@echo to debug compact-vm, set DEBUG=1 when "make compact-vm"
 	@echo "(cd $(BUILD); gdb --args $(VM_CMPL) $*.cmpl)"
 	@#$(VM_CMPL) $(BUILD)/$*.cmpl
@@ -111,9 +111,9 @@ tt:
 	cp $(BUILD)/$*.cmpl $(BUILD)/$*.cmpl.v1
 	@#@echo test cmpl print
 	@#$(PRINT_CMPL) $(BUILD)/$*.cmpl
-	echo "(cd $(BUILD); gdb --args $(mapleinterpreter) $*.mmpl)"
+	echo "(cd $(BUILD); gdb --args ../$(mapleinterpreter) $*.mmpl)"
 	(cd $(BUILD); $(MAPLEINTERPRETER) $*.mmpl)
-	echo "(cd $(BUILD); gdb --args $(mapleinterpreter) $*.mmpl)"
+	echo "(cd $(BUILD); gdb --args ../$(mapleinterpreter) $*.mmpl)"
 	@echo to debug compact-vm, set DEBUG=1 when "make compact-vm"
 	@echo "(cd $(BUILD); gdb --args $(VM_CMPL) $*.cmpl)"
 	(cd $(BUILD); $(VM_CMPL) $*.cmpl)
