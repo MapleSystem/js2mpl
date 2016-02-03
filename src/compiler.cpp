@@ -1550,7 +1550,6 @@ BaseNode *JSCompiler::CompileOpGosub(jsbytecode *pc) {
 }
 
 BaseNode *JSCompiler::CompileOpTry(jsbytecode *pc) {
-  eh_->DumpEHstructVec();
   labidx_t mirlabel = GetorCreateLabelofPc(pc, "h@");
   BaseNode* trynode = jsbuilder_->CreateStmtGoto(OP_try, mirlabel);
   jsbuilder_->AddStmtInCurrentFunctionBody(trynode);
@@ -1562,7 +1561,6 @@ BaseNode *JSCompiler::CompileOpTry(jsbytecode *pc) {
   EHstruct *eh = eh_->GetEHstruct(0, pc, pc, 0);
   MIR_ASSERT(eh);
   eh_->SetEHLabel(eh, mirlabel);
-  eh_->DumpEHstruct(eh);
   return trynode;
 }
 
