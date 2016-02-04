@@ -10,7 +10,7 @@ enum JSType {
   JSTYPE_NUMBER,
   JSTYPE_OBJECT,
   JSTYPE_UNKNOWN,
-  JSTYPE_ELEMHOLE,
+  JSTYPE_NONE,
 };
 
 // Bit is set for 16-bit code units

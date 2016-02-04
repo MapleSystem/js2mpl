@@ -165,8 +165,8 @@ BaseNode *JSCompiler::CompileOpConstValue(uint32_t jsvalue_tag, int32_t payload)
      pty = PTY_dynnull; break;
    case JSTYPE_BOOLEAN:
      pty = PTY_dynbool; break;
-   case JSTYPE_ELEMHOLE:
-     pty = PTY_dynhole; break;
+   case JSTYPE_NONE:
+     pty = PTY_dynnone; break;
    default:
      assert(false && "NIY");
      break;
@@ -426,7 +426,7 @@ BaseNode *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool need_t
   if((MIRIntrinsicId)idx == INTRN_JS_NUMBER || (MIRIntrinsicId)idx == INTRN_JS_STRING) {
     BaseNode * argument;
     if(arg_num == 0) {
-      argument = CompileOpConstValue(JSTYPE_ELEMHOLE, 0);
+      argument = CompileOpConstValue(JSTYPE_NONE, 0);
     }
     else {
       BaseNode *bn = tmp_stack.top();
@@ -2490,7 +2490,6 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_NEWARRAY: /*90, 4, 0, 1*/  {
         uint32_t length = GET_UINT24(pc);
         BaseNode *len = jsbuilder_->GetConstUInt32(length);
-        BaseNode *arr = CompileGeneric1(INTRN_JSOP_NEW_ARR, len, true);
         std::stack<BaseNode *> tmp_stack;
         pc = js::GetNextPc(pc);
         op = JSOp(*pc);
@@ -2512,49 +2511,40 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         }
         if (newpc)
           *newpc = pc;
-        if (length > 0) {
-          MIRSymbol *arguments = NULL;
-          arguments = jsbuilder_->GetCurrentFunction()->symtab->CreateSymbol();
-          const char *temp_name = Util::GetSequentialName("js_arguments_", temp_var_no_, mp_);
-          MapleString argname(temp_name, mp_);
-          arguments->SetNameStridx(module_->stringtable.GetOrCreateStridxFromName(argname));
-          jsbuilder_->GetCurrentFunction()->symtab->AddToStringSymbolMap(arguments);
-          arguments->sclass = SC_auto;
-          arguments->skind  = ST_var;
 
-          uint32_t size_array[1];
-          size_array[0] = length;
-          MIRType *array_type = jsbuilder_->GetOrCreateArrayType(jsvalue_type_, 1, size_array);
-          MIRType *array_ptr_type = jsbuilder_->GetOrCreatePointerType(array_type);
-          tyidx_t tyidx = array_type->_ty_idx;
-          arguments->SetTyIdx(tyidx);
-          BaseNode *bn;
-          MIRType *pargtype = jsbuilder_->GetOrCreatePointerType(arguments->GetType());
-          BaseNode *addr_base = jsbuilder_->CreateExprAddrof(0, arguments);
+        MIRSymbol *arguments = NULL;
+        arguments = jsbuilder_->GetCurrentFunction()->symtab->CreateSymbol();
+        const char *temp_name = Util::GetSequentialName("js_arguments_", temp_var_no_, mp_);
+        MapleString argname(temp_name, mp_);
+        arguments->SetNameStridx(module_->stringtable.GetOrCreateStridxFromName(argname));
+        jsbuilder_->GetCurrentFunction()->symtab->AddToStringSymbolMap(arguments);
+        arguments->sclass = SC_auto;
+        arguments->skind  = ST_var;
 
-          for (uint32_t i = 0; i < length; i++) {
-              bn = CheckConvertToJSValueType(tmp_stack.top());
-              DEBUGPRINT3(bn->op);
-              tmp_stack.pop();
-              MapleVector<BaseNode *> opnds(themodule.mp_allocator_.Adapter());
-              opnds.push_back(addr_base);
-              BaseNode *addr_offset = jsbuilder_->GetConstInt(length - i - 1);
-              opnds.push_back(addr_offset);
-              BaseNode *array_expr = jsbuilder_->CreateExprArray(array_type, opnds);
-              BaseNode *stmt = jsbuilder_->CreateStmtIassign(array_ptr_type, 0, array_expr, bn);
-              jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
-          }
+        uint32_t size_array[1];
+        size_array[0] = length;
+        MIRType *array_type = jsbuilder_->GetOrCreateArrayType(jsvalue_type_, 1, size_array);
+        MIRType *array_ptr_type = jsbuilder_->GetOrCreatePointerType(array_type);
+        tyidx_t tyidx = array_type->_ty_idx;
+        arguments->SetTyIdx(tyidx);
+        BaseNode *bn;
+        MIRType *pargtype = jsbuilder_->GetOrCreatePointerType(arguments->GetType());
+        BaseNode *addr_base = jsbuilder_->CreateExprAddrof(0, arguments);
 
-          MapleVector<BaseNode *> args(module_->mp_allocator_.Adapter());
-          args.push_back(arr);
-          args.push_back(addr_base);
-          args.push_back(len);
-          BaseNode *stmt = jsbuilder_->CreateStmtIntrinsicCallN(INTRN_JSOP_INIT_ARR, args);
+        for (uint32_t i = 0; i < length; i++) {
+          bn = CheckConvertToJSValueType(tmp_stack.top());
+          DEBUGPRINT3(bn->op);
+          tmp_stack.pop();
+          MapleVector<BaseNode *> opnds(themodule.mp_allocator_.Adapter());
+          opnds.push_back(addr_base);
+          BaseNode *addr_offset = jsbuilder_->GetConstInt(length - i - 1);
+          opnds.push_back(addr_offset);
+          BaseNode *array_expr = jsbuilder_->CreateExprArray(array_type, opnds);
+          BaseNode *stmt = jsbuilder_->CreateStmtIassign(array_ptr_type, 0, array_expr, bn);
           jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
-          MIRSymbol *temp = CreateTempJSValueTypeVar();
-          jsbuilder_->SaveReturnValue(temp);
-          arr = jsbuilder_->CreateExprDread(jsvalue_type_, temp);
         }
+
+        BaseNode *arr = CompileGeneric2(INTRN_JS_NEW_ARR_ELEMS, addr_base, len, true);
         Push(arr);
         break;
       }
@@ -2628,7 +2618,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         break;
       }
       case JSOP_HOLE: /*218, 1, 0, 1*/  {
-        BaseNode *hole_elem = CompileOpConstValue(JSTYPE_ELEMHOLE, 0);
+        BaseNode *hole_elem = CompileOpConstValue(JSTYPE_NONE, 0);
         Push(hole_elem);
         break;
       }
