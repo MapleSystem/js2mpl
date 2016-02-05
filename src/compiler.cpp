@@ -599,6 +599,7 @@ js_builtin_id JSCompiler::EcmaNameToId(char *name) {
   else if (!strcmp(name, "Function")) return JS_BUILTIN_FUNCTION;
   else if (!strcmp(name, "exports"))  return JS_BUILTIN_EXPORTS;  // for plugin
   else if (!strcmp(name, "module"))  return JS_BUILTIN_MODULE;
+  else if (!strcmp(name, "Math"))  return JS_BUILTIN_MATH;
   else return JS_BUILTIN_COUNT;
 }
 
