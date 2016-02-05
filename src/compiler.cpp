@@ -74,6 +74,10 @@ void JSCompiler::SetupMainFuncRet(BaseNode *rval){
   jsbuilder_->CreateStmtReturn(rval, false);
 }
 
+static bool IsCCall(char *name) {
+  return (strcmp(name, "ccall") == 0);
+}
+
 MIRSymbol *JSCompiler::CreateTempVar(MIRType *type) {
   const char *name = Util::GetSequentialName("temp_var_", temp_var_no_, mp_);
   bool created;
@@ -486,13 +490,7 @@ BaseNode *JSCompiler::CompileOpCall(uint32_t argc) {
   char *name;
   if (js2mplDebug > 2) funcnode->dump();
 
-  MapleVector<BaseNode *> allargs(module_->mp_allocator_.Adapter());
-  allargs.push_back(funcnode);
-  allargs.push_back(impnode);
-
-  for (int32_t i = argc - 1; i >=0; i--)
-    allargs.push_back(argsvec[i]);
-
+  MapleVector<BaseNode *> args(module_->mp_allocator_.Adapter());
   bool useSimpleCall = false;
   char *funcname = NULL;
   puidx_t puidx;
@@ -507,33 +505,42 @@ BaseNode *JSCompiler::CompileOpCall(uint32_t argc) {
 
       funcname = GetFuncName(funcobjname);
       if (funcname) {
+        DEBUGPRINT3(funcname);
         JSMIRFunction *func = closure_->GetJSMIRFunc(funcname);
         if (func) {
           puidx = func->puidx;
           useSimpleCall = UseSimpleCall(funcname);
         }
+      } else if(IsCCall(funcobjname)) {
+        funcname = funcobjname;
       }
     }
   }
 
   if (useSimpleCall) {
-    DEBUGPRINT3(funcname);
-    MapleVector<BaseNode *> args(module_->mp_allocator_.Adapter());
     for (int32_t i = argc - 1; i >= 0; i--)
       args.push_back(argsvec[i]);
 
     JSMIRFunction *func = closure_->GetJSMIRFunc(funcname);
-
-    DEBUGPRINT3(argc);
-    DEBUGPRINT3(func->argc);
     if (argc < func->argc) {
       BaseNode *undefined = CompileOpConstValue(JSTYPE_UNDEFINED, 0);
       for (int32_t i = argc; i < func->argc; i++)
         args.push_back(undefined);
     }
+
     stmt = jsbuilder_->CreateStmtCall(puidx, args);
+  } else if (funcname && IsCCall(funcname)) {
+    for (int32_t i = argc - 1; i >=0; i--)
+      args.push_back(argsvec[i]);
+
+    stmt = jsbuilder_->CreateStmtIntrinsicCallN(INTRN_JSOP_CCALL, args);
   } else {
-    stmt = jsbuilder_->CreateStmtIntrinsicCallN(INTRN_JSOP_CALL, allargs);
+    args.push_back(funcnode);
+    args.push_back(impnode);
+    for (int32_t i = argc - 1; i >=0; i--)
+      args.push_back(argsvec[i]);
+
+    stmt = jsbuilder_->CreateStmtIntrinsicCallN(INTRN_JSOP_CALL, args);
   }
 
   if (stmt)
@@ -661,14 +668,14 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc) {
   // ??? Generate a dread node to pass the name.
   MIRSymbol *var;
   bool created;
-  if (jsbuilder_->IsGlobalName(name)) {
+  if (jsbuilder_->IsGlobalName(name) || IsCCall(name)) {
     var = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalue_type_, created);
   } else {
     var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_, created);
   }
 
   // print is a builtin function.
-  if (!strcmp(name, "print")) {
+  if (!strcmp(name, "print") || IsCCall(name)) {
     created = false;
   }
 
@@ -1518,13 +1525,13 @@ labidx_t JSCompiler::GetorCreateLabelofPc(jsbytecode *pc, char *pref) {
 }
 
 BaseNode *JSCompiler::CompileOpGoto(jsbytecode *pc, jsbytecode *jumptopc, MIRSymbol *tempvar) {
-  // check if it iss in try range and will jump out of it, add exittry stmt
+  // check if it iss in try range and will jump out of it, add cleanuptry stmt
   EHstruct *eh = eh_->GetEHstruct(pc);
   EHstruct *ehjump = eh_->GetEHstruct(jumptopc);
   if (eh && eh != ehjump) {
-    DEBUGPRINTs("creating exittry");
-    BaseNode* exittrynode = MP_NEW(mp_, StmtNode(OP_exittry));
-    jsbuilder_->AddStmtInCurrentFunctionBody(exittrynode);
+    DEBUGPRINTs("creating cleanuptry");
+    BaseNode* cleanuptrynode = MP_NEW(mp_, StmtNode(OP_cleanuptry));
+    jsbuilder_->AddStmtInCurrentFunctionBody(cleanuptrynode);
   }
 
   // use special endtry label for goto within the try range
