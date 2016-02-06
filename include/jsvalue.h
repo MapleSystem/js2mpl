@@ -2,7 +2,7 @@
 #define JSVALUE_H
 
 namespace mapleir {
-enum JSType {
+enum __jstype {
   JSTYPE_UNDEFINED = 0,
   JSTYPE_NULL,
   JSTYPE_BOOLEAN,
