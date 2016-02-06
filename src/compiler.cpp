@@ -2513,6 +2513,11 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         if (newpc)
           *newpc = pc;
 
+        if (length == 0) {
+          BaseNode *arr = CompileGeneric1(INTRN_JS_NEW_ARR_LENGTH, CompileOpConstValue(JSTYPE_NUMBER, 0), true);
+          Push(arr);
+          break;
+        }
         MIRSymbol *arguments = NULL;
         arguments = jsbuilder_->GetCurrentFunction()->symtab->CreateSymbol();
         const char *temp_name = Util::GetSequentialName("js_arguments_", temp_var_no_, mp_);
