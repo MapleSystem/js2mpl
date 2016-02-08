@@ -32,7 +32,6 @@ void JSCompiler::Init() {
   char *name = "main";
   if (jsbuilder_->IsPlugin())
      name = jsbuilder_->GetWrapperName();
-  // TODO: scope_->GetOrCreateSN(name) was supposed to get a const parameter
   scope_->GetOrCreateSN(name)->SetFunc(jsmain_);
   funcstack_.push(jsmain_);
   jsbuilder_->SetCurrentFunction(jsmain_);
@@ -55,22 +54,6 @@ void JSCompiler::Finish() {
 }
 
 void JSCompiler::SetupMainFuncRet(BaseNode *rval){
-  // TODO: fixme: since javascript doesn't have a explicit main function,
-  // I'd rather always return 0. Yiming 07/16/2015
-  // right now if rval is jsvalue_type_, we return the value for test
-  /*   if (rval->op == OP_dread) {  // TODO: don't need this after print is implemented
-    DreadNode * node = static_cast<DreadNode *>(rval);
-    MIRSymbol *st = module_->GetSymbolFromStidx(node->stidx, node->islocal);
-    MIRType *type = st->GetType();
-    if (type == jsvalue_type_) {
-      BaseNode *newdreadnode = jsbuilder_->CreateExprDread(type, 4, st);
-      jsbuilder_->CreateStmtReturn(newdreadnode, false);
-    } else {
-      jsbuilder_->CreateStmtReturn(jsbuilder_->GetConstInt(0), false);
-    }
-  } else {
-      jsbuilder_->CreateStmtReturn(jsbuilder_->GetConstInt(0), false);
-  } */
   jsbuilder_->CreateStmtReturn(rval, false);
 }
 
@@ -1615,13 +1598,9 @@ BaseNode *JSCompiler::CheckConvertToJSValueType(BaseNode *data)
     jsbuilder_->GetPrimType(data->ptyp), data);
 }
 
-  /*
-   * Pops the top two values on the stack as rval and lval, compare th\
-em with ===,
-* if the result is true, jumps to a 32-bit offset from the current \
-bytecode,
-* re-pushes lval onto the stack if false.
-*/
+// Pops the top two values on the stack as rval and lval, compare them with ===,
+// if the result is true, jumps to a 32-bit offset from the current bytecode,
+// re-pushes lval onto the stack if false.
 void JSCompiler::CompileOpCase(jsbytecode *pc, int offset, BaseNode *rval, BaseNode *lval)
 {
   MIRIntrinsicId idx = (MIRIntrinsicId)FindIntrinsicForOp(JSOP_STRICTEQ);
@@ -1784,15 +1763,15 @@ bool JSCompiler::MarkLabels(JSScript *script, jsbytecode *pcstart, jsbytecode *p
       case JSOP_GOSUB:
         target = pc + GET_JUMP_OFFSET(pc);
         break;
-      case JSOP_LOOPHEAD:
-      case JSOP_LOOPENTRY:
-        target = pc;
-        break;
     }
 
-    if (target) {
+    if (target && label_map_[target] == 0) {
       if (js2mplDebug>0) printf("      0x%x jump target: 0x%x\n", pc, target);
-      labidx_t mirlabel = GetorCreateLabelofPc(target);
+      labidx_t mirlabel;
+      if (op == JSOP_GOSUB || op == JSOP_FINALLY)
+        mirlabel = GetorCreateLabelofPc(target, "f@");
+      else
+        mirlabel = GetorCreateLabelofPc(target);
       label_map_[target] = mirlabel;
     }
 
@@ -2671,9 +2650,6 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         break;
         }
       case JSOP_EXCEPTION: /*118, 1, 0, 1*/  {
-        BaseNode* handler = MP_NEW(mp_, StmtNode(OP_handler));
-        jsbuilder_->AddStmtInCurrentFunctionBody(handler);
-          
         BaseNode *rr = jsbuilder_->CreateExprRegread(PTY_dynany, -SREG_thrownval);
         Push(rr);
         break; 
