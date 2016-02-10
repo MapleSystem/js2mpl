@@ -1,5 +1,6 @@
 include ../Makefile.in
 
+currdir = $(CURDIR)
 JS2MPLDIR = $(CURDIR)/..
 MAPLEROOT = $(JS2MPLDIR)/..
 MAPLEALL = $(MAPLEROOT)/mapleall
@@ -16,6 +17,7 @@ GEN_CMPL=$(MAPLEALL)/build/maplevm/cmpl-v1/gencmpl-v1
 PRINT_CMPL=$(MAPLEALL)/build/maplevm/cmpl-v1/printcmpl-v1
 VM_CMPL=$(MAPLEALL)/build/maplevm/compact/jsvm-cmpl-v1
 GEN_CMPL_V2=$(MAPLEALL)/build/maplevm/cmpl/gencmpl
+VM_CMPL_V2=$(MAPLEALL)/build/maplevm/jsvm-cmpl/jsvm-cmpl
 PRINT_CMPL_V2=$(MAPLEALL)/build/maplevm/cmpl/printcmpl
 MEM_PROFILER_CMPL=./get-mem-usage.sh
 js2mpl=../build/js2mpl
@@ -49,6 +51,7 @@ all: DIRECTORIES
 	@echo "= test single case: make foo will test foo.js          ="
 	@echo "=                   make foo.p will test plugin foo.js ="
 	@echo "========================================================"
+	echo $(currdir)
 
 .PHONY: clean
 vpath %.js $(SRCDIR) $(PLUGINDIR) $(REQDIR)
@@ -81,21 +84,26 @@ tt:
 	cp $(BUILD)/$*.cmpl $(BUILD)/$*.cmpl.v1
 	@#@echo test cmpl print
 	@#$(PRINT_CMPL) $(BUILD)/$*.cmpl
+	@echo "\n====================== interpreter32 ===================\n"
 	@echo "(cd $(BUILD); gdb --args ../$(mapleinterpreter) $*.mmpl)"
-	@#$(MAPLEINTERPRETER) $(BUILD)/$*.mmpl
 	(cd $(BUILD); $(MAPLEINTERPRETER) $*.mmpl)
 	@echo "(cd $(BUILD); gdb --args ../$(mapleinterpreter) $*.mmpl)"
+	@echo "\n====================== jsvm-cmpl-v1  ===================\n"
 	@echo to debug compact-vm, set DEBUG=1 when "make compact-vm"
 	@echo "(cd $(BUILD); gdb --args $(VM_CMPL) $*.cmpl)"
-	@#$(VM_CMPL) $(BUILD)/$*.cmpl
 	(cd $(BUILD); $(VM_CMPL) $*.cmpl)
 	@echo "(cd $(BUILD); gdb --args $(VM_CMPL) $*.cmpl)"
+	@echo convert mmpl to cmpl-v2
+	@$(GEN_CMPL_V2) $(BUILD)/$*.mmpl
+	cp $(BUILD)/$*.cmpl $(BUILD)/$*.cmpl.v2
+	@#$(PRINT_CMPL_V2) $(BUILD)/$*.cmpl
+	@echo "\n====================== jsvm-cmpl-v2  ===================\n"
+	@echo "(cd $(BUILD); gdb --args $(VM_CMPL_V2) $*.cmpl)"
+	@#(cd $(BUILD); $(currdir)/timeout.sh -t 1 -i 1 -d 0 $(VM_CMPL_V2) $*.cmpl)
+	(cd $(BUILD); $(VM_CMPL_V2) $*.cmpl)
+	@echo "(cd $(BUILD); gdb --args $(VM_CMPL_V2) $*.cmpl)"
 	@echo profile memory usage of compact-vm for the app
 	$(MEM_PROFILER_CMPL) $(BUILD)/$*.cmpl
-	@echo convert mmpl to cmpl-v2
-	@#$(GEN_CMPL_V2) $(BUILD)/$*.mmpl
-	(cd $(BUILD); $(GEN_CMPL_V2) $*.mmpl)
-	cp $(BUILD)/$*.cmpl $(BUILD)/$*.cmpl.v2
 	@echo ""
 
 %.p : %.js $(REQ) $(JS2MPL) $(BE) $(MAPLEINTERPRETER) DIRECTORIES
