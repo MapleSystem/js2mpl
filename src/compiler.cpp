@@ -145,7 +145,7 @@ BaseNode *JSCompiler::CompileOpConstValue(uint32_t jsvalue_tag, int32_t payload)
   PrimType pty;
   switch (jsvalue_tag) {
    case JSTYPE_NUMBER:
-     pty = PTY_dyni32; break;
+     pty = PTY_i32; break;
    case JSTYPE_UNDEFINED:
      pty = PTY_dynundef; break;
    case JSTYPE_NULL:
@@ -158,7 +158,11 @@ BaseNode *JSCompiler::CompileOpConstValue(uint32_t jsvalue_tag, int32_t payload)
      assert(false && "NIY");
      break;
   }
-  int64_t val = (int64_t)((uint64_t)(uint32_t)jsvalue_tag << 32 | (uint64_t)(uint32_t)payload);
+  int64_t val;
+  if (pty == PTY_i32)
+    val = (uint64_t)(uint32_t)payload;
+  else
+  val = (int64_t)((uint64_t)(uint32_t)jsvalue_tag << 32 | (uint64_t)(uint32_t)payload);
   return jsbuilder_->CreateIntConst(val, pty);
 }
 
