@@ -83,7 +83,7 @@ tt:
 	$(GEN_CMPL) $(BUILD)/$*.mmpl
 	cp $(BUILD)/$*.cmpl $(BUILD)/$*.cmpl.v1
 	@#@echo test cmpl print
-	@#$(PRINT_CMPL) $(BUILD)/$*.cmpl
+	$(PRINT_CMPL) $(BUILD)/$*.cmpl > $(BUILD)/$*.mpl.v1
 	@echo "\n====================== interpreter32 ===================\n"
 	@echo "(cd $(BUILD); gdb --args ../$(mapleinterpreter) $*.mmpl)"
 	(cd $(BUILD); $(MAPLEINTERPRETER) $*.mmpl)
@@ -96,7 +96,7 @@ tt:
 	@echo convert mmpl to cmpl-v2
 	@$(GEN_CMPL_V2) $(BUILD)/$*.mmpl
 	cp $(BUILD)/$*.cmpl $(BUILD)/$*.cmpl.v2
-	@#$(PRINT_CMPL_V2) $(BUILD)/$*.cmpl
+	$(PRINT_CMPL_V2) $(BUILD)/$*.cmpl > $(BUILD)/$*.mpl.v2
 	@echo "\n====================== jsvm-cmpl-v2  ===================\n"
 	@echo "(cd $(BUILD); gdb --args $(VM_CMPL_V2) $*.cmpl)"
 	@#(cd $(BUILD); $(currdir)/timeout.sh -t 1 -i 1 -d 0 $(VM_CMPL_V2) $*.cmpl)
