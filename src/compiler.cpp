@@ -520,7 +520,10 @@ base_node_t *JSCompiler::CompileOpCall(uint32_t argc) {
 
     stmt = jsbuilder_->CreateStmtCall(puidx, args);
   } else if (funcname && IsCCall(funcname)) {
-    for (int32_t i = argc - 1; i >=0; i--)
+    args.push_back(argsvec[argc-1]);
+    BaseNode *argc_node = jsbuilder_->GetConstUInt32((uint32_t)argc-1);
+    args.push_back(argc_node);
+    for (int32_t i = argc - 2; i >=0; i--)
       args.push_back(argsvec[i]);
 
     stmt = jsbuilder_->CreateStmtIntrinsicCallN(INTRN_JSOP_CCALL, args);
