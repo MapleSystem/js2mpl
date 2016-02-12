@@ -39,4 +39,8 @@ function testcase() {
             delete this.x_12_14_13;
         }
     }
-testcase();
+var vres = testcase();
+// print(vres);
+if (vres !== true) {
+  $ERROR("expect true");
+}
