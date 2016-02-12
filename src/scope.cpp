@@ -283,6 +283,9 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
                                      << " == (u" << use << ", d" << def << ")==>"
                                      << stackDepth+inc << endl;
         stackDepth += inc;
+        if(stackDepth < 0) {
+          assert(false && "the spidermonkey emitted bytecode has issue in operator stack");
+        }
       }
 
       lastOp = op;
