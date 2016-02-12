@@ -30,13 +30,13 @@ class JSCompiler{
   std::map<jsbytecode *, labidx_t> label_map_;
   std::map<labidx_t, MIRSymbol *> label_tempvar_map_;
 
-  std::map<const jschar *, BaseNode *> jsstring_map_;
+  std::map<const jschar *, base_node_t *> jsstring_map_;
 
   std::stack<std::pair<JSScript *, JSMIRFunction *>> scriptstack_;
 
   MemPool *mp_;
   mapleir::MIRModule *module_;
-  BaseNode *dummyNode;
+  base_node_t *dummyNode;
 
   uint32_t anon_func_no_;
   uint32_t temp_var_no_;
@@ -71,20 +71,20 @@ class JSCompiler{
       closure_(closure),
       opstack_(opstack){}
 
-  void Push(BaseNode *node) { opstack_->Push(node); }
-  BaseNode *Pop() {
-    BaseNode *bn = static_cast <BaseNode *>(opstack_->Pop());
+  void Push(base_node_t *node) { opstack_->Push(node); }
+  base_node_t *Pop() {
+    base_node_t *bn = static_cast <base_node_t *>(opstack_->Pop());
     assert(bn);
     return bn;
   }
 
-  BaseNode *Top() {
-    BaseNode *bn = static_cast <BaseNode *>(opstack_->Top());
+  base_node_t *Top() {
+    base_node_t *bn = static_cast <base_node_t *>(opstack_->Top());
     assert(bn);
     return bn;
   }
-  BaseNode *GetOpAt(uint32_t n) {
-    BaseNode *bn = static_cast <BaseNode *>(opstack_->GetOpAt(n));
+  base_node_t *GetOpAt(uint32_t n) {
+    base_node_t *bn = static_cast <base_node_t *>(opstack_->GetOpAt(n));
     assert(bn);
     return bn;
   }
@@ -108,86 +108,86 @@ class JSCompiler{
 
   void Init();
   void EnvInit(JSMIRFunction *func);
-  void SetupMainFuncRet(BaseNode *rval);
+  void SetupMainFuncRet(base_node_t *rval);
   void CloseFuncBookKeeping();
   int32_t GetBuiltinMethod(uint32_t argc, bool *need_this);
   MIRSymbol *CreateTempVar(MIRType *);
   MIRSymbol *CreateTempJSValueTypeVar();
   void InitWithUndefined(bool created, MIRSymbol *var);
   uint32_t GetFieldidFromTag(uint32_t tag);
-  MIRType *DetermineTypeFromNode(BaseNode *node);
-  MIRSymbol *SymbolFromSavingInATemp(BaseNode *expr);
-  BaseNode *NodeFromSavingInATemp(BaseNode *expr);
+  MIRType *DetermineTypeFromNode(base_node_t *node);
+  MIRSymbol *SymbolFromSavingInATemp(base_node_t *expr);
+  AddrofNode *NodeFromSavingInATemp(base_node_t *expr);
   // Compile Functions.
   BaseNode *CompileOpConstValue(uint32_t jsvalue_tag, int32_t payload);
   js_builtin_id EcmaNameToId(char *name);
   int32_t GetBuiltinStringId(const jschar *chars, uint32_t length);
-  BaseNode *CompileBuiltinObject(char *name);
-  BaseNode *CompileBuiltinMethod(int32_t idx, int arg_num, bool need_this);
+  base_node_t *CompileBuiltinObject(char *name);
+  base_node_t *CompileBuiltinMethod(int32_t idx, int arg_num, bool need_this);
   uint32_t FindIntrinsicForOp(JSOp opcode);
-  BaseNode *CompileOpBinary(JSOp op, BaseNode *opnd0, BaseNode *opnd1);
-  BaseNode *CompileOpUnary(JSOp op, BaseNode *opnd);
-  BaseNode *CompileGenericN(int32_t intrin_id,
-                            MapleVector<BaseNode *> &arguments,
+  base_node_t *CompileOpBinary(JSOp op, base_node_t *opnd0, base_node_t *opnd1);
+  base_node_t *CompileOpUnary(JSOp op, base_node_t *opnd);
+  base_node_t *CompileGenericN(int32_t intrin_id,
+                            MapleVector<base_node_t *> &arguments,
                             bool is_call, bool retvalOK = false);
-  BaseNode *CompileGeneric0(int32_t intrin_id,
+  base_node_t *CompileGeneric0(int32_t intrin_id,
                             bool is_call, bool retvalOK = false);
-  BaseNode *CompileGeneric1(int32_t intrin_id, BaseNode *arg,
+  base_node_t *CompileGeneric1(int32_t intrin_id, base_node_t *arg,
                             bool is_call, bool retvalOK = false);
-  BaseNode *CompileGeneric2(int32_t intrin_id, BaseNode *arg0,
-                            BaseNode *arg1, bool is_call, bool retvalOK = false);
-  BaseNode *CompileGeneric3(int32_t intrin_id, BaseNode *arg0,
-                            BaseNode *arg1, BaseNode *arg2, bool is_call, bool retvalOK = false);
-  BaseNode *CompileGeneric4(int32_t intrin_id, BaseNode *arg0,
-                            BaseNode *arg1, BaseNode *arg2, BaseNode *arg3, bool is_call, bool retvalOK = false);
-  BaseNode *CompileOpGetProp(BaseNode *obj, JSString *name);
-  BaseNode *CompileOpCallprop(BaseNode *obj, JSAtom *atom);
-  BaseNode *CompileOpString(JSString *str);
-  BaseNode *CompileOpNewIterator(BaseNode *bn, uint8_t flags);
-  BaseNode *CompileOpIterNext(BaseNode *iterator);
-  BaseNode *CompileOpMoreIterator(BaseNode *iterator);
-  BaseNode *CompileOpGetArg(uint32_t i);
-  void CompileOpSetArg(uint32_t i, BaseNode *val);
-  BaseNode *CompileOpGetLocal(uint32_t local_no);
-  BaseNode *CompileOpSetLocal(uint32_t local_no, BaseNode *src);
-  BaseNode *CompileOpNewInit(uint32_t kind);
+  base_node_t *CompileGeneric2(int32_t intrin_id, base_node_t *arg0,
+                            base_node_t *arg1, bool is_call, bool retvalOK = false);
+  base_node_t *CompileGeneric3(int32_t intrin_id, base_node_t *arg0,
+                            base_node_t *arg1, base_node_t *arg2, bool is_call, bool retvalOK = false);
+  base_node_t *CompileGeneric4(int32_t intrin_id, base_node_t *arg0,
+                            base_node_t *arg1, base_node_t *arg2, base_node_t *arg3, bool is_call, bool retvalOK = false);
+  base_node_t *CompileOpGetProp(base_node_t *obj, JSString *name);
+  base_node_t *CompileOpCallprop(base_node_t *obj, JSAtom *atom);
+  base_node_t *CompileOpString(JSString *str);
+  base_node_t *CompileOpNewIterator(base_node_t *bn, uint8_t flags);
+  base_node_t *CompileOpIterNext(base_node_t *iterator);
+  base_node_t *CompileOpMoreIterator(base_node_t *iterator);
+  base_node_t *CompileOpGetArg(uint32_t i);
+  void CompileOpSetArg(uint32_t i, base_node_t *val);
+  base_node_t *CompileOpGetLocal(uint32_t local_no);
+  StmtNode *CompileOpSetLocal(uint32_t local_no, base_node_t *src);
+  base_node_t *CompileOpNewInit(uint32_t kind);
   BaseNode *CompileOpNewArray(uint32_t length);
-  BaseNode *CompileOpLength(BaseNode *array);
-  BaseNode *CompileOpGetElem(BaseNode *obj, BaseNode *index);
-  bool CompileOpSetElem(BaseNode *obj, BaseNode *index, BaseNode *val);
-  bool CompileOpSetProp(BaseNode *obj, JSString *name, BaseNode *val);
-  bool CompileOpInitPropGetter(BaseNode *obj, JSString *name, BaseNode *val);
-  bool CompileOpInitPropSetter(BaseNode *obj, JSString *name, BaseNode *val);
-  bool CompileOpInitElemGetter(BaseNode *obj, BaseNode *index, BaseNode *val);
-  bool CompileOpInitElemSetter(BaseNode *obj, BaseNode *index, BaseNode *val);
-  int ProcessAliasedVar(JSAtom *atom, MIRType *&env_ptr, BaseNode *&base, int &depth);
-  BaseNode *CompileOpGetAliasedVar(JSAtom *atom);
-  BaseNode *CompileOpSetAliasedVar(JSAtom *atom, BaseNode *val);
-  BaseNode *CompileOpLambda(jsbytecode *pc, JSFunction *jsfun);
-  BaseNode *CompileOpBindName(JSAtom *atom);
-  BaseNode *CompileOpCall(uint32_t argc);
-  BaseNode *CompileOpNew(uint32_t argc);
-  BaseNode *CompileOpName(JSAtom *atom, jsbytecode *pc);
-  BaseNode *CompileOpIfJump(JSOp op, BaseNode *cond, jsbytecode *pcend);
+  BaseNode *CompileOpLength(base_node_t *array);
+  base_node_t *CompileOpGetElem(base_node_t *obj, base_node_t *index);
+  bool CompileOpSetElem(base_node_t *obj, base_node_t *index, base_node_t *val);
+  bool CompileOpSetProp(base_node_t *obj, JSString *name, base_node_t *val);
+  bool CompileOpInitPropGetter(base_node_t *obj, JSString *name, base_node_t *val);
+  bool CompileOpInitPropSetter(base_node_t *obj, JSString *name, base_node_t *val);
+  bool CompileOpInitElemGetter(base_node_t *obj, base_node_t *index, base_node_t *val);
+  bool CompileOpInitElemSetter(base_node_t *obj, base_node_t *index, base_node_t *val);
+  int ProcessAliasedVar(JSAtom *atom, MIRType *&env_ptr, base_node_t *&base, int &depth);
+  base_node_t *CompileOpGetAliasedVar(JSAtom *atom);
+  base_node_t *CompileOpSetAliasedVar(JSAtom *atom, base_node_t *val);
+  base_node_t *CompileOpLambda(jsbytecode *pc, JSFunction *jsfun);
+  base_node_t *CompileOpBindName(JSAtom *atom);
+  base_node_t *CompileOpCall(uint32_t argc);
+  base_node_t *CompileOpNew(uint32_t argc);
+  base_node_t *CompileOpName(JSAtom *atom, jsbytecode *pc);
+  base_node_t *CompileOpIfJump(JSOp op, base_node_t *cond, jsbytecode *pcend);
   
   labidx_t CreateLabel(char *pref = NULL);
   labidx_t GetorCreateLabelofPc(jsbytecode *pc, char *pref = NULL);
   int64_t GetIntValue(jsbytecode *pc);
-  BaseNode *CompileOpCondSwitch(BaseNode *opnd, JSScript *script,
+  SwitchNode *CompileOpCondSwitch(base_node_t *opnd, JSScript *script,
                                 jsbytecode *pcstart, jsbytecode *pcend);
-  BaseNode *CompileOpTableSwitch(BaseNode *opnd, int32_t len,
+  SwitchNode *CompileOpTableSwitch(base_node_t *opnd, int32_t len,
                                  JSScript *script, jsbytecode *pc);
-  BaseNode *CompileOpGoto(jsbytecode *pc, jsbytecode *jumptopc, MIRSymbol *tempvar);
-  BaseNode *CompileOpGosub(jsbytecode *pc);
-  BaseNode *CompileOpTry(jsbytecode *pc);
+  GotoNode *CompileOpGoto(jsbytecode *pc, jsbytecode *jumptopc, MIRSymbol *tempvar);
+  GotoNode *CompileOpGosub(jsbytecode *pc);
+  GotoNode *CompileOpTry(jsbytecode *pc);
   BaseNode *CompileOpLoopHead(jsbytecode *pc);
-  BaseNode *CheckConvertToJSValueType(BaseNode *node);
-  BaseNode *CheckConvertToBoolean(BaseNode *node);
-  BaseNode *CheckConvertToInt32(BaseNode *node);
-  BaseNode *CheckConvertToRespectiveType(BaseNode *node, MIRType *ty);
-  bool CompileOpSetName(JSAtom *atom, BaseNode *val);
-  void CompileOpCase(jsbytecode *pc, int offset, BaseNode *rval,
-		     BaseNode *lval);
+  base_node_t *CheckConvertToJSValueType(base_node_t *node);
+  base_node_t *CheckConvertToBoolean(base_node_t *node);
+  base_node_t *CheckConvertToInt32(base_node_t *node);
+  base_node_t *CheckConvertToRespectiveType(base_node_t *node, MIRType *ty);
+  bool CompileOpSetName(JSAtom *atom, base_node_t *val);
+  void CompileOpCase(jsbytecode *pc, int offset, base_node_t *rval,
+		     base_node_t *lval);
   bool CompileOpDefFun(JSFunction *jsfun);
   bool CompileOpDefVar(JSAtom *atom);
   bool CompileScript(JSScript *script);

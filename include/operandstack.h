@@ -16,7 +16,7 @@ class OperandStack {
   std::vector<void *> stack_;
 
  public:
-  BaseNode *rval;
+  base_node_t *rval;
   bool flag_has_rval;
   bool flag_has_iter;
   bool flag_in_try_block;

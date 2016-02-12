@@ -17,7 +17,7 @@ JSMIRFunction *JSMIRBuilder::CreateJSMain() {
     SetCurrentFunction(jsmain);
   } else {
     jsmain = GetOrCreateFunction("main", GetInt32(), arguments, false);
-    BaseNode *stmt = CreateStmtIntrinsicCall0((MIRIntrinsicId)INTRN_JS_INIT_CONTEXT);
+    IntrinsiccallNode *stmt = CreateStmtIntrinsicCall0((MIRIntrinsicId)INTRN_JS_INIT_CONTEXT);
     SetCurrentFunction(jsmain);
     AddStmtInCurrentFunctionBody(stmt);
   }
@@ -122,19 +122,19 @@ JSMIRFunction *JSMIRBuilder::GetOrCreateFunction(const char *name,
   return fn;
 }
 
-void JSMIRBuilder::AddStmtInCurrentFunctionBody(BaseNode *n) {
+void JSMIRBuilder::AddStmtInCurrentFunctionBody(stmt_node_t *n) {
   MIRBuilder::AddStmtInCurrentFunctionBody(n);
   DEBUGPRINTnode(n);
 }
 
-BaseNode *JSMIRBuilder::CreateStmtReturn(BaseNode *rval, bool adj_type) {
-  BaseNode *stmt = MIRBuilder::CreateStmtReturn(rval);
+NaryStmtNode *JSMIRBuilder::CreateStmtReturn(base_node_t *rval, bool adj_type) {
+  NaryStmtNode *stmt = MIRBuilder::CreateStmtReturn(rval);
   AddStmtInCurrentFunctionBody(stmt);
 
   JSMIRFunction *func = GetCurrentFunction();
   if (adj_type && !IsMain(func) && rval->op == OP_dread) {
     DEBUGPRINTsv2("modify _return_type", (rval->op));
-    DreadNode *dn = (DreadNode *)rval;
+    AddrofNode *dn = (AddrofNode *)rval;
     stidx_t stidx = dn->stidx;
     MIRSymbol *var;
     if (dn->islocal) {
@@ -177,33 +177,25 @@ void JSMIRBuilder::UpdateFunction(JSMIRFunction *func,
 void JSMIRBuilder::SaveReturnValue(MIRSymbol *var) {
   DEBUGPRINT4("in SaveReturnValue")
 
-  BaseNode *bn = CreateExprRegread(module_->type_table_[var->GetTyIdx()]->GetPrimType(), -SREG_retval0);
-  BaseNode *stmt = CreateStmtDassign(var, 0, bn);
+  base_node_t *bn = CreateExprRegread(module_->type_table_[var->GetTyIdx()]->GetPrimType(), -SREG_retval0);
+  StmtNode *stmt = CreateStmtDassign(var, 0, bn);
   MIRBuilder::AddStmtInCurrentFunctionBody(stmt);
 }
 
-BaseNode *JSMIRBuilder::CreateStmtDassign(MIRSymbol *symbol,
+StmtNode *JSMIRBuilder::CreateStmtDassign(MIRSymbol *symbol,
                                           uint32_t field_id,
-                                          BaseNode *src) {
+                                          base_node_t *src) {
   DEBUGPRINT4("in CreateStmtDassign")
 
-  BaseNode *stmt = MIRBuilder::CreateStmtDassign(symbol, field_id, src);
+  StmtNode *stmt = MIRBuilder::CreateStmtDassign(symbol, field_id, src);
   AddStmtInCurrentFunctionBody(stmt);
   return stmt;
 }
 
-BaseNode *JSMIRBuilder::CreateStmtIcall(BaseNode *puptrexp,
-                                      MapleVector<BaseNode *> args) {
-  IcallNode *stmt = module_->mp_->New<IcallNode>();
-  stmt->puptrexp = puptrexp;
-  stmt->nopnd = args;
-  return stmt;
-}
-
-BaseNode *JSMIRBuilder::CreateStmtIntrinsicCall1N(
-  MIRIntrinsicId idx, BaseNode *arg0, MapleVector<BaseNode *> &args) {
+IntrinsiccallNode *JSMIRBuilder::CreateStmtIntrinsicCall1N(
+      MIRIntrinsicId idx, base_node_t *arg0, MapleVector<base_node_t *> &args) {
   IntrinsiccallNode *stmt = module_->mp_->New<IntrinsiccallNode>();
-  MapleVector<BaseNode *> arguments(module_->mp_allocator_.Adapter());
+  MapleVector<base_node_t *> arguments(module_->mp_allocator_.Adapter());
   arguments.push_back(arg0);
   for (int i=0; i<args.size(); i++)
     arguments.push_back(args[i]);

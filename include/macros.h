@@ -58,7 +58,7 @@
   if (js2mplDebug > 1) { \
     PrintIndentation(js2mplDebugIndent);\
     std::cout << "  >> node: "; \
-    node->Print(0);\
+    static_cast<StmtNode *>(node)->Print(0);\
     DEBUGPRINT0;\
   } \
 } while(0);

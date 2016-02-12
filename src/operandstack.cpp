@@ -9,10 +9,10 @@ namespace mapleir {
 void OperandStack::ReplaceStackItemsWithTemps(JSCompiler *compiler,
                                               MIRSymbol *var) {
   for (unsigned i = 0; i < current_depth_; i++) {
-    BaseNode *cur = (BaseNode *) stack_[i];
+    base_node_t *cur = (base_node_t *)stack_[i];
     if (cur == NULL)
       continue;
-    if (cur->FindSymbol(var))
+    if (GenericFindSymbol(cur, var))
       stack_[i] = (void *) compiler->NodeFromSavingInATemp(cur);
   }
 }
