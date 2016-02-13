@@ -79,29 +79,33 @@ tt:
 	@echo gdb --args $(js2mpl) $(build)/$*.js $(OPT)
 	@echo gdb --args $(be) $(build)/$*.mpl
 	$(BE) $(BUILD)/$*.mpl > $(BUILD)/$*.log
+	@echo "\n====================== interpreter32 ==================="
+	@echo "(cd $(BUILD); gdb --args ../$(mapleinterpreter) $*.mmpl)"
+	(cd $(BUILD); $(MAPLEINTERPRETER) $*.mmpl)
+	@echo "(cd $(BUILD); gdb --args ../$(mapleinterpreter) $*.mmpl)"
+	@echo "========================================================\n"
 	@echo convert mmpl to cmpl
 	$(GEN_CMPL) $(BUILD)/$*.mmpl
 	cp $(BUILD)/$*.cmpl $(BUILD)/$*.cmpl.v1
 	@#@echo test cmpl print
 	$(PRINT_CMPL) $(BUILD)/$*.cmpl > $(BUILD)/$*.mpl.v1
-	@echo "\n====================== interpreter32 ===================\n"
-	@echo "(cd $(BUILD); gdb --args ../$(mapleinterpreter) $*.mmpl)"
-	(cd $(BUILD); $(MAPLEINTERPRETER) $*.mmpl)
-	@echo "(cd $(BUILD); gdb --args ../$(mapleinterpreter) $*.mmpl)"
-	@echo "\n====================== jsvm-cmpl-v1  ===================\n"
+	@echo "\n====================== jsvm-cmpl-v1  ==================="
 	@echo to debug compact-vm, set DEBUG=1 when "make compact-vm"
 	@echo "(cd $(BUILD); gdb --args $(VM_CMPL) $*.cmpl)"
 	(cd $(BUILD); $(VM_CMPL) $*.cmpl)
 	@echo "(cd $(BUILD); gdb --args $(VM_CMPL) $*.cmpl)"
+	@echo "========================================================\n"
 	@echo convert mmpl to cmpl-v2
 	@$(GEN_CMPL_V2) $(BUILD)/$*.mmpl
 	cp $(BUILD)/$*.cmpl $(BUILD)/$*.cmpl.v2
 	$(PRINT_CMPL_V2) $(BUILD)/$*.cmpl > $(BUILD)/$*.mpl.v2
-	@echo "\n====================== jsvm-cmpl-v2  ===================\n"
+	@echo "\n====================== jsvm-cmpl-v2  ==================="
 	@echo "(cd $(BUILD); gdb --args $(VM_CMPL_V2) $*.cmpl)"
 	@#(cd $(BUILD); $(currdir)/timeout.sh -t 1 -i 1 -d 0 $(VM_CMPL_V2) $*.cmpl)
 	(cd $(BUILD); $(VM_CMPL_V2) $*.cmpl)
 	@echo "(cd $(BUILD); gdb --args $(VM_CMPL_V2) $*.cmpl)"
+	@echo "========================================================\n"
+	@echo convert mmpl to cmpl-v2
 	@echo profile memory usage of compact-vm for the app
 	$(MEM_PROFILER_CMPL) $(BUILD)/$*.cmpl
 	@echo ""
