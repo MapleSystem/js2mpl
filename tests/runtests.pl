@@ -229,14 +229,14 @@ while( ($srcdir = readdir(DIR))){
       foreach $i (@pluginfiles) {
         system("cp $i.v2 $i");
       }
-      #$res = system("cd $tempdir; $pwd/timeout.sh -t 1 -i 1 -d 0 $pwd/../../mapleall/build/maplevm/compact/jsvm-cmpl $cmpl_file >> $tempdir/$log_file");
-      #if ($res > 0) {
-      #  print " ==jsvm-cmpl-v2===> $file\n";
-      #  $countrunCMPLv2 ++;
-      #  push(@failed_jsvm_cmpl_v2_file, $file);
-      #  $flag ++;
-      #  next;
-      #}
+      $res = system("cd $tempdir; $pwd/timeout.sh -t 1 -i 1 -d 0 $pwd/../../mapleall/build/maplevm/jsvm-cmpl/jsvm-cmpl $cmpl_file >> $tempdir/$log_file");
+      if ($res > 0) {
+        print " ==jsvm-cmpl-v2===> $file\n";
+        $countrunCMPLv2 ++;
+        push(@failed_jsvm_cmpl_v2_file, $file);
+        $flag ++;
+        next;
+      }
       # plugins have to be run in the local directory at moment due to the lacking of search path for required
       #$res = system("$pwd/../../mapleall/build/maplevm/interpreter32 $tempdir/$mmpl_file > $tempdir/$out_file");
       $res = system("cd $tempdir; $pwd/../../mapleall/build/maplevm/interpreter32 $mmpl_file > $tempdir/$out_file");
