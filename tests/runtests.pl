@@ -278,13 +278,16 @@ if ((scalar(@failed_mpl_file) + scalar(@failed_mmpl_file) + scalar(@failed_int_f
   print("\n all $count tests passed\n");
   print("======================================================\n");
 } else {
-  my $countFailed = $countMPL + $countMMPL + $countINT + $countrunCMPL;
+  my $countFailed = $countMPL + $countMMPL + $countINT + $countrunCMPL +
+                    $countgenCMPL + $countgenCMPLv2 + $countrunCMPLv2;
   my $countPassed = $count - $countFailed;
   if(scalar(@successed_file) > 0) {
     print "\n=========================\npassed $countPassed tests:\n\n";
     foreach $successed (@successed_file) {
       print $successed."\n";
     }
+    print "=========================\n";
+    print "    passed $countPassed tests\n";
     print "=========================\n";
   }
   print "\n=========================\nfailed $countFailed tests:\n\n";
