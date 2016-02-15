@@ -16,8 +16,8 @@ DEPS :=$(foreach dep, $(DEP), $(BUILD)/$(dep))
 
 MOZSRC=$(MAPLEROOT)/mozjs/mozjs-31.2.0
 MOZBUILD=$(MAPLEROOT)/mozjs/mozjs-build
-MAPLELIB=$(MAPLEALL)/build/mapleir/libmpldev.a
-MPLIB=$(MAPLEALL)/build/Mempool/libmempooldev.a
+MAPLELIB=$(MAPLEALL)/build/mapleir/libmpl.a
+MPLIB=$(MAPLEALL)/build/Mempool/libmempool.a
 LIBS=-L $(MOZBUILD)/dist/lib -ljs_static -lpthread -ldl
 #LIBS=-L $(MOZBUILD)/dist/lib -ljs_static -lz -lpthread -ldl
 

@@ -238,8 +238,8 @@ while( ($srcdir = readdir(DIR))){
         next;
       }
       # plugins have to be run in the local directory at moment due to the lacking of search path for required
-      #$res = system("$pwd/../../mapleall/build/maplevm/interpreter32 $tempdir/$mmpl_file > $tempdir/$out_file");
-      $res = system("cd $tempdir; $pwd/../../mapleall/build/maplevm/interpreter32 $mmpl_file > $tempdir/$out_file");
+      #$res = system("$pwd/../../mapleall/build/maplevm/interpreter $tempdir/$mmpl_file > $tempdir/$out_file");
+      $res = system("cd $tempdir; $pwd/../../mapleall/build/maplevm/interpreter $mmpl_file > $tempdir/$out_file");
       system("grep failed $tempdir/$out_file > $tempdir/$err_file");
       my $errfile = "$tempdir/$err_file";
       my $size = -s $errfile;
@@ -249,7 +249,7 @@ while( ($srcdir = readdir(DIR))){
         print "\n!!warning: string \"failed\" is emited from interpreter. please check the test case $js_file.\n";
       }
       if ($res > 0) {
-        print " ==interpreter32===> $file\n";
+        print " ==interpreter===> $file\n";
         $countINT ++;
         push(@failed_int_file, $file);
         $flag ++;

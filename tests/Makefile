@@ -12,7 +12,7 @@ required = output/required
 
 JS2MPL=$(JS2MPLDIR)/build/js2mpl
 BE = $(MAPLEALL)/build/maplebe/be/mplbe
-MAPLEINTERPRETER=$(MAPLEALL)/build/maplevm/interpreter32
+MAPLEINTERPRETER=$(MAPLEALL)/build/maplevm/interpreter
 GEN_CMPL=$(MAPLEALL)/build/maplevm/cmpl-v1/gencmpl-v1
 PRINT_CMPL=$(MAPLEALL)/build/maplevm/cmpl-v1/printcmpl-v1
 VM_CMPL=$(MAPLEALL)/build/maplevm/compact/jsvm-cmpl-v1
@@ -21,8 +21,6 @@ VM_CMPL_V2=$(MAPLEALL)/build/maplevm/jsvm-cmpl/jsvm-cmpl
 PRINT_CMPL_V2=$(MAPLEALL)/build/maplevm/cmpl/printcmpl
 MEM_PROFILER_CMPL=./get-mem-usage.sh
 js2mpl=../build/js2mpl
-be = ../../mapleall/build/maplebe/be/mplbe
-mapleinterpreter=../../mapleall/build/maplevm/interpreter32
 
 PLUGINDIR=todo-tests/plugin regression-tests/plugin
 REQDIR=todo-tests/plugin/required regression-tests/plugin/required
@@ -77,12 +75,12 @@ tt:
 	@echo gdb --args $(js2mpl) $(build)/$*.js $(OPT)
 	$(JS2MPL) $(BUILD)/$*.js $(OPT)
 	@echo gdb --args $(js2mpl) $(build)/$*.js $(OPT)
-	@echo gdb --args $(be) $(build)/$*.mpl
+	@echo gdb --args $(BE) $(build)/$*.mpl
 	$(BE) $(BUILD)/$*.mpl > $(BUILD)/$*.log
-	@echo "\n====================== interpreter32 ==================="
-	@echo "(cd $(BUILD); gdb --args ../$(mapleinterpreter) $*.mmpl)"
+	@echo "\n====================== interpreter ==================="
+	@echo "(cd $(BUILD); gdb --args $(MAPLEINTERPRETER) $*.mmpl)"
 	(cd $(BUILD); $(MAPLEINTERPRETER) $*.mmpl)
-	@echo "(cd $(BUILD); gdb --args ../$(mapleinterpreter) $*.mmpl)"
+	@echo "(cd $(BUILD); gdb --args $(MAPLEINTERPRETER) $*.mmpl)"
 	@echo "========================================================\n"
 	@echo convert mmpl to cmpl
 	$(GEN_CMPL) $(BUILD)/$*.mmpl
@@ -116,16 +114,16 @@ tt:
 	@echo gdb --args $(js2mpl) $(build)/$*.js $(OPT)
 	$(JS2MPL) $(BUILD)/$*.js $(OPT)
 	@echo gdb --args $(js2mpl) $(build)/$*.js $(OPT)
-	@echo gdb --args $(be) $(build)/$*.mpl
+	@echo gdb --args $(BE) $(build)/$*.mpl
 	$(BE) $(BUILD)/$*.mpl > $(BUILD)/$*.log
 	@echo convert mmpl to cmpl
 	$(GEN_CMPL) $(BUILD)/$*.mmpl
 	cp $(BUILD)/$*.cmpl $(BUILD)/$*.cmpl.v1
 	@#@echo test cmpl print
 	@#$(PRINT_CMPL) $(BUILD)/$*.cmpl
-	echo "(cd $(BUILD); gdb --args ../$(mapleinterpreter) $*.mmpl)"
+	echo "(cd $(BUILD); gdb --args $(MAPLEINTERPRETER) $*.mmpl)"
 	(cd $(BUILD); $(MAPLEINTERPRETER) $*.mmpl)
-	echo "(cd $(BUILD); gdb --args ../$(mapleinterpreter) $*.mmpl)"
+	echo "(cd $(BUILD); gdb --args $(MAPLEINTERPRETER) $*.mmpl)"
 	@echo to debug compact-vm, set DEBUG=1 when "make compact-vm"
 	@echo "(cd $(BUILD); gdb --args $(VM_CMPL) $*.cmpl)"
 	(cd $(BUILD); $(VM_CMPL) $*.cmpl)
@@ -143,16 +141,16 @@ tt:
 	@echo gdb --args $(js2mpl) $(required)/$*.js -plungin
 	$(JS2MPL) $(required)/$*.js -plugin
 	@echo gdb --args $(js2mpl) $(required)/$*.js -plungin
-	@echo gdb --args $(be) $(required)/$*.mpl
+	@echo gdb --args $(BE) $(required)/$*.mpl
 	$(BE) $(REQUIRED)/$*.mpl > $(REQUIRED)/$*.log
 	@echo convert mmpl to cmpl
 	$(GEN_CMPL) $(REQUIRED)/$*.mmpl
 	cp $(REQUIRED)/$*.cmpl $(REQUIRED)/$*.cmpl.v1
 	@#@echo test cmpl print
 	@#$(PRINT_CMPL) $(REQUIRED)/$*.cmpl
-	@#@echo "(cd $(REQUIRED); gdb --args $(mapleinterpreter) $*.mmpl)"
+	@#@echo "(cd $(REQUIRED); gdb --args $(MAPLEINTERPRETER) $*.mmpl)"
 	@#(cd $(REQUIRED); $(MAPLEINTERPRETER) $*.mmpl)
-	@#@echo "(cd $(REQUIRED); gdb --args $(mapleinterpreter) $*.mmpl)"
+	@#@echo "(cd $(REQUIRED); gdb --args $(MAPLEINTERPRETER) $*.mmpl)"
 	@#@echo to debug compact-vm, set DEBUG=1 when "make compact-vm"
 	@#@echo "(cd $(REQUIRED); gdb --args $(VM_CMPL) $*.cmpl)"
 	@#(cd $(REQUIRED); $(VM_CMPL) $*.cmpl)
