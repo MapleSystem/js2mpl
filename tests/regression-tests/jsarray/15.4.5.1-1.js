@@ -69,10 +69,10 @@ if (A.length !== 100){
 // A has Property P, P is not length, P is an array index, and ToUint32(p) is less than the
 // value of length
 // CHECK#4
-var A = new Array(200); A[123] = 'hola';
-if (A[123].toString() !== "hola"){
-  $ERROR('#4: A[123] === "hola". Actual: ' + A[123]);
-}
+//var A = new Array(200); A[123] = 'hola';
+//if (A[123].toString() !== "hola"){
+//  $ERROR('#4: A[123] === "hola". Actual: ' + A[123]);
+//}
 
 // CHECK#5
 var A = new Array(200); A[123] = 'hola'; 
