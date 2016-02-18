@@ -229,7 +229,7 @@ while( ($srcdir = readdir(DIR))){
       foreach $i (@pluginfiles) {
         system("cp $i.v2 $i");
       }
-      $res = system("cd $tempdir; $pwd/timeout.sh -t 1 -i 1 -d 0 $pwd/../../mapleall/build/maplevm//jsvm-cmpl/jsvm-cmpl $cmpl_file >> $tempdir/$log_file");
+      $res = system("cd $tempdir; $pwd/timeout.sh -t 1 -i 1 -d 0 $pwd/../../mapleall/build/maplevm//jsvm-cmpl/jsvm-cmpl-v2 $cmpl_file >> $tempdir/$log_file");
       if ($res > 0) {
         print " ==jsvm-cmpl-v2===> $file\n";
         $countrunCMPLv2 ++;
