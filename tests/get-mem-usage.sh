@@ -8,13 +8,19 @@
 #
 # default source repository path
 
-if [ $# -ne 1 ]
+if [ $# -ne 2 ]
 then
-  echo "Using $0 [app_name.cmpl]"
+  echo "Using $0 [jsvm_path app_name.cmpl]"
   exit 1
 fi
 
-APP_CMPL=$1
+JSVM_CMPL=$1
+if [ ! -f $JSVM_CMPL ]; then
+  echo "$JSVM_CMPL doens't exist!"
+  exit 1
+fi
+
+APP_CMPL=$2
 if [ ! -f $APP_CMPL ]; then
   echo "$APP_CMPL doens't exist!"
   exit 1
@@ -22,14 +28,6 @@ fi
 
 APP_PATH=$(dirname $APP_CMPL)
 APP_NAME=$(basename $APP_CMPL)
-
-# here assume the script is under js2mpl-vm/tests
-JSVM_CMPL=../../mapleall/build/maplevm/compact/jsvm-cmpl-v1
-
-if [ ! -f $JSVM_CMPL ]; then 
-  echo "$JSVM_CMPL doesn't exist!"
-  exit 1
-fi
 
 MASSIF_OUT=$APP_PATH/massif.out.$APP_NAME
 APP_OUT=$APP_PATH/app.out.$APP_NAME
@@ -64,7 +62,8 @@ done
 echo "================================================================="
 echo "  summary of memory usage information for MapleJS compact VM"
 echo "================================================================="
-echo "application name:                     $APP_CMPL"
+echo "jsvm:         $JSVM_CMPL"
+echo "application:  $APP_CMPL"
 echo "cmpl size:                            $binmir_size Bytes"
 echo "maximum app heap RAM usage:           $app_heap_size Bytes"
 echo "maximum vm RAM usage:                 $vm_mem_size Bytes"

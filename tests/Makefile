@@ -96,7 +96,7 @@ tt:
 	@echo convert mmpl to cmpl-v2
 	@$(GEN_CMPL_V2) $(BUILD)/$*.mmpl
 	cp $(BUILD)/$*.cmpl $(BUILD)/$*.cmpl.v2
-	$(PRINT_CMPL_V2) $(BUILD)/$*.cmpl > $(BUILD)/$*.mpl.v2
+	$(PRINT_CMPL_V2) $(BUILD)/$*.cmpl > $(BUILD)/$*.mmpl.v2
 	@echo "\n====================== jsvm-cmpl-v2  ==================="
 	@echo "(cd $(BUILD); gdb --args $(VM_CMPL_V2) $*.cmpl)"
 	@#(cd $(BUILD); $(currdir)/timeout.sh -t 1 -i 1 -d 0 $(VM_CMPL_V2) $*.cmpl)
@@ -105,7 +105,7 @@ tt:
 	@echo "========================================================\n"
 	@echo convert mmpl to cmpl-v2
 	@echo profile memory usage of compact-vm for the app
-	$(MEM_PROFILER_CMPL) $(BUILD)/$*.cmpl
+	$(MEM_PROFILER_CMPL) $(VM_CMPL_V2) $(BUILD)/$*.cmpl
 	@echo ""
 
 %.p : %.js $(REQ) $(JS2MPL) $(BE) $(MAPLEINTERPRETER) DIRECTORIES
@@ -129,7 +129,7 @@ tt:
 	(cd $(BUILD); $(VM_CMPL) $*.cmpl)
 	@echo "(cd $(BUILD); gdb --args $(VM_CMPL) $*.cmpl)"
 	@echo profile memory usage of compact-vm for the app
-	$(MEM_PROFILER_CMPL) $(BUILD)/$*.cmpl
+	$(MEM_PROFILER_CMPL) $(VM_CMPL) $(BUILD)/$*.cmpl
 	@echo convert mmpl to cmpl-v2
 	$(GEN_CMPL_V2) $(BUILD)/$*.mmpl
 	cp $(BUILD)/$*.cmpl $(BUILD)/$*.cmpl.v2
@@ -155,8 +155,8 @@ tt:
 	@#@echo "(cd $(REQUIRED); gdb --args $(VM_CMPL) $*.cmpl)"
 	@#(cd $(REQUIRED); $(VM_CMPL) $*.cmpl)
 	@#@echo "(cd $(REQUIRED); gdb --args $(VM_CMPL) $*.cmpl)"
-	@echo profile memory usage of compact-vm for the app
-	$(MEM_PROFILER_CMPL) $(REQUIRED)/$*.cmpl
+	@#echo profile memory usage of compact-vm for the app
+	@#$(MEM_PROFILER_CMPL) $(REQUIRED)/$*.cmpl
 	@echo convert mmpl to cmpl-v2
 	$(GEN_CMPL_V2) $(REQUIRED)/$*.mmpl
 	cp $(REQUIRED)/$*.cmpl $(REQUIRED)/$*.cmpl.v2
