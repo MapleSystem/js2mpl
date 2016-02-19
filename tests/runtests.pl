@@ -113,10 +113,10 @@ foreach $srcdir (@required) {
         $flag ++;
         next;
       }
-      #$res = system("$pwd/../../mapleall/build/maplebe/be/mplbe-c $plugindir/$mpl_file >> $plugindir/$log_file");
       $res = system("$pwd/../../mapleall/build/maplevm/cmpl/mmpl2cmpl $plugindir/$mmpl_file >> $plugindir/$log_file");
       if ($res > 0) {
-        print " ==mplbe-c===> $file\n";
+#print " ==mplbe-c===> $file\n";
+        print " ==mmpl2cmpl-v2===> $file\n";
         $countgenCMPLv2 ++;
         push(@failed_gencmpl_v2_file, $file);
         $flag ++;
