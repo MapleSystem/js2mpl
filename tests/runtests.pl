@@ -113,7 +113,8 @@ foreach $srcdir (@required) {
         $flag ++;
         next;
       }
-      $res = system("$pwd/../../mapleall/build/maplevm/cmpl/mmpl2cmpl $plugindir/$mmpl_file >> $plugindir/$log_file");
+#$res = system("$pwd/../../mapleall/build/maplevm/cmpl/mmpl2cmpl $plugindir/$mmpl_file >> $plugindir/$log_file");
+      $res = system("$pwd/../../mapleall/build/mapleir/mmpl2cmpl $plugindir/$mmpl_file >> $plugindir/$log_file");
       if ($res > 0) {
 #print " ==mplbe-c===> $file\n";
         print " ==mmpl2cmpl-v2===> $file\n";
