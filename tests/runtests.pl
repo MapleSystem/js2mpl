@@ -113,9 +113,9 @@ foreach $srcdir (@required) {
         $flag ++;
         next;
       }
-      $res = system("$pwd/../../mapleall/build/maplevm/cmpl/gencmpl $plugindir/$mmpl_file >> $plugindir/$log_file");
+      $res = system("$pwd/../../mapleall/build/maplebe/be/mplbe-c $plugindir/$mpl_file >> $plugindir/$log_file");
       if ($res > 0) {
-        print " ==gencmpl-v2===> $file\n";
+        print " ==mplbe-c===> $file\n";
         $countgenCMPLv2 ++;
         push(@failed_gencmpl_v2_file, $file);
         $flag ++;
@@ -209,9 +209,9 @@ while( ($srcdir = readdir(DIR))){
         $flag ++;
         next;
       }
-      $res = system("$pwd/../../mapleall/build/maplevm/cmpl/gencmpl $tempdir/$mmpl_file >> $tempdir/$log_file");
+      $res = system("$pwd/../../mapleall/build/maplebe/be/mplbe-c $tempdir/$mpl_file >> $tempdir/$log_file");
       if ($res > 0) {
-        print " ==gencmpl-v2===> $file\n";
+        print " ==mplbe-c===> $file\n";
         $countgenCMPLv2 ++;
         push(@failed_gencmpl_v2_file, $file);
         $flag ++;
