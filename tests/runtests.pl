@@ -113,7 +113,8 @@ foreach $srcdir (@required) {
         $flag ++;
         next;
       }
-      $res = system("$pwd/../../mapleall/build/maplebe/be/mplbe-c $plugindir/$mpl_file >> $plugindir/$log_file");
+      #$res = system("$pwd/../../mapleall/build/maplebe/be/mplbe-c $plugindir/$mpl_file >> $plugindir/$log_file");
+      $res = system("$pwd/../../mapleall/build/maplevm/cmpl/mmpl2cmpl $plugindir/$mmpl_file >> $plugindir/$log_file");
       if ($res > 0) {
         print " ==mplbe-c===> $file\n";
         $countgenCMPLv2 ++;
