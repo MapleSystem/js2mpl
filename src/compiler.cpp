@@ -217,21 +217,21 @@ base_node_t *JSCompiler::CompileOpBinary(JSOp opcode,
   if (mop != 0) {
     // Perf: e.g. lt u1 (cvt dyni32 i32 (intrinsicop i32 JSOP_LENGTH (dread dynany %str 0)), constval dyni32 0x400010000)
     // =====>>>> lt u1 (intrinsicop i32 JSOP_LENGTH (dread dynany %str 0), constval i32 0x400010000) ---->>
-    if (restype->GetPrimType() != PTY_dynany) {
+    if (restype->GetPrimType() != PTY_dynany && opcodeinfo.IsCompare(mop)) {
       PrimType pty0 = op0->ptyp;
       PrimType pty1 = op1->ptyp;
       if (IsPrimitiveInteger(pty0) && IsPrimitiveInteger(pty1))
-        return jsbuilder_->CreateExprBinary(mop, restype, op0, op1);
+        return jsbuilder_->CreateExprCompare(mop, restype, jsbuilder_->GetInt32(), op0, op1);
       if (IsPrimitiveInteger(pty0) && op1->op == OP_constval) {
           if (pty1 == PTY_dyni32) {
             op1->ptyp = PTY_i32;
-          return jsbuilder_->CreateExprBinary(mop, restype, op0, op1);
+          return jsbuilder_->CreateExprCompare(mop, restype, jsbuilder_->GetInt32(), op0, op1);
           }
       }
       if (IsPrimitiveInteger(pty1) && op0->op == OP_constval) {
           if (pty0 == PTY_dyni32) {
             op0->ptyp = PTY_i32;
-          return jsbuilder_->CreateExprBinary(mop, restype, op0, op1);
+          return jsbuilder_->CreateExprCompare(mop, restype, jsbuilder_->GetInt32(), op0, op1);
           }
       }
     }
