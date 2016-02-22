@@ -36,6 +36,7 @@ void JSCompiler::Init() {
   funcstack_.push(jsmain_);
   jsbuilder_->SetCurrentFunction(jsmain_);
   DEBUGPRINT2(jsmain_);
+  jsmain_->SetEntry();
 
   funcFormals = closure_->funcFormals;
 
