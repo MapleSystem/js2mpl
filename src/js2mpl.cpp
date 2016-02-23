@@ -143,6 +143,15 @@ int main(int argc, const char *argv[]) {
     exit(1);
   }
 
+  // set entryfunc_ in MIRModule
+  if (! isplugin)
+    mapleir::themodule.entryfunc_ = "main";
+  else {  // entryfunc_ is the last function generated
+    mapleir::themodule.entryfunc_ = mapleir::themodule.symtab->GetSymbolFromStidx(mapleir::themodule._function_list.back()->stidx)->GetName();
+  }
+  // set numfuncs_ in MIRModule
+  mapleir::themodule.numfuncs_ = mapleir::themodule._function_list.size();
+
   if (js2mplDebug > 0)
     mapleir::themodule.dump();
 
