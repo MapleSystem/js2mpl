@@ -749,15 +749,16 @@ base_node_t *JSCompiler::CompileOpString(JSString *str) {
   MIRAggConst *init =  MP_NEW(module_->mp_, MIRAggConst(type));
 
   uint8_t cl[4];
-  cl[0] = string_class;
+
   if (length < 256) {
     cl[1] = length;
   } else {
       string_class |= JSSTRING_LARGE;
-      cl[1] = (length & 0xff0000) >> 16;
-      cl[2] = (length & 0x00fff00) >> 8;
-      cl[3] = length & 0xff;
+      cl[1] = length & 0xff;
+      cl[2] = (length & 0x00ff00) >> 8;
+      cl[3] = (length & 0xff0000) >> 16;
   }
+  cl[0] = string_class;
   if ((string_class & JSSTRING_UNICODE) == 0) {
     uint64_t val = (uint64_t)(cl[0]);
     MIRIntConst *int_const = MP_NEW(mp_, MIRIntConst(val, unit_type));
