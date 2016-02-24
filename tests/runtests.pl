@@ -113,8 +113,8 @@ foreach $srcdir (@required) {
         $flag ++;
         next;
       }
-#$res = system("$pwd/../../mapleall/build/maplevm/cmpl/mmpl2cmpl $plugindir/$mmpl_file >> $plugindir/$log_file");
-      $res = system("$pwd/../../mapleall/build/mapleir/mmpl2cmpl $plugindir/$mmpl_file >> $plugindir/$log_file");
+#$res = system("$pwd/../../mapleall/build/mapleir/mmpl2cmpl $plugindir/$mmpl_file >> $plugindir/$log_file");
+      $res = system("$pwd/../../mapleall/build/maplebe/be/mplbe-c $plugindir/$mpl_file >> $plugindir/$log_file");
       if ($res > 0) {
 #print " ==mplbe-c===> $file\n";
         print " ==mmpl2cmpl-v2===> $file\n";
@@ -124,9 +124,9 @@ foreach $srcdir (@required) {
         next;
       }
       system("cp $plugindir/$cmpl_file $plugindir/$cmpl_file.v2");
-      $res = system("$pwd/../../mapleall/build/mapleir/printcmpl $plugindir/$cmpl_file >> $plugindir/$log_file");
+      $res = system("$pwd/../../mapleall/build/mapleir/cmpl2mmpl $plugindir/$cmpl_file >> $plugindir/$log_file");
       if ($res > 0) {
-        print " ==printcmpl-v2===> $file\n";
+        print " ==cmpl2mmpl-v2===> $file\n";
         $countprintCMPLv2 ++;
         push(@failed_printcmpl_v2_file, $file);
         $flag ++;
@@ -219,9 +219,9 @@ while( ($srcdir = readdir(DIR))){
         $flag ++;
         next;
       }
-      $res = system("$pwd/../../mapleall/build/mapleir/printcmpl $tempdir/$cmpl_file >> $tempdir/$log_file");
+      $res = system("$pwd/../../mapleall/build/mapleir/cmpl2mmpl $tempdir/$cmpl_file >> $tempdir/$log_file");
       if ($res > 0) {
-        print " ==printcmpl-v2===> $file\n";
+        print " ==cmpl2mmpl-v2===> $file\n";
         $countprintCMPLv2 ++;
         push(@failed_printcmpl_v2_file, $file);
         $flag ++;
