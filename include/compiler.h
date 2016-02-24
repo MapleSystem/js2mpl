@@ -116,7 +116,7 @@ class JSCompiler{
   void InitWithUndefined(bool created, MIRSymbol *var);
   uint32_t GetFieldidFromTag(uint32_t tag);
   MIRType *DetermineTypeFromNode(base_node_t *node);
-  MIRSymbol *SymbolFromSavingInATemp(base_node_t *expr);
+  MIRSymbol *SymbolFromSavingInATemp(base_node_t *expr, bool jsvalue_p);
   AddrofNode *NodeFromSavingInATemp(base_node_t *expr);
   // Compile Functions.
   BaseNode *CompileOpConstValue(uint32_t jsvalue_tag, int32_t payload);

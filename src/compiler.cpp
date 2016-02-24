@@ -117,11 +117,15 @@ MIRType *JSCompiler::DetermineTypeFromNode(base_node_t *node) {
 }
 
 // create a new temporary, store expr to the temporary and return the temporary
-MIRSymbol *JSCompiler::SymbolFromSavingInATemp(base_node_t *expr) {
+MIRSymbol *JSCompiler::SymbolFromSavingInATemp(base_node_t *expr, bool jsvalue_p) {
   MIRType *exprty;
-  if (expr->ptyp != PTY_agg)
+  if (jsvalue_p) {
+    exprty = jsvalue_type_;
+    expr = CheckConvertToJSValueType(expr);
+  }
+  else {
     exprty = jsbuilder_->GetPrimType(expr->ptyp);
-  else exprty = jsvalue_type_;
+  }
   MIRSymbol *temp_var = CreateTempVar(exprty);
   jsbuilder_->CreateStmtDassign(temp_var, 0, expr); 
   return temp_var;
@@ -130,7 +134,7 @@ MIRSymbol *JSCompiler::SymbolFromSavingInATemp(base_node_t *expr) {
 // create a new temporary, store expr to the temporary and return a dread node 
 // of the new temporary
 AddrofNode *JSCompiler::NodeFromSavingInATemp(base_node_t *expr) {
-  MIRSymbol *temp_var = SymbolFromSavingInATemp(expr);
+  MIRSymbol *temp_var = SymbolFromSavingInATemp(expr, false);
   return jsbuilder_->CreateExprDread(temp_var->GetType(), temp_var);
 }
 
@@ -145,7 +149,7 @@ BaseNode *JSCompiler::CompileOpConstValue(uint32_t jsvalue_tag, int32_t payload)
   PrimType pty;
   switch (jsvalue_tag) {
    case JSTYPE_NUMBER:
-     pty = PTY_dyni32; break;
+     return jsbuilder_->CreateIntConst((uint64_t)(uint32_t)payload, PTY_i32);
    case JSTYPE_UNDEFINED:
      pty = PTY_dynundef; break;
    case JSTYPE_NULL:
@@ -215,31 +219,18 @@ base_node_t *JSCompiler::CompileOpBinary(JSOp opcode,
     default: break;
   }
   if (mop != 0) {
-    // Perf: e.g. lt u1 (cvt dyni32 i32 (intrinsicop i32 JSOP_LENGTH (dread dynany %str 0)), constval dyni32 0x400010000)
-    // =====>>>> lt u1 (intrinsicop i32 JSOP_LENGTH (dread dynany %str 0), constval i32 0x400010000) ---->>
-    if (restype->GetPrimType() != PTY_dynany && opcodeinfo.IsCompare(mop)) {
-      PrimType pty0 = op0->ptyp;
-      PrimType pty1 = op1->ptyp;
-      if (IsPrimitiveInteger(pty0) && IsPrimitiveInteger(pty1))
+    if (op0->ptyp == PTY_i32 && op1->ptyp == PTY_i32) {
+      if (opcodeinfo.IsCompare(mop))
         return jsbuilder_->CreateExprCompare(mop, restype, jsbuilder_->GetInt32(), op0, op1);
-      if (IsPrimitiveInteger(pty0) && op1->op == OP_constval) {
-          if (pty1 == PTY_dyni32) {
-            op1->ptyp = PTY_i32;
-          return jsbuilder_->CreateExprCompare(mop, restype, jsbuilder_->GetInt32(), op0, op1);
-          }
-      }
-      if (IsPrimitiveInteger(pty1) && op0->op == OP_constval) {
-          if (pty0 == PTY_dyni32) {
-            op0->ptyp = PTY_i32;
-          return jsbuilder_->CreateExprCompare(mop, restype, jsbuilder_->GetInt32(), op0, op1);
-          }
-      }
+      return jsbuilder_->CreateExprBinary(mop, jsbuilder_->GetInt32(), op0, op1);
     }
+
     if (opcodeinfo.IsCompare(mop))
       return jsbuilder_->CreateExprCompare(mop, restype, jsbuilder_->GetDynany(),
            CheckConvertToJSValueType(op0), CheckConvertToJSValueType(op1));
     else return jsbuilder_->CreateExprBinary(mop, restype,
            CheckConvertToJSValueType(op0), CheckConvertToJSValueType(op1));
+
   }
 
   MIRIntrinsicId idx = (MIRIntrinsicId)FindIntrinsicForOp(opcode);
@@ -2046,7 +2037,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
           } else if (func == jsmain_) {
             SetupMainFuncRet(jsbuilder_->GetConstInt(0));  // main function always returns 0
           } else {
-            jsbuilder_->CreateStmtReturn(opstack_->rval, false);
+            jsbuilder_->CreateStmtReturn(CheckConvertToJSValueType(opstack_->rval), false);
           }
           opstack_->flag_has_rval = false;
         }
@@ -2080,7 +2071,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
           // the temp with the goto label
           // TODO should not pop from opstack_
           base_node_t *expr = Top();
-          MIRSymbol *tempvar = SymbolFromSavingInATemp(expr);
+          MIRSymbol *tempvar = SymbolFromSavingInATemp(expr, true);
           CompileOpGoto(pc, pc + offset, tempvar);
         }
         else CompileOpGoto(pc, pc + offset, NULL);
@@ -2444,7 +2435,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         break;
       }
       case JSOP_SETALIASEDVAR: /*137, 5, 1, 1*/  {
-        base_node_t *val = Pop();
+        base_node_t *val = CheckConvertToJSValueType(Pop());
         JSAtom * atom = ScopeCoordinateName(
             jscontext_->runtime()->scopeCoordinateNameCache, script, pc);
         base_node_t *bn = CompileOpSetAliasedVar(atom, val);
@@ -2510,7 +2501,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
           *newpc = pc;
 
         if (length == 0) {
-          base_node_t *arr = CompileGeneric1(INTRN_JS_NEW_ARR_LENGTH, CompileOpConstValue(JSTYPE_NUMBER, 0), true);
+          base_node_t *arr = CompileGeneric1(INTRN_JS_NEW_ARR_LENGTH, CheckConvertToJSValueType(CompileOpConstValue(JSTYPE_NUMBER, 0)), true);
           Push(arr);
           break;
         }
