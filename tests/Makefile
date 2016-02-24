@@ -16,9 +16,9 @@ MAPLEINTERPRETER=$(MAPLEALL)/build/maplevm/interpreter
 GEN_CMPL=$(MAPLEALL)/build/maplevm/cmpl-v1/gencmpl-v1
 PRINT_CMPL=$(MAPLEALL)/build/maplevm/cmpl-v1/printcmpl-v1
 VM_CMPL=$(MAPLEALL)/build/maplevm/compact/jsvm-cmpl-v1
-GEN_CMPL_V2=$(MAPLEALL)/build/maplevm/cmpl/mmpl2cmpl
-VM_CMPL_V2=$(MAPLEALL)/build/maplevm/jsvm-cmpl/jsvm-cmpl
-PRINT_CMPL_V2=$(MAPLEALL)/build/maplevm/cmpl/printcmpl
+GEN_CMPL_V2=$(MAPLEALL)/build/mapleir/mmpl2cmpl
+VM_CMPL_V2=$(MAPLEALL)/build/maplevm/jsvm-cmpl/jsvm-cmpl-v2
+PRINT_CMPL_V2=$(MAPLEALL)/build/mapleir/cmpl2mmpl
 MEM_PROFILER_CMPL=./get-mem-usage.sh
 js2mpl=../build/js2mpl
 
@@ -86,7 +86,7 @@ tt:
 	$(GEN_CMPL) $(BUILD)/$*.mmpl
 	cp $(BUILD)/$*.cmpl $(BUILD)/$*.cmpl.v1
 	@#@echo test cmpl print
-	$(PRINT_CMPL) $(BUILD)/$*.cmpl > $(BUILD)/$*.mpl.v1
+	$(PRINT_CMPL) $(BUILD)/$*.cmpl > $(BUILD)/$*.mmpl.v1
 	@echo "\n====================== jsvm-cmpl-v1  ==================="
 	@echo to debug compact-vm, set DEBUG=1 when "make compact-vm"
 	@echo "(cd $(BUILD); gdb --args $(VM_CMPL) $*.cmpl)"
