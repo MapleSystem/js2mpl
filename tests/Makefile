@@ -79,7 +79,7 @@ tt:
 	$(BE) $(BUILD)/$*.mpl > $(BUILD)/$*.log
 	@echo "\n====================== interpreter ==================="
 	@echo "(cd $(BUILD); gdb --args $(MAPLEINTERPRETER) $*.mmpl)"
-	(cd $(BUILD); $(MAPLEINTERPRETER) $*.mmpl)
+	(cd $(BUILD); time $(MAPLEINTERPRETER) $*.mmpl)
 	@echo "(cd $(BUILD); gdb --args $(MAPLEINTERPRETER) $*.mmpl)"
 	@echo "========================================================\n"
 	@echo convert mmpl to cmpl
@@ -89,19 +89,19 @@ tt:
 	$(PRINT_CMPL) $(BUILD)/$*.cmpl > $(BUILD)/$*.mmpl.v1
 	@echo "\n====================== jsvm-cmpl-v1  ==================="
 	@echo to debug compact-vm, set DEBUG=1 when "make compact-vm"
-	@echo "(cd $(BUILD); gdb --args $(VM_CMPL) $*.cmpl)"
-	(cd $(BUILD); $(VM_CMPL) $*.cmpl)
-	@echo "(cd $(BUILD); gdb --args $(VM_CMPL) $*.cmpl)"
+	@echo "(cd $(BUILD); gdb --args $(VM_CMPL) $*.cmpl.v1)"
+	(cd $(BUILD); time $(VM_CMPL) $*.cmpl.v1)
+	@echo "(cd $(BUILD); gdb --args $(VM_CMPL) $*.cmpl.v1)"
 	@echo "========================================================\n"
 	@echo convert mmpl to cmpl-v2
-	@$(GEN_CMPL_V2) $(BUILD)/$*.mmpl
+	$(GEN_CMPL_V2) $(BUILD)/$*.mmpl
 	cp $(BUILD)/$*.cmpl $(BUILD)/$*.cmpl.v2
 	$(PRINT_CMPL_V2) $(BUILD)/$*.cmpl > $(BUILD)/$*.mmpl.v2
 	@echo "\n====================== jsvm-cmpl-v2  ==================="
-	@echo "(cd $(BUILD); gdb --args $(VM_CMPL_V2) $*.cmpl)"
-	@#(cd $(BUILD); $(currdir)/timeout.sh -t 1 -i 1 -d 0 $(VM_CMPL_V2) $*.cmpl)
-	(cd $(BUILD); $(VM_CMPL_V2) $*.cmpl)
-	@echo "(cd $(BUILD); gdb --args $(VM_CMPL_V2) $*.cmpl)"
+	@echo "(cd $(BUILD); gdb --args $(VM_CMPL_V2) $*.cmpl.v2)"
+	@#(cd $(BUILD); $(currdir)/timeout.sh -t 1 -i 1 -d 0 $(VM_CMPL_V2) $*.cmpl.v2)
+	(cd $(BUILD); time $(VM_CMPL_V2) $*.cmpl.v2)
+	@echo "(cd $(BUILD); gdb --args $(VM_CMPL_V2) $*.cmpl.v2)"
 	@echo "========================================================\n"
 	@echo convert mmpl to cmpl-v2
 	@echo profile memory usage of compact-vm for the app
