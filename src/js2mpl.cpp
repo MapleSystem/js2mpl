@@ -168,6 +168,7 @@ int main(int argc, const char *argv[]) {
   streambuf *backup = cout.rdbuf();
   cout.rdbuf(mplfile.rdbuf());
   mapleir::themodule.flavor_ = mapleir::FEproduced;
+  mapleir::themodule.srclang_ = mapleir::SrcLangJS;
   mapleir::themodule.dump();  // write out generated Maple IR
   cout.rdbuf(backup);  // restore cout's buffer
   mplfile.close();
