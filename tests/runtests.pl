@@ -27,9 +27,6 @@ my @failed_mmpl_file;
 my @failed_gencmpl_file;
 my @failed_printcmpl_file;
 my @failed_jsvm_cmpl_file;
-my @failed_gencmpl_v2_file;
-my @failed_printcmpl_v2_file;
-my @failed_jsvm_cmpl_v2_file;
 my @failed_int_file;
 my @successed_file;
 chdir $dirname;
@@ -42,9 +39,6 @@ my @countMMPL = 0;
 my @countgenCMPL = 0;
 my @countprintCMPL = 0;
 my @countrunCMPL = 0;
-my @countgenCMPLv2 = 0;
-my @countprintCMPLv2 = 0;
-my @countrunCMPLv2 = 0;
 my @countINT = 0;
 
 # process plugin files first
@@ -96,39 +90,19 @@ foreach $srcdir (@required) {
         $flag ++;
         next;
       }
-      $res = system("$pwd/../../mapleall/build/maplevm/cmpl-v1/gencmpl-v1 $plugindir/$mmpl_file >> $plugindir/$log_file");
+      $res = system("$pwd/../../mapleall/build/maplebe/be/mplbe-c $plugindir/$mpl_file >> $plugindir/$log_file");
       if ($res > 0) {
-        print " ==gencmpl-v1===> $file\n";
+        print " ==mmpl2cmpl===> $file\n";
         $countgenCMPL ++;
         push(@failed_gencmpl_file, $file);
         $flag ++;
         next;
       }
-      system("cp $plugindir/$cmpl_file $plugindir/$cmpl_file.v1");
-      $res = system("$pwd/../../mapleall/build/maplevm/cmpl-v1/printcmpl-v1 $plugindir/$cmpl_file >> $plugindir/$log_file");
-      if ($res > 0) {
-        print " ==printcmpl-v1===> $file\n";
-        $countprintCMPL ++;
-        push(@failed_printcmpl_file, $file);
-        $flag ++;
-        next;
-      }
-#$res = system("$pwd/../../mapleall/build/mapleir/mmpl2cmpl $plugindir/$mmpl_file >> $plugindir/$log_file");
-      $res = system("$pwd/../../mapleall/build/maplebe/be/mplbe-c $plugindir/$mpl_file >> $plugindir/$log_file");
-      if ($res > 0) {
-#print " ==mplbe-c===> $file\n";
-        print " ==mmpl2cmpl-v2===> $file\n";
-        $countgenCMPLv2 ++;
-        push(@failed_gencmpl_v2_file, $file);
-        $flag ++;
-        next;
-      }
-      system("cp $plugindir/$cmpl_file $plugindir/$cmpl_file.v2");
       $res = system("$pwd/../../mapleall/build/mapleir/cmpl2mmpl $plugindir/$cmpl_file >> $plugindir/$log_file");
       if ($res > 0) {
-        print " ==cmpl2mmpl-v2===> $file\n";
-        $countprintCMPLv2 ++;
-        push(@failed_printcmpl_v2_file, $file);
+        print " ==cmpl2mmpl===> $file\n";
+        $countprintCMPL ++;
+        push(@failed_printcmpl_file, $file);
         $flag ++;
         next;
       }
@@ -183,59 +157,27 @@ while( ($srcdir = readdir(DIR))){
         $flag ++;
         next;
       }
-      $res = system("$pwd/../../mapleall/build/maplevm/cmpl-v1/gencmpl-v1 $tempdir/$mmpl_file >> $tempdir/$log_file");
+      $res = system("$pwd/../../mapleall/build/maplebe/be/mplbe-c $tempdir/$mpl_file >> $tempdir/$log_file");
       if ($res > 0) {
-        print " ==gencmpl-v1===> $file\n";
+        print " ==mplbe-c===> $file\n";
         $countgenCMPL ++;
         push(@failed_gencmpl_file, $file);
         $flag ++;
         next;
       }
-      $res = system("$pwd/../../mapleall/build/maplevm/cmpl-v1/printcmpl-v1 $tempdir/$cmpl_file >> $tempdir/$log_file");
+      $res = system("$pwd/../../mapleall/build/mapleir/cmpl2mmpl $tempdir/$cmpl_file >> $tempdir/$log_file");
       if ($res > 0) {
-        print " ==printcmpl-v1===> $file\n";
+        print " ==cmpl2mmpl===> $file\n";
         $countprintCMPL ++;
         push(@failed_printcmpl_file, $file);
         $flag ++;
         next;
       }
-      @pluginfiles = <$plugindir/*.cmpl>;
-      foreach $i (@pluginfiles) {
-        system("cp $i.v1 $i");
-      }
-      $res = system("cd $tempdir; $pwd/../../mapleall/build/maplevm/jsvm-cmpl-v1/jsvm-cmpl-v1 $cmpl_file >> $tempdir/$log_file");
-      if ($res > 0) {
-        print " ==jsvm-cmpl-v1===> $file\n";
-        $countrunCMPL ++;
-        push(@failed_jsvm_cmpl_file, $file);
-        $flag ++;
-        next;
-      }
-      $res = system("$pwd/../../mapleall/build/maplebe/be/mplbe-c $tempdir/$mpl_file >> $tempdir/$log_file");
-      if ($res > 0) {
-        print " ==mplbe-c===> $file\n";
-        $countgenCMPLv2 ++;
-        push(@failed_gencmpl_v2_file, $file);
-        $flag ++;
-        next;
-      }
-      $res = system("$pwd/../../mapleall/build/mapleir/cmpl2mmpl $tempdir/$cmpl_file >> $tempdir/$log_file");
-      if ($res > 0) {
-        print " ==cmpl2mmpl-v2===> $file\n";
-        $countprintCMPLv2 ++;
-        push(@failed_printcmpl_v2_file, $file);
-        $flag ++;
-        next;
-      }
-      @pluginfiles = <$plugindir/*.cmpl>;
-      foreach $i (@pluginfiles) {
-        system("cp $i.v2 $i");
-      }
       $res = system("cd $tempdir; $pwd/timeout.sh -t 1 -i 1 -d 0 $pwd/../../mapleall/build/maplevm//jsvm-cmpl/jsvm-cmpl $cmpl_file >> $tempdir/$log_file");
       if ($res > 0) {
-        print " ==jsvm-cmpl-v2===> $file\n";
-        $countrunCMPLv2 ++;
-        push(@failed_jsvm_cmpl_v2_file, $file);
+        print " ==jsvm-cmpl===> $file\n";
+        $countrunCMPL ++;
+        push(@failed_jsvm_cmpl_file, $file);
         $flag ++;
         next;
       }
@@ -275,13 +217,11 @@ while( ($srcdir = readdir(DIR))){
 closedir(DIR);
 
 if ((scalar(@failed_mpl_file) + scalar(@failed_mmpl_file) + scalar(@failed_int_file) +
-     scalar(@failed_gencmpl_file) + scalar(@failed_printcmpl_file) + scalar(@failed_jsvm_cmpl_file) +
-     scalar(@failed_gencmpl_v2_file) + scalar(@failed_printcmpl_v2_file) + scalar(@failed_jsvm_cmpl_v2_file)) eq 0) {
+     scalar(@failed_gencmpl_file) + scalar(@failed_printcmpl_file) + scalar(@failed_jsvm_cmpl_file)) eq 0) {
   print("\n all $count tests passed\n");
   print("======================================================\n");
 } else {
-  my $countFailed = $countMPL + $countMMPL + $countINT + $countrunCMPL +
-                    $countgenCMPL + $countgenCMPLv2 + $countrunCMPLv2;
+  my $countFailed = $countMPL + $countMMPL + $countINT + $countrunCMPL + $countgenCMPL;
   my $countPassed = $count - $countFailed;
   if(scalar(@successed_file) > 0) {
     print "\n=========================\npassed $countPassed tests:\n\n";
@@ -314,39 +254,20 @@ if ((scalar(@failed_mpl_file) + scalar(@failed_mmpl_file) + scalar(@failed_int_f
     }
   }
   if(scalar(@failed_gencmpl_file) > 0) {
-    print("=== failed v1 gen-compact maple IR: $countgenCMPL tests\n");
+    print("=== failed gen-compact maple IR: $countgenCMPL tests\n");
     foreach $failed (@failed_gencmpl_file) {
       print $failed."\n";
     }
   }
   if(scalar(@failed_printcmpl_file) > 0) {
-    print("=== failed v1 print-compact maple IR: $countprintCMPL tests\n");
+    print("=== failed print-compact maple IR: $countprintCMPL tests\n");
     foreach $failed (@failed_printcmpl_file) {
       print $failed."\n";
     }
   }
   if(scalar(@failed_jsvm_cmpl_file) > 0) {
-    print("=== failed v1 interprete-compact maple IR: $countrunCMPL tests\n");
+    print("=== failed interprete-compact maple IR: $countrunCMPL tests\n");
     foreach $failed (@failed_jsvm_cmpl_file) {
-      print $failed."\n";
-    }
-    print "\n";
-  }
-  if(scalar(@failed_gencmpl_v2_file) > 0) {
-    print("=== failed v2 gen-compact maple IR: $countgenCMPLv2 tests\n");
-    foreach $failed (@failed_gencmpl_v2_file) {
-      print $failed."\n";
-    }
-  }
-  if(scalar(@failed_printcmpl_v2_file) > 0) {
-    print("=== failed v2 print-compact maple IR: $countprintCMPLv2 tests\n");
-    foreach $failed (@failed_printcmpl_v2_file) {
-      print $failed."\n";
-    }
-  }
-  if(scalar(@failed_jsvm_cmpl_v2_file) > 0) {
-    print("=== failed v2 interprete-compact maple IR: $countrunCMPLv2 tests\n");
-    foreach $failed (@failed_jsvm_cmpl_v2_file) {
       print $failed."\n";
     }
     print "\n";
