@@ -142,7 +142,7 @@ bool EH::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcend) 
     }
 
     // end of current try eh
-    if (GetEHstruct(0, 0, 0, pc)) {
+    if (GetEHstruct(0, 0, 0, js::GetNextPc(pc))) {
       DEBUGPRINTs("} endtry");
       if (js2mplDebug>0) DumpEHstruct(eh);
       trystack_.pop();
