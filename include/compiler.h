@@ -179,7 +179,7 @@ class JSCompiler{
                                  JSScript *script, jsbytecode *pc);
   GotoNode *CompileOpGoto(jsbytecode *pc, jsbytecode *jumptopc, MIRSymbol *tempvar);
   GotoNode *CompileOpGosub(jsbytecode *pc);
-  GotoNode *CompileOpTry(jsbytecode *pc);
+  TryNode *CompileOpTry(jsbytecode *pc);
   BaseNode *CompileOpLoopHead(jsbytecode *pc);
   base_node_t *CheckConvertToJSValueType(base_node_t *node);
   base_node_t *CheckConvertToBoolean(base_node_t *node);
