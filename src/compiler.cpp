@@ -1585,6 +1585,16 @@ base_node_t *JSCompiler::CheckConvertToJSValueType(base_node_t *data)
     case PTY_i32:
     case PTY_u32:
       to_type = jsbuilder_->GetDyni32();
+      if (data->op == OP_constval) {
+        ConstvalNode *cv = static_cast<ConstvalNode *>(data);
+        if (cv) {
+          cv->ptyp = PTY_dyni32;
+          MIRIntConst *ic = static_cast<MIRIntConst *>(cv->constval);
+          ic->value_ = (int64_t)((uint64_t)JSTYPE_NUMBER << 32 | (ic->value_ & 0xffffffff));
+          cv->constval = ic;
+          return cv;
+        }
+      }
       break;
     case PTY_simplestr:
       to_type = jsbuilder_->GetDynstr();
