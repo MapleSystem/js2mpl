@@ -1,6 +1,8 @@
 #ifndef JSVALUE_H
 #define JSVALUE_H
-
+#define JSFUNCPROP_STRICT    ((uint8_t)0x01)
+#define JSFUNCPROP_NATIVE    ((uint8_t)0x02)
+#define JSFUNCPROP_USERFUNC  ((uint8_t)0x04)
 namespace mapleir {
 enum __jstype {
   JSTYPE_UNDEFINED = 0,

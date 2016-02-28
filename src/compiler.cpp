@@ -1106,18 +1106,17 @@ bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
   bool created;
   MIRSymbol *func_st = jsbuilder_->GetOrCreateGlobalDecl(funcname, jsvalue_type_, created);
   base_node_t *ptr = jsbuilder_->CreateExprAddroffunc(func_st->value_.func_->puidx);
-  MapleVector<base_node_t *> arguments(module_->mp_allocator_.Adapter());
   assert(jsfun && "not a jsfunction");
 
   char *name = Util::GetNameWithSuffix(funcname, "_obj_", mp_);
   if (!jsbuilder_->GetStringIndex(name)) {
     DEBUGPRINT2(name);
-    arguments.push_back(ptr);
-    arguments.push_back(jsbuilder_->GetConstInt(-1-jsfun->nargs()));
-    arguments.push_back(jsbuilder_->GetConstInt(0));
-    arguments.push_back(jsbuilder_->GetConstUInt32(jsfun->strict()));
-    arguments.push_back(jsbuilder_->GetConstInt(0));
-    base_node_t *func_node = CompileGenericN(INTRN_JS_NEW_FUNCTION, arguments, true, true);
+    uint32_t varg_p = 0;
+    uint32_t nargs = (uint32_t)(uint8_t)jsfun->nargs();
+    uint32_t length = nargs;
+    uint32_t flag = jsfun->strict() ? JSFUNCPROP_STRICT | JSFUNCPROP_USERFUNC : JSFUNCPROP_USERFUNC;
+    uint32_t attrs = varg_p << 24 | nargs << 16 | length << 8 | flag;
+    base_node_t *func_node = CompileGeneric3(INTRN_JS_NEW_FUNCTION, ptr, jsbuilder_->GetConstInt(0), jsbuilder_->GetConstUInt32(attrs), true, true);
 
     MIRSymbol *func_obj = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalue_type_, created);
     jsbuilder_->InsertGlobalName(name);
@@ -1190,14 +1189,12 @@ base_node_t *JSCompiler::CompileOpLambda(jsbytecode *pc, JSFunction *jsfun) {
     DEBUGPRINTs3("lambda->scope->IsTopLevel()");
   }
 
-  MapleVector<base_node_t *> arguments(module_->mp_allocator_.Adapter());
-  arguments.push_back(ptr);
-  arguments.push_back(jsbuilder_->GetConstInt(-1-jsfun->nargs()));
-  arguments.push_back(node);
-  arguments.push_back(jsbuilder_->GetConstUInt32(jsfun->strict()));
-  arguments.push_back(jsbuilder_->GetConstInt(0));
-
-  bn = CompileGenericN(INTRN_JS_NEW_FUNCTION, arguments, true);
+  uint32_t varg_p = 0;
+  uint32_t nargs = (uint32_t)(uint8_t)jsfun->nargs();
+  uint32_t length = nargs;
+  uint32_t flag = jsfun->strict() ? JSFUNCPROP_STRICT | JSFUNCPROP_USERFUNC : JSFUNCPROP_USERFUNC;
+  uint32_t attrs = varg_p << 24 | nargs << 16 | length << 8 | flag;
+  bn = CompileGeneric3(INTRN_JS_NEW_FUNCTION, ptr, node, jsbuilder_->GetConstUInt32(attrs), true);
 
   std::pair<JSScript *, JSMIRFunction *> P(jsfun->nonLazyScript(), lambda);
   scriptstack_.push(P);
