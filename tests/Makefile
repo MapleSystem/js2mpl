@@ -13,12 +13,9 @@ required = output/required
 JS2MPL=$(JS2MPLDIR)/build/js2mpl
 BE = $(MAPLEALL)/build/maplebe/be/mplbe
 MAPLEINTERPRETER=$(MAPLEALL)/build/maplevm/interpreter
-GEN_CMPL=$(MAPLEALL)/build/maplevm/cmpl-v1/gencmpl-v1
-PRINT_CMPL=$(MAPLEALL)/build/maplevm/cmpl-v1/printcmpl-v1
-VM_CMPL=$(MAPLEALL)/build/maplevm/jsvm-cmpl-v1/jsvm-cmpl-v1
-VM_CMPL_V2=$(MAPLEALL)/build/maplevm/jsvm-cmpl/jsvm-cmpl
-GEN_CMPL_V2=$(MAPLEALL)/build/mapleir/mmpl2cmpl
-PRINT_CMPL_V2=$(MAPLEALL)/build/mapleir/cmpl2mmpl
+VM_CMPL=$(MAPLEALL)/build/maplevm/jsvm-cmpl/jsvm-cmpl
+GEN_CMPL=$(MAPLEALL)/build/mapleir/mmpl2cmpl
+PRINT_CMPL=$(MAPLEALL)/build/mapleir/cmpl2mmpl
 MEM_PROFILER_CMPL=./get-mem-usage.sh
 js2mpl=../build/js2mpl
 
@@ -84,28 +81,16 @@ tt:
 	@echo "========================================================\n"
 	@echo convert mmpl to cmpl
 	$(GEN_CMPL) $(BUILD)/$*.mmpl
-	cp $(BUILD)/$*.cmpl $(BUILD)/$*.cmpl.v1
-	@#@echo test cmpl print
-	$(PRINT_CMPL) $(BUILD)/$*.cmpl > $(BUILD)/$*.mmpl.v1
-	@echo "\n====================== jsvm-cmpl-v1  ==================="
-	@echo to debug compact-vm, set DEBUG=1 when "make compact-vm"
-	@echo "(cd $(BUILD); gdb --args $(VM_CMPL) $*.cmpl.v1)"
-	(cd $(BUILD); time $(VM_CMPL) $*.cmpl.v1)
-	@echo "(cd $(BUILD); gdb --args $(VM_CMPL) $*.cmpl.v1)"
+	$(PRINT_CMPL) $(BUILD)/$*.cmpl > $(BUILD)/$*.mmpl
+	@echo "\n====================== jsvm-cmpl  ==================="
+	@echo "(cd $(BUILD); gdb --args $(VM_CMPL) $*.cmpl)"
+	@#(cd $(BUILD); $(currdir)/timeout.sh -t 1 -i 1 -d 0 $(VM_CMPL) $*.cmpl)
+	(cd $(BUILD); time $(VM_CMPL) $*.cmpl)
+	@echo "(cd $(BUILD); gdb --args $(VM_CMPL) $*.cmpl)"
 	@echo "========================================================\n"
-	@echo convert mmpl to cmpl-v2
-	$(GEN_CMPL_V2) $(BUILD)/$*.mmpl
-	cp $(BUILD)/$*.cmpl $(BUILD)/$*.cmpl.v2
-	$(PRINT_CMPL_V2) $(BUILD)/$*.cmpl > $(BUILD)/$*.mmpl.v2
-	@echo "\n====================== jsvm-cmpl-v2  ==================="
-	@echo "(cd $(BUILD); gdb --args $(VM_CMPL_V2) $*.cmpl.v2)"
-	@#(cd $(BUILD); $(currdir)/timeout.sh -t 1 -i 1 -d 0 $(VM_CMPL_V2) $*.cmpl.v2)
-	(cd $(BUILD); time $(VM_CMPL_V2) $*.cmpl.v2)
-	@echo "(cd $(BUILD); gdb --args $(VM_CMPL_V2) $*.cmpl.v2)"
-	@echo "========================================================\n"
-	@echo convert mmpl to cmpl-v2
+	@echo convert mmpl to cmpl
 	@echo profile memory usage of compact-vm for the app
-	$(MEM_PROFILER_CMPL) $(VM_CMPL_V2) $(BUILD)/$*.cmpl
+	$(MEM_PROFILER_CMPL) $(VM_CMPL) $(BUILD)/$*.cmpl
 	@echo ""
 
 %.p : %.js $(REQ) $(JS2MPL) $(BE) $(MAPLEINTERPRETER) DIRECTORIES
@@ -116,11 +101,6 @@ tt:
 	@echo gdb --args $(js2mpl) $(build)/$*.js $(OPT)
 	@echo gdb --args $(BE) $(build)/$*.mpl
 	$(BE) $(BUILD)/$*.mpl > $(BUILD)/$*.log
-	@echo convert mmpl to cmpl
-	$(GEN_CMPL) $(BUILD)/$*.mmpl
-	cp $(BUILD)/$*.cmpl $(BUILD)/$*.cmpl.v1
-	@#@echo test cmpl print
-	@#$(PRINT_CMPL) $(BUILD)/$*.cmpl
 	echo "(cd $(BUILD); gdb --args $(MAPLEINTERPRETER) $*.mmpl)"
 	(cd $(BUILD); $(MAPLEINTERPRETER) $*.mmpl)
 	echo "(cd $(BUILD); gdb --args $(MAPLEINTERPRETER) $*.mmpl)"
@@ -130,9 +110,8 @@ tt:
 	@echo "(cd $(BUILD); gdb --args $(VM_CMPL) $*.cmpl)"
 	@echo profile memory usage of compact-vm for the app
 	$(MEM_PROFILER_CMPL) $(VM_CMPL) $(BUILD)/$*.cmpl
-	@echo convert mmpl to cmpl-v2
-	$(GEN_CMPL_V2) $(BUILD)/$*.mmpl
-	cp $(BUILD)/$*.cmpl $(BUILD)/$*.cmpl.v2
+	@echo convert mmpl to cmpl
+	$(GEN_CMPL) $(BUILD)/$*.mmpl
 	@echo ""
 
 %.r : %.js $(JS2MPL) $(BE) DIRECTORIES
@@ -145,22 +124,6 @@ tt:
 	$(BE) $(REQUIRED)/$*.mpl > $(REQUIRED)/$*.log
 	@echo convert mmpl to cmpl
 	$(GEN_CMPL) $(REQUIRED)/$*.mmpl
-	cp $(REQUIRED)/$*.cmpl $(REQUIRED)/$*.cmpl.v1
-	@#@echo test cmpl print
-	@#$(PRINT_CMPL) $(REQUIRED)/$*.cmpl
-	@#@echo "(cd $(REQUIRED); gdb --args $(MAPLEINTERPRETER) $*.mmpl)"
-	@#(cd $(REQUIRED); $(MAPLEINTERPRETER) $*.mmpl)
-	@#@echo "(cd $(REQUIRED); gdb --args $(MAPLEINTERPRETER) $*.mmpl)"
-	@#@echo to debug compact-vm, set DEBUG=1 when "make compact-vm"
-	@#@echo "(cd $(REQUIRED); gdb --args $(VM_CMPL) $*.cmpl)"
-	@#(cd $(REQUIRED); $(VM_CMPL) $*.cmpl)
-	@#@echo "(cd $(REQUIRED); gdb --args $(VM_CMPL) $*.cmpl)"
-	@#echo profile memory usage of compact-vm for the app
-	@#$(MEM_PROFILER_CMPL) $(REQUIRED)/$*.cmpl
-	@echo convert mmpl to cmpl-v2
-	$(GEN_CMPL_V2) $(REQUIRED)/$*.mmpl
-	cp $(REQUIRED)/$*.cmpl $(REQUIRED)/$*.cmpl.v2
-	@cp $(REQUIRED)/$*.mmpl $(REQUIRED)/$*.r
 	@echo ""
 
 src:
