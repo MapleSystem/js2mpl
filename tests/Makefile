@@ -81,7 +81,7 @@ tt:
 	@echo "========================================================\n"
 	@echo convert mmpl to cmpl
 	$(GEN_CMPL) $(BUILD)/$*.mmpl
-	$(PRINT_CMPL) $(BUILD)/$*.cmpl > $(BUILD)/$*.mmpl
+	$(PRINT_CMPL) $(BUILD)/$*.cmpl > $(BUILD)/$*.cmpl.mmpl
 	@echo "\n====================== jsvm-cmpl  ==================="
 	@echo "(cd $(BUILD); gdb --args $(VM_CMPL) $*.cmpl)"
 	@#(cd $(BUILD); $(currdir)/timeout.sh -t 1 -i 1 -d 0 $(VM_CMPL) $*.cmpl)
