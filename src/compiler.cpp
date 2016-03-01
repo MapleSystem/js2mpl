@@ -1525,23 +1525,29 @@ GotoNode *JSCompiler::CompileOpGosub(jsbytecode *pc) {
 }
 
 TryNode *JSCompiler::CompileOpTry(jsbytecode *catch_pc) {
-  labidx_t mirlabel = GetorCreateLabelofPc(catch_pc, "h@");
-  TryNode* trynode = jsbuilder_->CreateStmtTry(OP_try, mirlabel, 0);
+  TryNode* trynode = jsbuilder_->CreateStmtTry(OP_try, 0, 0);
   jsbuilder_->AddStmtInCurrentFunctionBody(trynode);
 
   // set up label for endtry
-  mirlabel = CreateLabel();
+  labidx_t mirlabel = CreateLabel();
   DEBUGPRINT3(mirlabel);
   // passed in is the catchpc which could also be finallypc in case there is no catch
   EHstruct *eh = eh_->GetEHstruct(0, catch_pc, catch_pc, 0);
   MIR_ASSERT(eh);
   eh_->SetEHLabel(eh, mirlabel);
+
+  // set catch label in the try statement
+  if (eh->catchpc) {
+    mirlabel = GetorCreateLabelofPc(eh->catchpc, "h@");
+    trynode->catch_offset = (uint16)mirlabel;
+  }
+
   // set finally label in the try statement
-  if (eh->finallypc)
+  if (eh->finallypc) {
     mirlabel = GetorCreateLabelofPc(eh->finallypc, "f@");
-  else
-    mirlabel = GetorCreateLabelofPc(catch_pc);
-  trynode->finally_offset = (uint16)mirlabel;
+    trynode->finally_offset = (uint16)mirlabel;
+  }
+
   return trynode;
 }
 
@@ -1865,12 +1871,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       // jump to finally for catch = pc
       eh = eh_->GetEHstruct(0, pc, 0, 0);
       if (eh) {
-        labidx_t mirlabel;
-        if (eh->finallypc)
-          mirlabel = GetorCreateLabelofPc(eh->finallypc, "f@");
-        else
-          mirlabel = GetorCreateLabelofPc(pc);
-        GotoNode* catchnode = jsbuilder_->CreateStmtGoto(OP_catch, mirlabel);
+        StmtNode* catchnode = MP_NEW(mp_, StmtNode(OP_catch));
         jsbuilder_->AddStmtInCurrentFunctionBody(catchnode);
       }
 
