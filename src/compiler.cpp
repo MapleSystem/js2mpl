@@ -696,7 +696,7 @@ int32_t JSCompiler::GetBuiltinStringId(const jschar *chars, size_t length) {
       continue;
     uint32_t j;
     for (j = 0; j < length; j++) {
-      if (builtin_strings[i].chars[j+2] != chars[j])
+      if (builtin_strings[i].chars[j+4] != chars[j])
         break;
     }
     if (j == length)
@@ -727,20 +727,12 @@ base_node_t *JSCompiler::CompileOpString(JSString *str) {
     return expr;
   }
 
-  if (length >= pow(2, 24))
+  if (length >= pow(2, 16))
     assert(false && "Not Support too long string now");
-  MIRType *unit_type;;
-  uint32_t pad = 2;
-  uint32_t string_class = 0;
-  if (IsAsciiChars(chars, length)) {
-    unit_type = jsbuilder_->GetUInt8();
-    pad = length > 256 ? 4 : 2;
-  } else {
-      unit_type = jsbuilder_->GetUInt16();
-      pad = length > 256 ? 2 : 1;
-      string_class |= JSSTRING_UNICODE;
-  }
-    
+  MIRType *unit_type = IsAsciiChars(chars, length) ? jsbuilder_->GetUInt8() : jsbuilder_->GetUInt16();
+  uint32_t pad = IsAsciiChars(chars, length) ? 4 : 2;
+  uint32_t string_class = IsAsciiChars(chars, length) ? 0 : JSSTRING_UNICODE;
+
   size_t padding_length = length + pad;
   MIRType *type = jsbuilder_->GetOrCreateArrayType(unit_type, 1, &(padding_length));
   const char *temp_name = Util::GetSequentialName("const_chars_", temp_var_no_, mp_);
@@ -750,16 +742,11 @@ base_node_t *JSCompiler::CompileOpString(JSString *str) {
   MIRAggConst *init =  MP_NEW(module_->mp_, MIRAggConst(type));
 
   uint8_t cl[4];
-
-  if (length < 256) {
-    cl[1] = length;
-  } else {
-      string_class |= JSSTRING_LARGE;
-      cl[1] = length & 0xff;
-      cl[2] = (length & 0x00ff00) >> 8;
-      cl[3] = (length & 0xff0000) >> 16;
-  }
   cl[0] = string_class;
+  cl[1] = 0;
+  cl[2] = length & 0xff;
+  cl[3] = (length & 0xff00) >> 8;
+
   if ((string_class & JSSTRING_UNICODE) == 0) {
     uint64_t val = (uint64_t)(cl[0]);
     MIRIntConst *int_const = MP_NEW(mp_, MIRIntConst(val, unit_type));
@@ -767,24 +754,21 @@ base_node_t *JSCompiler::CompileOpString(JSString *str) {
     val = (uint64_t)(cl[1]);
     int_const = MP_NEW(mp_, MIRIntConst(val, unit_type));
     init->const_vec.push_back(int_const);
-    if (length > 255) {
-      val = (uint64_t)(cl[2]);
-      int_const = MP_NEW(mp_, MIRIntConst(val, unit_type));
-      init->const_vec.push_back(int_const);
-      val = (uint64_t)(cl[3]);
-      int_const = MP_NEW(mp_, MIRIntConst(val, unit_type));
-      init->const_vec.push_back(int_const);
-    }
+
+    val = (uint64_t)(cl[2]);
+    int_const = MP_NEW(mp_, MIRIntConst(val, unit_type));
+    init->const_vec.push_back(int_const);
+    val = (uint64_t)(cl[3]);
+    int_const = MP_NEW(mp_, MIRIntConst(val, unit_type));
+    init->const_vec.push_back(int_const);
   } else {
     uint16_t *tmp = (uint16_t *)cl;
-    uint64_t val = (uint64_t)(tmp[0]);
+    uint64_t val = (uint64_t)(cl[0]);
     MIRIntConst *int_const = MP_NEW(mp_, MIRIntConst(val, unit_type));
     init->const_vec.push_back(int_const);
-    if (length > 255) {
-      uint64_t val = (uint64_t)(tmp[0]);
-      MIRIntConst *int_const = MP_NEW(mp_, MIRIntConst(val, unit_type));
-      init->const_vec.push_back(int_const);
-    }
+    val = (uint64_t)(tmp[1]);
+    int_const = MP_NEW(mp_, MIRIntConst(val, unit_type));
+    init->const_vec.push_back(int_const);
   }
 
   for (uint32_t i = 0; i < length; i++) {
