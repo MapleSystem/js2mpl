@@ -1791,6 +1791,12 @@ bool JSCompiler::CompileScript(JSScript *script) {
   jsbytecode *end = script->codeEnd();
 
   JSMIRFunction *func = funcstack_.top();
+  
+  // TODO: is here opstack_ none-empty an error here?
+  // to make it work, empty opstack_ now.
+  // Check the case of app_inline.js
+  while (!opstack_->Empty()) Pop();
+
   EnvInit(func);
 
   // mark labels to avoid issue of missing labeled target for back edges

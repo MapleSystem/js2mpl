@@ -10,6 +10,6 @@ function Testing() {
 }
 
 var res = Testing();
-if (res === "f1gee99")
+if (res === "99geef1")
   print("pass\n");
 else $ERROR("test failed: expect f1gee99 but get ", res);
