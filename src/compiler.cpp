@@ -2478,6 +2478,11 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_NEWARRAY: /*90, 4, 0, 1*/  {
         uint32_t length = GET_UINT24(pc);
         BaseNode *len = jsbuilder_->GetConstUInt32(length);
+#if 1
+        base_node_t *arr = CompileGeneric1(INTRN_JS_NEW_ARR_LENGTH, CheckConvertToJSValueType(len), true);
+        Push(arr);
+        break;
+#else
         std::stack<base_node_t *> tmp_stack;
         pc = js::GetNextPc(pc);
         op = JSOp(*pc);
@@ -2540,6 +2545,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         base_node_t *arr = CompileGeneric2(INTRN_JS_NEW_ARR_ELEMS, addr_base, len, true);
         Push(arr);
         break;
+#endif
       }
       case JSOP_NEWOBJECT: /*91, 5, 0, 1*/  { SIMULATESTACK(0, 1); break; }
       case JSOP_ENDINIT: /*92, 1, 0, 0*/  {
@@ -2629,7 +2635,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       }
       case JSOP_INITELEM_ARRAY: /*96, 4, 2, 1*/  {
         base_node_t *init = Pop();
-        base_node_t *arr = Pop();
+        base_node_t *arr = CheckConvertToJSValueType(Pop());
         BaseNode *index = CompileOpConstValue(JSTYPE_NUMBER, (int32_t)GET_UINT24(pc));
         if (!CompileOpSetElem(arr, index, init))
           return false;
