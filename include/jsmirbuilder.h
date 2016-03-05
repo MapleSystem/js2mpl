@@ -9,7 +9,6 @@ namespace mapleir {
 
 class JSMIRBuilder : public MIRBuilder {
  private:
-  JSMIRFunction *jscurrfunc;
   std::set<char *> global_vars;
   JSMIRContext &jsmir_context_;
 

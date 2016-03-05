@@ -11,10 +11,10 @@
 #include "../include/js2mpl.h"
 #include "../include/compiler.h"
 
-maplemp::MemPoolCtrler Mpc;
 using namespace mapleir;
 using namespace std;
-mapleir::MIRModule mapleir::themodule(Mpc);
+maplemp::MemPoolCtrler Mpc;
+MIRModule mapleir::themodule(Mpc);
 
 // extract base name and plugin name from input js file name with path
 static void ProcessSrcInfo(string infile, string &basename,  string &pluginname) {
@@ -84,6 +84,7 @@ static void help() {
 }
 
 int main(int argc, const char *argv[]) {
+
   if (!strcmp(argv[1], "-help")) {
     help();
     exit(1);
@@ -150,7 +151,7 @@ int main(int argc, const char *argv[]) {
     mapleir::themodule.entryfunc_ = mapleir::themodule.symtab->GetSymbolFromStidx(mapleir::themodule._function_list.back()->stidx)->GetName();
   }
   // set numfuncs_ in MIRModule
-  mapleir::themodule.numfuncs_ = mapleir::themodule._function_list.size();
+  mapleir::themodule.num_funcs = mapleir::themodule._function_list.size();
 
   if (js2mplDebug > 0)
     mapleir::themodule.dump();
@@ -270,8 +271,8 @@ bool js2mpldriver(const char *fn, mapleir::MIRModule *module, JSMIRContext &jsmi
     // Set Up JSMIRBuilder
     ///////////////////////////////////////////////
     DEBUGPRINTs("\n\n =====> Pass To Set Up JSMIRBuilder <===\n");
-    mapleir::JSMIRBuilder *jsbuilder = MP_NEW(module->mp_, mapleir::JSMIRBuilder(module, jsmirctx));
-    jsbuilder->Init();
+    mapleir::JSMIRBuilder jsbuilder(module, jsmirctx);
+    jsbuilder.Init();
 
     mapleir::OperandStack *opstack = MP_NEW(module->mp_, mapleir::OperandStack(50));
 
@@ -279,11 +280,11 @@ bool js2mpldriver(const char *fn, mapleir::MIRModule *module, JSMIRContext &jsmi
     // Pass To Set Up Scope Chain
     ///////////////////////////////////////////////
     DEBUGPRINTs("\n\n =====> Pass To Set Up Scope Chain <====\n");
-    mapleir::Scope *scope = MP_NEW(module->mp_, mapleir::Scope(cx, script, module, jsbuilder));
+    mapleir::Scope *scope = MP_NEW(module->mp_, mapleir::Scope(cx, script, module, &jsbuilder));
     scope->Init();
     scope->Build(script);
 
-    if (jsbuilder->JSOPOnly())
+    if (jsbuilder.JSOPOnly())
       goto finish;
 
     if (js2mplDebug>2) {
@@ -296,7 +297,7 @@ bool js2mpldriver(const char *fn, mapleir::MIRModule *module, JSMIRContext &jsmi
     // Pass To Set Up Exception Handling
     ///////////////////////////////////////////////
     DEBUGPRINTs("\n\n =====> Pass To Set Up Exception Handling <====\n");
-    mapleir::EH *eh = MP_NEW(module->mp_, mapleir::EH(cx, script, module, jsbuilder, scope));
+    mapleir::EH *eh = MP_NEW(module->mp_, mapleir::EH(cx, script, module, &jsbuilder, scope));
     eh->Build(script);
 
     ///////////////////////////////////////////////
@@ -304,7 +305,7 @@ bool js2mpldriver(const char *fn, mapleir::MIRModule *module, JSMIRContext &jsmi
     ///////////////////////////////////////////////
     DEBUGPRINTs("\n\n =====> Pass To Set Up Closure Env <====\n");
     mapleir::JSClosure *closure = MP_NEW(module->mp_,
-        mapleir::JSClosure(fn, cx, script, module, scope, jsbuilder, opstack));
+        mapleir::JSClosure(fn, cx, script, module, scope, &jsbuilder, opstack));
     closure->Init();
     closure->Build(script);
 
@@ -319,7 +320,7 @@ bool js2mpldriver(const char *fn, mapleir::MIRModule *module, JSMIRContext &jsmi
     ///////////////////////////////////////////////
     DEBUGPRINTs("\n\n =====> Pass To Build MapleIR <=========\n");
     mapleir::JSCompiler *compiler = MP_NEW(module->mp_,
-        mapleir::JSCompiler(fn, cx, script, module, jsbuilder, scope, eh, closure, opstack));
+        mapleir::JSCompiler(fn, cx, script, module, &jsbuilder, scope, eh, closure, opstack));
 
     compiler->Init();
 
