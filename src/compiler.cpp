@@ -73,10 +73,12 @@ MIRSymbol *JSCompiler::CreateTempJSValueTypeVar() {
 }
 
 void JSCompiler::InitWithUndefined(bool doit, MIRSymbol *var) {
+#if 0
   if (doit) {
     BaseNode *undefined = CompileOpConstValue(JSTYPE_UNDEFINED, 0);
     BaseNode *stmt = jsbuilder_->CreateStmtDassign(var, 0, undefined);
   }
+#endif
 }
 
 uint32_t JSCompiler::GetFieldidFromTag(uint32_t tag) {
