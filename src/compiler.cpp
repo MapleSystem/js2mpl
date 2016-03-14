@@ -2458,7 +2458,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       }
       case JSOP_SETARG: /*85, 3, 1, 1*/  {
         uint32_t i = GET_ARGNO(pc);
-        base_node_t *bn = Pop();
+        base_node_t *bn = CheckConvertToJSValueType(Pop());
         CompileOpSetArg(i, bn);
         Push(bn);
         break;
