@@ -18,8 +18,8 @@ MOZSRC=$(MAPLEROOT)/mozjs/mozjs-31.2.0
 MOZBUILD=$(MAPLEROOT)/mozjs/mozjs-build
 MAPLELIB=$(MAPLEALL)/build/mapleir/libmpl.a
 MPLIB=$(MAPLEALL)/build/Mempool/libmempool.a
-LIBS=-L $(MOZBUILD)/dist/lib -ljs_static -lpthread -ldl
-#LIBS=-L $(MOZBUILD)/dist/lib -ljs_static -lz -lpthread -ldl
+#LIBS=-L $(MOZBUILD)/dist/lib -ljs_static -lpthread -ldl
+LIBS=-L $(MOZBUILD)/dist/lib -ljs_static -lz -lpthread -ldl
 
 INCLUDES = -I $(MAPLEALL) \
            -I $(MOZBUILD)/dist/include \
