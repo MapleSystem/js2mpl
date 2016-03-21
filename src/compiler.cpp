@@ -2447,7 +2447,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         JSAtom * atom = ScopeCoordinateName(
             jscontext_->runtime()->scopeCoordinateNameCache, script, pc);
         base_node_t *bn = CompileOpSetAliasedVar(atom, val);
-        Push(bn);
+        Push(val);
         break;
       }
       case JSOP_GETARG: /*84, 3, 0, 1*/  {

@@ -18,10 +18,11 @@ function testcase() {
 
   var o = {foo : 1};
   var desc = Object.getOwnPropertyDescriptor(o,"foo");
-  if(desc.value !== 1 || 
-     desc.writable !== true ||
-     desc.enumerable !== true ||
-     desc.configurable !== true)
-    return 1;
+  if(desc.value === 1 &&
+     desc.writable === true &&
+     desc.enumerable === true &&
+     desc.configurable === true)
+    return true;
  }
-testcase();
+if (testcase() !== true)
+  $ERROR("error 1");
