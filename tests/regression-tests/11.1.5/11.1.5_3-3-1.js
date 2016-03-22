@@ -28,4 +28,5 @@ function testcase() {
             delete Object.prototype.prop;
         }
     }
-testcase();
+if (testcase() !== true)
+  $ERROR("error 1");
