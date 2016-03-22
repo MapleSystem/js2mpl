@@ -10,17 +10,16 @@
 
 a = [0, 1, 2];
 
-names = Object.getOwnPropertyNames(a);
-//expected = ["0", "1", "2", "length"];
+names = Object.getOwnPropertyNames(a).sort();
+expected = ["0", "1", "2", "length"].sort();
 
-if (names[0] !== "length")
+if(names.toString() !== expected.toString())
+  $ERROR("error getOwnPropertyNames");
+if (names.indexOf("length") < 0)
   $ERROR("error length");
-if (names[1] !== "0")
+if (names.indexOf("0") < 0)
   $ERROR("error 0");
-if (names[2] !== "1")
+if (names.indexOf("1") < 0)
   $ERROR("error 1");
-if (names[3] !== "2")
+if (names.indexOf("2") < 0)
   $ERROR("error 2");
-
-
-
