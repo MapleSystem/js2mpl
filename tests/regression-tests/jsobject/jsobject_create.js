@@ -8,9 +8,9 @@ print(names[0]);
 print(names[1]);
 print(names[2]);
 
-if(names[2] !== "foo2")
+if(names[1] !== "foo2")
   $ERROR("fail 1");
-if(names[1] !== "foo1")
+if(names[2] !== "foo1")
   $ERROR("fail 2");
 if(names[0] !== "foo")
   $ERROR("fail 3");
