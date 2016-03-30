@@ -1239,8 +1239,6 @@ int JSCompiler::ProcessAliasedVar(JSAtom *atom, MIRType *&env_ptr, base_node_t *
 
     env_ptr = pfunc->envptr;
     env_node = jsbuilder_->CreateExprDread(pfunc->envptr, env_var);
-
-    env_node = jsbuilder_->CreateExprDread(pfunc->envptr, env_var);
     idx = jsbuilder_->GetStructFieldIdFromFieldName(pfunc->envtype, name);
     DEBUGPRINT3(idx);
 
