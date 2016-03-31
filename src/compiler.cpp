@@ -480,7 +480,11 @@ base_node_t *JSCompiler::CompileOpCall(uint32_t argc) {
 
   if (funcnode->op == OP_dread) {
     AddrofNode *dread = static_cast<AddrofNode *>(funcnode);
-    MIRSymbol *funcobj = module_->symtab->GetSymbolFromStidx(dread->stidx, /*checkfirst*/true);
+    MIRSymbol *funcobj;
+    if (dread->islocal)
+      funcobj = module_->CurFunction()->symtab->GetSymbolFromStidx(dread->stidx, /*checkfirst*/true);
+    else
+      funcobj = module_->symtab->GetSymbolFromStidx(dread->stidx, /*checkfirst*/true);
     // the function might not be a global one, embeded in obj
     if (funcobj) {
       char *funcobjname = (char *)(funcobj->GetName().c_str());
@@ -2038,7 +2042,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
                   jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE), false));
             base_node_t *node2 = CheckConvertToJSValueType(CompileGeneric1(INTRN_JS_GET_BISTRING,
                   jsbuilder_->GetConstUInt32((uint32_t)JSBUILTIN_STRING_EXPORTS), false));
-            base_node_t *ret_expr = CompileGeneric2(INTRN_JSOP_GETPROP, node1, node2, false);
+            base_node_t *ret_expr = CompileGeneric2(INTRN_JSOP_GETPROP, node1, node2, true);
             SetupMainFuncRet(ret_expr);
           } else if (func == jsmain_) {
             SetupMainFuncRet(jsbuilder_->GetConstInt(0));  // main function always returns 0
@@ -2055,7 +2059,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
                   jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE), false));
             base_node_t *node2 = CheckConvertToJSValueType(CompileGeneric1(INTRN_JS_GET_BISTRING,
                   jsbuilder_->GetConstUInt32((uint32_t)JSBUILTIN_STRING_EXPORTS), false));
-            base_node_t *ret_expr = CompileGeneric2(INTRN_JSOP_GETPROP, node1, node2, false);
+            base_node_t *ret_expr = CompileGeneric2(INTRN_JSOP_GETPROP, node1, node2, true);
             jsbuilder_->CreateStmtReturn(ret_expr, false);
           } else if (func == jsmain_) {
             BaseNode *undefined = CompileOpConstValue(JSTYPE_UNDEFINED, 0);
@@ -2272,7 +2276,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         JSString *str = script->getAtom(pc);
         base_node_t *obj = CheckConvertToJSValueType(Pop());
         base_node_t *name = CompileOpString(str);
-        base_node_t *val = CompileGeneric2(INTRN_JSOP_GETPROP_BY_NAME, obj, name, false);
+        base_node_t *val = CompileGeneric2(INTRN_JSOP_GETPROP_BY_NAME, obj, name, true);
         Push(val);
         break;
       }
@@ -2306,7 +2310,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         base_node_t *index = Pop();
         base_node_t *obj = CheckConvertToJSValueType(Pop());
         index = CheckConvertToJSValueType(index);
-        base_node_t *elem = CompileGeneric2(INTRN_JSOP_GETPROP, obj, index, false);
+        base_node_t *elem = CompileGeneric2(INTRN_JSOP_GETPROP, obj, index, true);
         Push(elem);
         break;
       }
