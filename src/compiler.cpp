@@ -543,48 +543,27 @@ base_node_t *JSCompiler::CompileOpCall(uint32_t argc) {
 
 base_node_t *JSCompiler::CompileOpNew(uint32_t argc) {
   // Reverse the order of args.
-  std::stack<base_node_t *> tmpStack;
+  std::vector<base_node_t *> argsvec;
   for (uint32_t i = 0; i < argc; i++) {
-    tmpStack.push(Pop());
+    argsvec.push_back(CheckConvertToJSValueType(Pop()));
   }
-
-  MapleVector<base_node_t *> args(module_->mp_allocator_.Adapter());
-  MIRSymbol *var;
 
   // impnode: implicitethis - first arg for closure node if needed
   // funcnode: it is intervened with arg setup
   base_node_t *impnode = Pop();
   base_node_t *funcnode = CheckConvertToJSValueType(Pop());
 
-  if (funcnode->op == OP_addroffunc) {
-    AddroffuncNode *addrfunc = static_cast<AddroffuncNode *>(funcnode);
-    MIRFunction *func = module_->functable[addrfunc->puidx];
-    MIRSymbol *funcsymbol = module_->symtab->GetSymbolFromStidx(func->stidx);
-    char *funcname = (char *)funcsymbol->GetName().c_str();
-    if (UseSimpleCall(funcname))
-      return funcnode;
-  }
+  MapleVector<base_node_t *> args(module_->mp_allocator_.Adapter());
+  args.push_back(funcnode);
+  args.push_back(impnode);
+  for (int32_t i = argc - 1; i >=0; i--)
+    args.push_back(argsvec[i]);
+  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallN(INTRN_JSOP_NEW, args);
+  jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
 
-  uint32_t size_array[1];
-  size_array[0] = argc;
-  MIRType *array_type = jsbuilder_->GetOrCreateArrayType(jsvalue_type_, 1, size_array);
-  MIRType *array_ptr_type = jsbuilder_->GetOrCreatePointerType(array_type);
-  MIRSymbol *arguments = CreateTempVar(array_type);
-  base_node_t *addr_base = jsbuilder_->CreateExprAddrof(0, arguments);
-  for (uint32_t i = 0; i < size_array[0]; i++) {
-    base_node_t *bn = CheckConvertToJSValueType(tmpStack.top());
-    DEBUGPRINT3(bn->op);
-    tmpStack.pop();
-    MapleVector<base_node_t *> opnds(themodule.mp_allocator_.Adapter());
-    opnds.push_back(addr_base);
-    BaseNode *addr_offset = jsbuilder_->GetConstInt(i);
-    opnds.push_back(addr_offset);
-    BaseNode *array_expr = jsbuilder_->CreateExprArray(array_type, opnds);
-    BaseNode *stmt = jsbuilder_->CreateStmtIassign(array_ptr_type, 0, array_expr, bn);
-    jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
-  }
-  return CompileGeneric4(INTRN_JSOP_NEW, funcnode, impnode,
-                         addr_base, jsbuilder_->GetConstUInt32(argc), true);
+  MIRSymbol *retrunVar = CreateTempVar(jsvalue_type_);
+  jsbuilder_->SaveReturnValue(retrunVar);
+  return jsbuilder_->CreateExprDread(jsvalue_type_, 0, retrunVar);
 }
 
 js_builtin_id JSCompiler::EcmaNameToId(char *name) {
