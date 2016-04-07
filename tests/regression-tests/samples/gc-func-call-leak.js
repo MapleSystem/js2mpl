@@ -6,12 +6,12 @@ function trigger(obj) {
 }
 
 function aa1() {
-    for (var i = 0; i < 500; i++) {
+    for (var i = 0; i < 5; i++) {
     trigger({epoch:"aaaaa"});
   }
 }
 
-for (var i = 0; i < 500; i++) {
+for (var i = 0; i < 5; i++) {
   aa1();
 }
 

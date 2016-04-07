@@ -505,10 +505,13 @@ base_node_t *JSCompiler::CompileOpCall(uint32_t argc) {
   }
 
   if (useSimpleCall) {
-    for (int32_t i = argc - 1; i >= 0; i--)
+    JSMIRFunction *func = closure_->GetJSMIRFunc(funcname);
+
+    // Discard redundant arguments.
+    int32_t last = argc > func->argc ? argc - func->argc : 0;
+    for (int32_t i = argc - 1; i >= last; i--)
       args.push_back(argsvec[i]);
 
-    JSMIRFunction *func = closure_->GetJSMIRFunc(funcname);
     if (argc < func->argc) {
       BaseNode *undefined = CompileOpConstValue(JSTYPE_UNDEFINED, 0);
       for (int32_t i = argc; i < func->argc; i++)
