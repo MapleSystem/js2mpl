@@ -47,11 +47,11 @@ DIRECTORIES:
 	$(MKDIR_P) $(BUILD)
 
 $(EXE): $(OBJ) $(MAPLELIB)
-	$(CC) $(CXXFLAGS) -o $(BUILD)/$(EXE) $(OBJS) $(MAPLELIB) $(MPLIB) $(LIBS)
+	$(LD) $(CXXFLAGS) -o $(BUILD)/$(EXE) $(OBJS) $(MAPLELIB) $(MPLIB) $(LIBS)
 
 .cpp.o: $(BUILD)/$*.d
-	$(CC) $(CXXFLAGS) $(LFLAGS) $(INCLUDES) -w -c $(CURDIR)/$*.cpp -o $(BUILD)/$*.o
-	@$(CC) -std=c++11 -MM $(INCLUDES) $(CURDIR)/$*.cpp > $(BUILD)/$*.d
+	$(CXX) $(CXXFLAGS) $(LFLAGS) $(INCLUDES) -w -c $(CURDIR)/$*.cpp -o $(BUILD)/$*.o
+	@$(CXX) -std=c++11 -MM $(INCLUDES) $(CURDIR)/$*.cpp > $(BUILD)/$*.d
 
 clean:
 	rm -rf $(BUILD)

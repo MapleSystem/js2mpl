@@ -1,6 +1,19 @@
 #========================MAKEFILE.in=====================================
 # G++ as default compiler
 CC=g++
+# TODO: update path when clang/clang++ are installed
+ifeq ($(USECLANG), 1)
+  CXX = clang++
+  CC = clang
+  AR = x86_64-linux-ar rcs
+else
+  CXX = g++
+  CC = gcc
+  AR = ar rcs
+endif
+
+LD = g++
+
 DYNAMICFLAG = -DDYNAMICLANG -DMIR_FEATURE_FULL=1 -m32
 
 # Compile time flags
@@ -12,7 +25,5 @@ endif
 
 # Library paths in addition to /usr/lib
 LFLAGS=-std=c++11
-
-AR=ar rcs
 
 MKDIR_P = mkdir -p

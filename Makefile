@@ -8,9 +8,13 @@ build: mapleall src
 test: tests
 arm: maplearm src tests
 arm2: maplearm2 src tests
+clang: mapleallclang src tests
 
 mapleall:
-	$(MAKE) -C ../mapleall
+	$(MAKE) -C ../mapleall DEBUG=1
+
+mapleallclang:
+	$(MAKE) -C ../mapleall DEBUG=1 USECLANG=1
 
 maplearm:
 	$(MAKE) -C ../mapleall ARM=1
