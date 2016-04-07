@@ -1,7 +1,4 @@
 #========================MAKEFILE.in=====================================
-# G++ as default compiler
-CC=g++
-# TODO: update path when clang/clang++ are installed
 ifeq ($(USECLANG), 1)
   CXX = clang++
   CC = clang
