@@ -2457,7 +2457,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         uint32_t i = GET_LOCALNO(pc);
         base_node_t *src = CheckConvertToJSValueType(Pop());
         base_node_t *bn = CompileOpSetLocal(i, src);
-        Push(bn);
+        Push(src);
         break;
       }
       case JSOP_NEWINIT: /*89, 5, 0, 1*/  {
