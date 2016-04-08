@@ -3,10 +3,12 @@ ifeq ($(USECLANG), 1)
   CXX = clang++
   CC = clang
   AR = x86_64-linux-ar rcs
+  FLAVOR = clang
 else
   CXX = g++
   CC = gcc
   AR = ar rcs
+  FLAVOR = gnu
 endif
 
 LD = g++

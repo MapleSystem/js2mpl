@@ -10,12 +10,13 @@ REQUIRED = $(CURDIR)/output/required
 build = output
 required = output/required
 
-JS2MPL=$(JS2MPLDIR)/build/js2mpl
-BE = $(MAPLEALL)/build/maplebe/be/mplbe
-MAPLEINTERPRETER=$(MAPLEALL)/build/maplevm/interpreter
-VM_CMPL=$(MAPLEALL)/build/maplevm/jsvm-cmpl/jsvm-cmpl
-GEN_CMPL=$(MAPLEALL)/build/mapleir/mmpl2cmpl
-PRINT_CMPL=$(MAPLEALL)/build/mapleir/cmpl2mmpl
+JS2MPL=$(JS2MPLDIR)/build/$(FLAVOR)/js2mpl
+BUILD_ALL=$(MAPLEALL)/build/$(FLAVOR)
+BE = $(BUILD_ALL)/vm/maplebe/be/mplbe
+MAPLEINTERPRETER=$(BUILD_ALL)/maplevm/interpreter
+VM_CMPL=$(BUILD_ALL)/maplevm/jsvm-cmpl/jsvm-cmpl
+GEN_CMPL=$(BUILD_ALL)/mapleir/mmpl2cmpl
+PRINT_CMPL=$(BUILD_ALL)/mapleir/cmpl2mmpl
 MEM_PROFILER_CMPL=./get-mem-usage.sh
 js2mpl=../build/js2mpl
 
