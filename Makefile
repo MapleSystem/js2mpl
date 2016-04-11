@@ -39,6 +39,9 @@ clean:
 	$(MAKE) clean -C tests
 
 cleanall:
+	rm -rf build/$(FLAVOR) ../mapleall/build/$(FLAVOR)
+
+cleanallall:
 	rm -rf build ../mapleall/build
 
 rebuild: cleanall all
