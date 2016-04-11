@@ -71,7 +71,7 @@ class JSCompiler{
       closure_(closure),
       opstack_(opstack){}
 
-  void Push(base_node_t *node) { opstack_->Push(node); }
+  void Push(base_node_t *node) { assert(node->op != OP_dassign); opstack_->Push(node); }
   base_node_t *Pop() {
     base_node_t *bn = static_cast <base_node_t *>(opstack_->Pop());
     assert(bn);
