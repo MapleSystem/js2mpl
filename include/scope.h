@@ -117,6 +117,7 @@ class Scope {
     char *GetAnonyFunctionName(jsbytecode *pc);
     bool IsFunction(char *name);
     int GetDepth() { return stackDepth; }
+    void DecDepth() { stackDepth--; }
 };
 
 }  // namespace mapleir
