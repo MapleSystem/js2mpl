@@ -1610,8 +1610,10 @@ void JSCompiler::CompileOpCase(jsbytecode *pc, int offset, base_node_t *rval, ba
 
 base_node_t *JSCompiler::CheckConvertToBoolean(base_node_t *node)
 {
-  if (IsPrimitiveInteger(node->ptyp))
-    return node;
+  if (IsPrimitiveInteger(node->ptyp)) {
+    if (node->ptyp == PTY_u1) return node;
+    return jsbuilder_->CreateExprTypeCvt(OP_cvt, jsbuilder_->GetUInt1(), jsbuilder_->GetPrimType(node->ptyp), node);
+  }
   return jsbuilder_->CreateExprIntrinsicop1(INTRN_JS_BOOLEAN, jsbuilder_->GetUInt1(), node);
 }
 
@@ -1847,13 +1849,10 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         //assert(! opstack_->Empty());
         if (! opstack_->Empty()) {
           MIRSymbol *tempvar = label_tempvar_map_[labidx];
-          base_node_t *expr = Pop();
-          MIRType *exprty;
-          if (expr->ptyp != PTY_agg)
-            exprty = jsbuilder_->GetPrimType(expr->ptyp);
-          else exprty = jsvalue_type_;
+          base_node_t *expr = CheckConvertToJSValueType(Pop());
+
           jsbuilder_->CreateStmtDassign(tempvar, 0, expr); 
-          Push(jsbuilder_->CreateExprDread(exprty, tempvar));
+          Push(jsbuilder_->CreateExprDread(tempvar->GetType(), tempvar));
         }
         label_tempvar_map_[labidx] = 0;  // re-initialize to 0
       }
