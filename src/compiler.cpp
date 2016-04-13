@@ -1850,9 +1850,18 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         if (! opstack_->Empty()) {
           MIRSymbol *tempvar = label_tempvar_map_[labidx];
           base_node_t *expr = CheckConvertToJSValueType(Pop());
-
           jsbuilder_->CreateStmtDassign(tempvar, 0, expr); 
-          Push(jsbuilder_->CreateExprDread(tempvar->GetType(), tempvar));
+          if (! opstack_->Empty()) {
+            base_node_t *top_value = Top();
+            if (!(top_value->op == OP_dread && top_value->islocal &&
+               ((addrof_node_t*)top_value)->stidx == tempvar->GetStIdx())) {
+              Push(jsbuilder_->CreateExprDread(tempvar->GetType(), tempvar));
+            } else {
+              scope_->DecDepth();
+            }
+          } else {
+            Push(jsbuilder_->CreateExprDread(tempvar->GetType(), tempvar));
+          }
         }
         label_tempvar_map_[labidx] = 0;  // re-initialize to 0
       }
@@ -2061,8 +2070,9 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
           // in middle of conditional expression; save in a temp and associate
           // the temp with the goto label
           // TODO should not pop from opstack_
-          base_node_t *expr = Top();
+          base_node_t *expr = Pop();
           MIRSymbol *tempvar = SymbolFromSavingInATemp(expr, true);
+          Push(jsbuilder_->CreateExprDread(tempvar->GetType(), tempvar));
           CompileOpGoto(pc, pc + offset, tempvar);
         }
         else CompileOpGoto(pc, pc + offset, NULL);
@@ -2081,25 +2091,23 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_OR: /*68, 5, 1, 1*/
       case JSOP_AND: /*69, 5, 1, 1*/  {
         int offset = GET_JUMP_OFFSET(pc);
-        base_node_t *opnd0 = Pop();  //Pop IFEQ stmt
+        base_node_t *opnd0 = CheckConvertToJSValueType(Pop());  //Pop IFEQ stmt
         base_node_t *cond0 = CheckConvertToBoolean(opnd0);
-        MIRSymbol *temp_var = CreateTempVar(jsbuilder_->GetUInt1());
-        jsbuilder_->CreateStmtDassign(temp_var, 0, cond0); 
+        MIRSymbol *temp_var = SymbolFromSavingInATemp(opnd0, true);
         opnd0 = jsbuilder_->CreateExprDread(jsbuilder_->GetUInt1(), temp_var);
         Push(opnd0);
 
         labidx_t mirlabel = GetorCreateLabelofPc(pc+offset);
-        CondGotoNode* gotonode =  jsbuilder_->CreateStmtCondGoto(opnd0, (op==JSOP_AND)?OP_brfalse:OP_brtrue, mirlabel);
+        CondGotoNode* gotonode =  jsbuilder_->CreateStmtCondGoto(cond0, (op==JSOP_AND)?OP_brfalse:OP_brtrue, mirlabel);
         jsbuilder_->AddStmtInCurrentFunctionBody(gotonode);
   
         jsbytecode *start = js::GetNextPc(pc);
         pc = pc + offset;
         //Pop(); comment out because CompileScriptBytecodes() has a Pop() which is not listed on command list
         CompileScriptBytecodes(script, start, pc, NULL);
-        base_node_t *opnd1 = Pop();
-        base_node_t *cond1 = CheckConvertToBoolean(opnd1);
-        jsbuilder_->CreateStmtDassign(temp_var, 0, cond1);
-        opnd0 = jsbuilder_->CreateExprDread(jsbuilder_->GetUInt1(), temp_var);
+        base_node_t *opnd1 = CheckConvertToJSValueType(Pop());
+        jsbuilder_->CreateStmtDassign(temp_var, 0, opnd1);
+        opnd0 = jsbuilder_->CreateExprDread(temp_var->GetType(), temp_var);
         Push(opnd0);
         continue;
       }
