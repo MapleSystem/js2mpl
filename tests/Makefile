@@ -12,7 +12,7 @@ required = output/required
 
 JS2MPL=$(JS2MPLDIR)/build/$(FLAVOR)/js2mpl
 BUILD_ALL=$(MAPLEALL)/build/$(FLAVOR)
-BE = $(BUILD_ALL)/vm/maplebe/be/mplbe
+BE = $(BUILD_ALL)/maplebe/be/mplbe
 MAPLEINTERPRETER=$(BUILD_ALL)/maplevm/interpreter
 VM_CMPL=$(BUILD_ALL)/maplevm/jsvm-cmpl/jsvm-cmpl
 GEN_CMPL=$(BUILD_ALL)/mapleir/mmpl2cmpl
