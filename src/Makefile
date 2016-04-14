@@ -2,8 +2,7 @@ include ../Makefile.in
 
 EXE=js2mpl
 
-JS2MPLDIR = $(CURDIR)/..
-MAPLEROOT = $(JS2MPLDIR)/..
+JS2MPLDIR = $(MAPLEROOT)/js2mpl-vm
 MAPLEALL = $(MAPLEROOT)/mapleall
 BUILD=$(JS2MPLDIR)/build/$(FLAVOR)
 
