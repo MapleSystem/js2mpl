@@ -194,7 +194,7 @@ StmtNode *JSMIRBuilder::CreateStmtDassign(MIRSymbol *symbol,
 
 IntrinsiccallNode *JSMIRBuilder::CreateStmtIntrinsicCall1N(
       MIRIntrinsicId idx, base_node_t *arg0, MapleVector<base_node_t *> &args) {
-  IntrinsiccallNode *stmt = module_->mp_->New<IntrinsiccallNode>();
+  IntrinsiccallNode *stmt = MP_NEW(module_->mp_, IntrinsiccallNode(OP_intrinsiccall));
   MapleVector<base_node_t *> arguments(module_->mp_allocator_.Adapter());
   arguments.push_back(arg0);
   for (int i=0; i<args.size(); i++)
