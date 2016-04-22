@@ -1,14 +1,13 @@
 include Makefile.in
 
 TARGS = mapleall mozjs src tests
-TARGS = mapleall src tests
+TARGS = mapleall src
 
-all: $(TARGS)
+all: $(TARGS) regression
 build: mapleall src
-test: tests
-arm: maplearm src tests
-arm2: maplearm2 src tests
-clang: mapleallclang src tests
+arm: maplearm src
+arm2: maplearm2 src
+clang: mapleallclang src
 
 mapleall:
 	$(MAKE) -C ../mapleall DEBUG=1
@@ -28,8 +27,8 @@ mozjs:
 src:
 	$(MAKE) -C $@
 
-tests:
-	$(MAKE) -C $@ regression
+regression:
+	$(MAKE) -C tests regression
 
 todo:
 	$(MAKE) -C tests todo
@@ -45,6 +44,14 @@ cleanallall:
 	rm -rf build ../mapleall/build
 
 rebuild: cleanall all
+
+checkin:
+	$(MAKE) -C ../js2mpl-vm cleanall
+	$(MAKE) -C ../js2mpl-vm build
+	$(MAKE) -C ../dex2mpl cleanall
+	$(MAKE) -C ../dex2mpl build
+	$(MAKE) -C ../js2mpl-vm regression
+	$(MAKE) -C ../dex2mpl regression
 
 .PHONY: $(TARGS)
 

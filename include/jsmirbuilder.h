@@ -98,7 +98,7 @@ class JSMIRBuilder : public MIRBuilder {
   void Init();
 
   bool IsMain(JSMIRFunction *func) { return func == jsmain_; }
-  JSMIRFunction *GetCurrentFunction() { (JSMIRFunction *)(MIRBuilder::GetCurrentFunction()); }
+  JSMIRFunction *GetCurrentFunction() { return (JSMIRFunction *)(MIRBuilder::GetCurrentFunction()); }
 
   bool IsPlugin() { return jsmir_context_.isplugin_; }
   char *GetWrapperName() { return (char*)jsmir_context_.wrapper_name_.c_str(); }
