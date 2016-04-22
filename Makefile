@@ -10,10 +10,10 @@ arm2: maplearm2 src
 clang: mapleallclang src
 
 mapleall:
-	$(MAKE) -C ../mapleall DEBUG=1
+	$(MAKE) -C ../mapleall
 
 mapleallclang:
-	$(MAKE) -C ../mapleall DEBUG=1 USECLANG=1
+	$(MAKE) -C ../mapleall USECLANG=1
 
 maplearm:
 	$(MAKE) -C ../mapleall ARM=1

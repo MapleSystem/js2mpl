@@ -214,6 +214,7 @@ while( ($srcdir = readdir(DIR))){
     chdir $predir;
   }
 }
+print " $count\n";
 closedir(DIR);
 
 if ((scalar(@failed_mpl_file) + scalar(@failed_mmpl_file) + scalar(@failed_int_file) +
