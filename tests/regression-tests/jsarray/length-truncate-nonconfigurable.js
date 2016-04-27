@@ -26,8 +26,8 @@ function assertEq(message, actual, expected)
 
 var arr = [0, 1, 2];
 Object.defineProperty(arr, 1, { configurable: false });
-
-Object.defineProperty(arr, "length", { value: 0, writable: false });
+arr.length = 0;
+Object.defineProperty(arr, "length", {writable: false });
 
 assertEq("#1: length is highest remaining index plus one", arr.length, 2);
 
