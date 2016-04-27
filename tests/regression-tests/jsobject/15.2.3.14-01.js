@@ -12,12 +12,6 @@ var expect = '';
 print("BUGNUMBER:" + BUGNUMBER);
 print(summary);
 
-function arraysEqual(a1, a2)
-{
-  return a1.length === a2.length &&
-         a1.every(function(v, i) { return v === a2[i]; });
-}
-
 /**************
  * BEGIN TEST *
  **************/
@@ -32,45 +26,59 @@ assertEq(1, Object.keys.length, 1);
 var o, keys;
 
 o = { a: 3, b: 2 };
-keys = Object.keys(o).sort();
-assertEq(2, arraysEqual(keys, ["a", "b"].sort()), true,
+keys1 = Object.keys(o).sort();
+keys2 = ["a", "b"].sort()
+assertEq(2, (keys1.length === keys2.length &&
+         keys1.every(function(v, i) { return v === keys2[i]; })), true,
          " " + keys);
 
 o = { get a() { return 17; }, b: 2 };
-keys = Object.keys(o).sort(),
-assertEq(3, arraysEqual(keys, ["a", "b"].sort()), true,
+keys1 = Object.keys(o).sort();
+keys2 = ["a", "b"].sort();
+assertEq(3, (keys1.length === keys2.length &&
+         keys1.every(function(v, i) { return v === keys2[i]; })), true,
          " " + keys);
 
 o = { __iterator__: function() { return Iterator({a: 2, b: 3}); } };
-keys = Object.keys(o);
-assertEq(4, arraysEqual(keys, ["__iterator__"]), true,
+keys1 = Object.keys(o);
+keys2 = ["__iterator__"];
+assertEq(4, (keys1.length === keys2.length &&
+         keys1.every(function(v, i) { return v === keys2[i]; })), true,
          " " + keys);
 
 o = { a: 1, b: 2 };
 delete o.a;
 o.a = 3;
-keys = Object.keys(o).sort();
-assertEq(5, arraysEqual(keys, ["b", "a"].sort()), true,
+keys1 = Object.keys(o).sort();
+keys2 = ["b", "a"].sort()
+assertEq(5, (keys1.length === keys2.length &&
+         keys1.every(function(v, i) { return v === keys2[i]; })), true,
          " " + keys);
 
 o = [0, 1, 2];
-keys = Object.keys(o).sort();
-assertEq(6, arraysEqual(keys, ["0", "1", "2"].sort()), true,
+keys1 = Object.keys(o).sort();
+keys2 = ["0", "1", "2"].sort();
+assertEq(6, (keys1.length === keys2.length &&
+         keys1.every(function(v, i) { return v === keys2[i]; })), true,
          " " + keys);
 
 o = { a: 1, b: 2, c: 3 };
 delete o.b;
 o.b = 5;
-keys = Object.keys(o).sort();
-assertEq(8, arraysEqual(keys, ["a", "c", "b"].sort()), true,
+keys1 = Object.keys(o).sort();
+keys2 = ["a", "c", "b"].sort();
+assertEq(8, (keys1.length === keys2.length &&
+         keys1.every(function(v, i) { return v === keys2[i]; })), true,
          " " + keys);
 
 function f() { }
 f.prototype.p = 1;
 o = new f();
 o.g = 1;
-keys = Object.keys(o);
-assertEq(9, arraysEqual(keys, ["g"]), true,
+keys1 = Object.keys(o);
+keys2 = ["g"]
+assertEq(9, (keys1.length === keys2.length &&
+         keys1.every(function(v, i) { return v === keys2[i]; })), true,
          " " + keys);
 /******************************************************************************/
 

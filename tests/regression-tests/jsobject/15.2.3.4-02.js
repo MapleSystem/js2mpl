@@ -22,33 +22,26 @@ function assertEq(message,actual, expected)
 }
 var a, names, expected;
 
-function arraysEqual(a1, a2)
-{
-  return a1.length === a2.length &&
-         a1.every(function(v, i) { return v === a2[i]; });
-}
-
-
 a = [0, 1, 2];
-
 names = Object.getOwnPropertyNames(a).sort();
 expected = ["0", "1", "2", "length"].sort();
-assertEq(1, arraysEqual(names, expected), true);
+assertEq(1, (names.length === expected.length &&
+         names.every(function(v, i) { return v === expected[i]; })), true);
 
 a = [1, , , 7];
 a.p = 2;
 Object.defineProperty(a, "q", { value: 42, enumerable: false });
-
 names = Object.getOwnPropertyNames(a).sort();
 expected = ["0", "3", "p", "q", "length"].sort();
-assertEq(2, arraysEqual(names, expected), true);
+assertEq(2, (names.length === expected.length &&
+         names.every(function(v, i) { return v === expected[i]; })), true);
 
 
 a = [];
-
 names = Object.getOwnPropertyNames(a).sort();
 expected = ["length"];
-assertEq(3, arraysEqual(names, expected), true);
+assertEq(3, (names.length === expected.length &&
+         names.every(function(v, i) { return v === expected[i]; })), true);
 
 /******************************************************************************/
 
