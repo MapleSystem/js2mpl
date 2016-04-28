@@ -16,17 +16,17 @@ assertStringify(2, [], "[]");
 assertStringify(3, {"foo":"bar"}, '{"foo":"bar"}');
 assertStringify(4, {"null":null}, '{"null":null}');
 assertStringify(5, {"five":5}, '{"five":5}');
-assertStringify(6, {"five":5, "six":6}, '{"six":6,"five":5}');
+assertStringify(6, {"five":5, "six":6}, '{"five":5,"six":6}');
 assertStringify(7, {"x":{"y":"z"}}, '{"x":{"y":"z"}}');
 assertStringify(8, {"w":{"x":{"y":"z"}}}, '{"w":{"x":{"y":"z"}}}');
 assertStringify(9, [1,2,3], '[1,2,3]');
 assertStringify(10, {"w":{"x":{"y":[1,2,3]}}}, '{"w":{"x":{"y":[1,2,3]}}}');
 assertStringify(11, {"false":false}, '{"false":false}');
 assertStringify(12, {"true":true}, '{"true":true}');
-assertStringify(13, {"child has two members": {"this":"one", 2:"and this one"}},
+assertStringify(13, {"child has two members": {2:"and this one","this":"one"}},
                 '{"child has two members":{"this":"one","2":"and this one"}}');
 assertStringify(14, {"x":{"a":"b","c":{"y":"z"},"f":"g"}},
-                '{"x":{"f":"g","c":{"y":"z"},"a":"b"}}');
+                '{"x":{"a":"b","c":{"y":"z"},"f":"g"}}');
 assertStringify(15, {"x":[1,{"y":"z"},3]}, '{"x":[1,{"y":"z"},3]}');
 assertStringify(16, [new String("hmm")], '["hmm"]');
 assertStringify(17, [new Boolean(true)], '[true]');
