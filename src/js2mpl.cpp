@@ -13,8 +13,6 @@
 
 using namespace mapleir;
 using namespace std;
-maplemp::MemPoolCtrler Mpc;
-MIRModule mapleir::themodule(Mpc);
 
 // extract base name and plugin name from input js file name with path
 static void ProcessSrcInfo(string infile, string &basename,  string &pluginname) {
