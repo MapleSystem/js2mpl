@@ -61,6 +61,10 @@ static bool IsCCall(char *name) {
   return (strcmp(name, "ccall") == 0);
 }
 
+static bool IsXcCall(char *name) {
+  return (strcmp(name, "xccall") == 0);
+}
+
 MIRSymbol *JSCompiler::CreateTempVar(MIRType *type) {
   const char *name = Util::GetSequentialName("temp_var_", temp_var_no_, mp_);
   bool created;
@@ -498,7 +502,7 @@ base_node_t *JSCompiler::CompileOpCall(uint32_t argc) {
           puidx = func->puidx;
           useSimpleCall = UseSimpleCall(funcname);
         }
-      } else if(IsCCall(funcobjname)) {
+      } else if(IsCCall(funcobjname) || IsXcCall(funcobjname)) {
         funcname = funcobjname;
       }
     }
@@ -527,6 +531,10 @@ base_node_t *JSCompiler::CompileOpCall(uint32_t argc) {
       args.push_back(argsvec[i]);
 
     stmt = jsbuilder_->CreateStmtIntrinsicCallN(INTRN_JSOP_CCALL, args);
+  } else if (funcname && IsXcCall(funcname)) {
+    for (int32_t i = argc - 1; i >= 0; i--)
+      args.push_back(argsvec[i]);
+    stmt = jsbuilder_->CreateStmtXintrinsicCallN((MIRIntrinsicId)0, args);
   } else {
     args.push_back(funcnode);
     args.push_back(impnode);
@@ -642,14 +650,14 @@ base_node_t *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc) {
   // ??? Generate a dread node to pass the name.
   MIRSymbol *var;
   bool created;
-  if (jsbuilder_->IsGlobalName(name) || IsCCall(name)) {
+  if (jsbuilder_->IsGlobalName(name) || IsCCall(name) || IsXcCall(name)){
     var = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalue_type_, created);
   } else {
     var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_, created);
   }
 
   // print is a builtin function.
-  if (!strcmp(name, "print") || IsCCall(name)) {
+  if (!strcmp(name, "print") || IsCCall(name) || IsXcCall(name)) {
     created = false;
   }
 
