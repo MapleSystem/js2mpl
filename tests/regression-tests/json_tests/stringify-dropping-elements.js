@@ -12,7 +12,7 @@ assertEq(1, JSON.stringify({foo: 123}),
 assertEq(2, JSON.stringify({foo: 123, bar: function () {}}),
          '{"foo":123}');
 assertEq(3, JSON.stringify({foo: 123, bar: function () {}, baz: 123}),
-         '{"foo":123,"baz":123}');
+         '{"baz":123,"foo":123}');
 
 assertEq(4, JSON.stringify([123]),
          '[123]');

@@ -23,4 +23,4 @@ var obj =
     m: { toJSON: {} }
   };
 
-assertEq(JSON.stringify(obj), '{"p":{"toJSON":null},"m":{"toJSON":{}}}');
+assertEq(JSON.stringify(obj), '{"m":{"toJSON":{}},"p":{"toJSON":null}}');
