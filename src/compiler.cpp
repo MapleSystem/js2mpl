@@ -2621,15 +2621,27 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         break;
       }
       case JSOP_MUTATEPROTO: /*194, 1, 2, 1*/  { SIMULATESTACK(2, 1); break; }
-      case JSOP_SETPROP: /*54, 5, 2, 1*/
-      case JSOP_INITPROP: /*93, 5, 2, 1*/  {
+      case JSOP_SETPROP: /*54, 5, 2, 1*/ {
         JSString *str = script->getAtom(pc);
         DEBUGPRINT2(str);
         base_node_t *val = Pop();
         base_node_t *obj = CheckConvertToJSValueType(Pop());
         if (!CompileOpSetProp(obj, str, val))
           return false;
-        Push((op == JSOP_SETPROP)? val : obj);
+        Push(val);
+        break;
+      }
+      case JSOP_INITPROP: /*93, 5, 2, 1*/  {
+        JSString *str = script->getAtom(pc);
+        DEBUGPRINT2(str);
+        base_node_t *val = Pop();
+        base_node_t *obj = CheckConvertToJSValueType(Pop());
+        base_node_t *name = CompileOpString(str);
+        stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCall3(INTRN_JSOP_INITPROP_BY_NAME, obj,
+                                                                                             name,
+                                                                                             CheckConvertToJSValueType(val));
+        jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
+        Push(obj);
         break;
       }
       case JSOP_INITELEM_ARRAY: /*96, 4, 2, 1*/  {
