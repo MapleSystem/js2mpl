@@ -832,7 +832,10 @@ void JSCompiler::CompileOpSetArg(uint32_t i, base_node_t *val) {
   JSMIRFunction *fun = jsbuilder_->GetCurrentFunction();
   int start = (fun->with_env_arg) ? 2 : 1;
   MIRSymbol *arg = jsbuilder_->GetFunctionArgument(fun, i+start);  // skip this and env parameters
+  opstack_->ReplaceStackItemsWithTemps(this, arg);
   jsbuilder_->CreateStmtDassign(arg, 0, val);
+  base_node_t *bn = jsbuilder_->CreateExprDread(jsvalue_type_, arg);
+  Push(bn);
   return;
 }
 
@@ -1067,7 +1070,9 @@ bool JSCompiler::CompileOpSetName(JSAtom *atom, base_node_t *val) {
   // variable being set, evaluate and store the result in a new temp and replace
   // the stack items by the temp
   opstack_->ReplaceStackItemsWithTemps(this, var);
-  BaseNode *bn = jsbuilder_->CreateStmtDassign(var, 0, CheckConvertToJSValueType(val));
+  jsbuilder_->CreateStmtDassign(var, 0, CheckConvertToJSValueType(val));
+  base_node_t *bn = jsbuilder_->CreateExprDread(jsvalue_type_, var);
+  Push(bn);
   return true;
 }
 
@@ -2300,7 +2305,6 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         Pop(); // pop the scope
         if (!CompileOpSetName(atom, val))
           return false;
-        Push(val);
         break;
       }
       case JSOP_GETELEM: /*55, 1, 2, 1*/  {
@@ -2459,7 +2463,6 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         uint32_t i = GET_ARGNO(pc);
         base_node_t *bn = CheckConvertToJSValueType(Pop());
         CompileOpSetArg(i, bn);
-        Push(bn);
         break;
       }
       case JSOP_GETLOCAL: /*86, 4, 0, 1*/  {
