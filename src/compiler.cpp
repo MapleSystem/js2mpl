@@ -200,8 +200,8 @@ uint32_t JSCompiler::FindIntrinsicForOp(JSOp opcode) {
 // JSOP_STRICTEQ 72
 // JSOP_STRICTNE 73
 base_node_t *JSCompiler::CompileOpBinary(JSOp opcode,
-                                      base_node_t *op0,
-                                      base_node_t *op1) {
+                                         base_node_t *op0,
+                                         base_node_t *op1) {
   Opcode mop = (Opcode)0;
   MIRType *restype = jsbuilder_->GetDynany();
   switch (opcode) {
@@ -231,12 +231,21 @@ base_node_t *JSCompiler::CompileOpBinary(JSOp opcode,
       return jsbuilder_->CreateExprBinary(mop, jsbuilder_->GetInt32(), op0, op1);
     }
 
-    if (opcodeinfo.IsCompare(mop))
+    if (opcodeinfo.IsCompare(mop)) {
       return jsbuilder_->CreateExprCompare(mop, restype, jsbuilder_->GetDynany(),
+           CheckConvertToJSValueType(op0), CheckConvertToJSValueType(op1)); }
+    else if (restype->GetPrimType() == PTY_u32) {
+      return jsbuilder_->CreateExprBinary(mop, restype,
+           CheckConvertToUInt32(op0), CheckConvertToUInt32(op1));
+    }
+    else if (restype->GetPrimType() == PTY_dynany) {
+      return jsbuilder_->CreateExprBinary(mop, restype,
            CheckConvertToJSValueType(op0), CheckConvertToJSValueType(op1));
-    else return jsbuilder_->CreateExprBinary(mop, restype,
-           CheckConvertToJSValueType(op0), CheckConvertToJSValueType(op1));
-
+    } else {
+      assert(restype->GetPrimType() == PTY_i32);
+      return jsbuilder_->CreateExprBinary(mop, restype,
+           CheckConvertToInt32(op0), CheckConvertToInt32(op1));
+    }
   }
 
   MIRIntrinsicId idx = (MIRIntrinsicId)FindIntrinsicForOp(opcode);
@@ -1636,6 +1645,19 @@ base_node_t *JSCompiler::CheckConvertToInt32(base_node_t *node)
     return node;
 #ifdef DYNAMICLANG
   return jsbuilder_->CreateExprTypeCvt(OP_cvt, jsbuilder_->GetInt32(), jsbuilder_->GetPrimType(node->ptyp), node);
+#else
+  BaseNode *expr = jsbuilder_->CreateExprIntrinsicop1(INTRN_JS_INT32, jsbuilder_->GetInt32(), node);
+  MIRSymbol *var = CreateTempVar(jsbuilder_->GetInt32());
+  return jsbuilder_->CreateExprDread(jsbuilder_->GetInt32(), var);
+#endif
+}
+
+base_node_t *JSCompiler::CheckConvertToUInt32(base_node_t *node)
+{
+  if (IsPrimitiveInteger(node->ptyp))
+    return node;
+#ifdef DYNAMICLANG
+  return jsbuilder_->CreateExprTypeCvt(OP_cvt, jsbuilder_->GetUInt32(), jsbuilder_->GetPrimType(node->ptyp), node);
 #else
   BaseNode *expr = jsbuilder_->CreateExprIntrinsicop1(INTRN_JS_INT32, jsbuilder_->GetInt32(), node);
   MIRSymbol *var = CreateTempVar(jsbuilder_->GetInt32());

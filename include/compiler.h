@@ -184,6 +184,7 @@ class JSCompiler{
   base_node_t *CheckConvertToJSValueType(base_node_t *node);
   base_node_t *CheckConvertToBoolean(base_node_t *node);
   base_node_t *CheckConvertToInt32(base_node_t *node);
+  base_node_t *CheckConvertToUInt32(base_node_t *node);
   base_node_t *CheckConvertToRespectiveType(base_node_t *node, MIRType *ty);
   bool CompileOpSetName(JSAtom *atom, base_node_t *val);
   void CompileOpCase(jsbytecode *pc, int offset, base_node_t *rval,
