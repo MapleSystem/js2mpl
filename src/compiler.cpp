@@ -260,9 +260,9 @@ base_node_t *JSCompiler::CompileOpUnary(JSOp opcode, base_node_t *val) {
   Opcode mop = (Opcode)0;
   MIRType *restype = jsbuilder_->GetDynany();
   switch (opcode) {
-    case JSOP_NOT: mop = OP_lnot; restype = jsbuilder_->GetUInt1(); break;
-    case JSOP_BITNOT: mop = OP_bnot; restype = jsbuilder_->GetUInt32(); break;
-    case JSOP_NEG: mop = OP_neg; restype = jsbuilder_->GetInt32();break;
+    case JSOP_NOT: mop = OP_lnot; restype = jsbuilder_->GetUInt1(); val = CheckConvertToBoolean(val); break;
+    case JSOP_BITNOT: mop = OP_bnot; restype = jsbuilder_->GetInt32(); val = CheckConvertToInt32(val); break;
+    case JSOP_NEG: mop = OP_neg; restype = jsbuilder_->GetInt32(); val = CheckConvertToInt32(val); break;
     default: break;
   }
   if (mop != 0)
