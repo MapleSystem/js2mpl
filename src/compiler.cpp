@@ -2148,7 +2148,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       }
       case JSOP_ITER: /*75, 2, 1, 1*/  { 
         uint8_t flags = GET_UINT8(pc);
-        base_node_t *bn = Pop();
+        base_node_t *bn = CheckConvertToJSValueType(Pop());
         base_node_t *itr = CompileOpNewIterator(bn, flags);
         Push(itr);
         opstack_->flag_has_iter = true;
