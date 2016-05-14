@@ -217,11 +217,13 @@ base_node_t *JSCompiler::CompileOpBinary(JSOp opcode,
     case JSOP_LSH: mop = OP_shl; restype = jsbuilder_->GetInt32(); break;
     case JSOP_RSH: mop = OP_ashr; restype = jsbuilder_->GetInt32(); break;
     case JSOP_URSH: mop = OP_lshr; restype = jsbuilder_->GetUInt32(); break;
-    case JSOP_ADD: mop = OP_add; break;
     case JSOP_SUB: mop = OP_sub; restype = jsbuilder_->GetInt32(); break;
     case JSOP_MUL: mop = OP_mul; restype = jsbuilder_->GetInt32(); break;
     case JSOP_DIV: mop = OP_div; restype = jsbuilder_->GetInt32(); break;
     case JSOP_MOD: mop = OP_rem; restype = jsbuilder_->GetInt32(); break;
+    case JSOP_ADD:
+      return CompileGeneric2(INTRN_JSOP_ADD, CheckConvertToJSValueType(op0),
+               CheckConvertToJSValueType(op1), true);
     default: break;
   }
   if (mop != 0) {
