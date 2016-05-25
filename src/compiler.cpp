@@ -67,8 +67,7 @@ static bool IsXcCall(char *name) {
 
 MIRSymbol *JSCompiler::CreateTempVar(MIRType *type) {
   const char *name = Util::GetSequentialName("temp_var_", temp_var_no_, mp_);
-  bool created;
-  MIRSymbol *var = jsbuilder_->GetOrCreateLocalDecl(name, type, created);
+  MIRSymbol *var = jsbuilder_->GetOrCreateLocalDecl(name, type);
   return var;
 }
 
@@ -743,9 +742,7 @@ base_node_t *JSCompiler::CompileOpString(JSString *str) {
   size_t padding_length = length + pad;
   MIRType *type = jsbuilder_->GetOrCreateArrayType(unit_type, 1, &(padding_length));
   const char *temp_name = Util::GetSequentialName("const_chars_", temp_var_no_, mp_);
-  bool created;
-  MIRSymbol *var = jsbuilder_->GetOrCreateGlobalDecl(temp_name, type, created);
-  //InitWithUndefined(created, var);
+  MIRSymbol *var = jsbuilder_->GetOrCreateGlobalDecl(temp_name, type);
   MIRAggConst *init =  MP_NEW(module_->mp_, MIRAggConst(type));
 
   uint8_t cl[4];
@@ -882,7 +879,6 @@ base_node_t *JSCompiler::CompileOpGetLocal(uint32_t local_no) {
 StmtNode *JSCompiler::CompileOpSetLocal(uint32_t local_no, base_node_t *src) {
   JSMIRFunction *func = jsbuilder_->GetCurrentFunction();
   char *name = closure_->GetLocalVar(func, local_no);
-  bool created;
   MIRSymbol *var;
 
   // for function name, use suffix _obj_
@@ -892,9 +888,9 @@ StmtNode *JSCompiler::CompileOpSetLocal(uint32_t local_no, base_node_t *src) {
       std::pair<char*, char*> P(objname, name);
       objFuncMap.push_back(P);
     }
-    var = jsbuilder_->GetOrCreateGlobalDecl(objname, jsvalue_type_, created);
+    var = jsbuilder_->GetOrCreateGlobalDecl(objname, jsvalue_type_);
   } else {
-    var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_, created);
+    var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_);
   }
 
   // if the stack is not empty, for each stack item that contains the 
@@ -1073,8 +1069,7 @@ bool JSCompiler::CompileOpSetName(JSAtom *atom, base_node_t *val) {
   JSMIRFunction *func = funcstack_.top();
   MIRSymbol *var = closure_->GetSymbolFromEnclosingScope(func, name);
   if (!var) {
-    bool created;
-    var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_, created);
+    var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_);
   }
 
   // if the stack is not empty, for each stack item that contains the 
@@ -1099,8 +1094,7 @@ bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
   JSMIRFunction *mfun = jsbuilder_->GetFunction(funcname);
   mfun->SetUserFunc();
 
-  bool created;
-  MIRSymbol *func_st = jsbuilder_->GetOrCreateGlobalDecl(funcname, jsvalue_type_, created);
+  MIRSymbol *func_st = jsbuilder_->GetOrCreateGlobalDecl(funcname, jsvalue_type_);
   base_node_t *ptr = jsbuilder_->CreateExprAddroffunc(func_st->value_.func_->puidx);
   assert(jsfun && "not a jsfunction");
 
@@ -1114,7 +1108,7 @@ bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
     uint32_t attrs = varg_p << 24 | nargs << 16 | length << 8 | flag;
     base_node_t *func_node = CompileGeneric3(INTRN_JS_NEW_FUNCTION, ptr, jsbuilder_->GetConstInt(0), jsbuilder_->GetConstUInt32(attrs), true, true);
 
-    MIRSymbol *func_obj = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalue_type_, created);
+    MIRSymbol *func_obj = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalue_type_);
     jsbuilder_->InsertGlobalName(name);
 
     BaseNode *stmt = jsbuilder_->CreateStmtDassign(func_obj, 0, func_node);
@@ -1169,16 +1163,14 @@ base_node_t *JSCompiler::CompileOpLambda(jsbytecode *pc, JSFunction *jsfun) {
 
   JSMIRFunction *parentFunc = funcstack_.top();
 
-  bool created;
-  MIRSymbol *funcsymbol = jsbuilder_->GetOrCreateGlobalDecl(funcname, jsvalue_type_, created);
+  MIRSymbol *funcsymbol = jsbuilder_->GetOrCreateGlobalDecl(funcname, jsvalue_type_);
   base_node_t *ptr = jsbuilder_->CreateExprAddroffunc(funcsymbol->value_.func_->puidx);
   MIRSymbol * env_var = NULL;
   base_node_t *node;
   DEBUGPRINT2((lambda->scope->GetName()));
   DEBUGPRINT2((lambda->scope->IsTopLevel()));
   if (parentFunc->scope->IsWithEnv()) {
-    bool created;
-    env_var = jsbuilder_->GetOrCreateLocalDecl("environment", parentFunc->envptr, created);
+    env_var = jsbuilder_->GetOrCreateLocalDecl("environment", parentFunc->envptr);
     node = jsbuilder_->CreateExprDread(parentFunc->envptr, env_var);
     lambda->penvtype = parentFunc->envptr;
   } else {
@@ -1195,7 +1187,7 @@ base_node_t *JSCompiler::CompileOpLambda(jsbytecode *pc, JSFunction *jsfun) {
 
   if(has_name) {
     char *name = Util::GetNameWithSuffix(funcname, "_obj_", mp_);
-    MIRSymbol *func_obj = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalue_type_, created);
+    MIRSymbol *func_obj = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalue_type_);
     jsbuilder_->InsertGlobalName(name);
     jsbuilder_->CreateStmtDassign(func_obj, 0, bn);
     bn = jsbuilder_->CreateExprDread(func_obj);
@@ -1229,12 +1221,11 @@ int JSCompiler::ProcessAliasedVar(JSAtom *atom, MIRType *&env_ptr, base_node_t *
   const char *env_name;
   base_node_t *bn = NULL;
   stmt_node_t *stmt = NULL;
-  bool created;
 
   // search in current func's alias list
   // depth = 0
   if (!idx && sn->IsWithEnv()) {
-    env_var = jsbuilder_->GetOrCreateLocalDecl("environment", func->envptr, created);
+    env_var = jsbuilder_->GetOrCreateLocalDecl("environment", func->envptr);
     DEBUGPRINTsv3("environment", func->envptr);
     idx = jsbuilder_->GetStructFieldIdFromFieldName(func->envtype, name);
     DEBUGPRINT3(idx);
@@ -1274,7 +1265,7 @@ int JSCompiler::ProcessAliasedVar(JSAtom *atom, MIRType *&env_ptr, base_node_t *
         env_node = jsbuilder_->CreateExprIread(pfunc->envptr, pfunc->envptr, 1, env_node);
 
         env_name = Util::GetSequentialName("environment_", temp_var_no_, mp_);
-        env_var = jsbuilder_->GetOrCreateLocalDecl(env_name, pfunc->envptr, created);
+        env_var = jsbuilder_->GetOrCreateLocalDecl(env_name, pfunc->envptr);
         stmt = jsbuilder_->CreateStmtDassign(env_var, 0, env_node);
         env_node = jsbuilder_->CreateExprDread(pfunc->envptr, env_var);
         idx = jsbuilder_->GetStructFieldIdFromFieldName(pfunc->envtype, name);
@@ -1310,8 +1301,7 @@ base_node_t *JSCompiler::CompileOpGetAliasedVar(JSAtom *atom) {
     // add to local
     DEBUGPRINT3("alias var not found, could be from block");
     char *name = Util::GetString(atom, mp_, jscontext_);
-    bool created;
-    MIRSymbol *var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_, created);
+    MIRSymbol *var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_);
     bn = jsbuilder_->CreateExprDread(jsvalue_type_, var);
   }
 
@@ -1333,8 +1323,7 @@ base_node_t *JSCompiler::CompileOpSetAliasedVar(JSAtom *atom, base_node_t *val) 
     // add to local
     DEBUGPRINT3("alias var not found, could be from block");
     char *name = Util::GetString(atom, mp_, jscontext_);
-    bool created;
-    MIRSymbol *var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_, created);
+    MIRSymbol *var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_);
     bn = jsbuilder_->CreateStmtDassign(var, 0, val);
   }
   jsbuilder_->AddStmtInCurrentFunctionBody(bn);
@@ -1711,8 +1700,7 @@ void JSCompiler::EnvInit(JSMIRFunction *func) {
 
   MIRType * env_type = func->envtype;
   MIRType * env_ptr = func->envptr;
-  bool created;
-  MIRSymbol *env_var = jsbuilder_->GetOrCreateLocalDecl("environment", env_ptr, created);
+  MIRSymbol *env_var = jsbuilder_->GetOrCreateLocalDecl("environment", env_ptr);
   DEBUGPRINTsv3("environment", env_ptr);
 
   base_node_t *size = jsbuilder_->CreateExprSizeoftype(env_type);
@@ -2620,8 +2608,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_CALLEE: /*132, 1, 0, 1*/  {
         char *name = funcstack_.top()->scope->GetName();
         char * objname = Util::GetNameWithSuffix(name, "_obj_", mp_);
-        bool created;
-        MIRSymbol *var = jsbuilder_->GetOrCreateGlobalDecl(objname, jsvalue_type_, created);
+        MIRSymbol *var = jsbuilder_->GetOrCreateGlobalDecl(objname, jsvalue_type_);
         base_node_t *bn = jsbuilder_->CreateExprDread(var);
         Push(bn);
         break;

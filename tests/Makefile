@@ -18,7 +18,7 @@ VM_CMPL=$(BUILD_ALL)/maplevm/jsvm-cmpl/jsvm-cmpl
 GEN_CMPL=$(BUILD_ALL)/mapleir/mmpl2cmpl
 PRINT_CMPL=$(BUILD_ALL)/mapleir/cmpl2mmpl
 MEM_PROFILER_CMPL=./get-mem-usage.sh
-js2mpl=../build/js2mpl
+js2mpl=../build/$(FLAVOR)/js2mpl
 
 PLUGINDIR=todo-tests/plugin regression-tests/plugin
 REQDIR=todo-tests/plugin/required regression-tests/plugin/required
