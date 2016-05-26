@@ -1090,7 +1090,6 @@ bool JSCompiler::CompileOpSetName(JSAtom *atom, base_node_t *val) {
 // JSOP_DEFFUN 127
 bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
   JSScript *scr = jsfun->getOrCreateScript(jscontext_);
-  MIRType *retuen_type = jsvalue_type_;
   JSAtom *atom = jsfun->displayAtom();
   DEBUGPRINT2(atom);
   char *funcname = Util::GetString(atom, mp_, jscontext_);
@@ -1156,10 +1155,13 @@ base_node_t *JSCompiler::CompileOpLambda(jsbytecode *pc, JSFunction *jsfun) {
   // isLambda() && displayAtom() && !hasGuessedAtom()
   // if((jsfun->isNamedLambda()))
   char *funcname = NULL;
-  if (atom && !jsfun->hasGuessedAtom())
+  bool has_name = false;
+  if (atom && !jsfun->hasGuessedAtom()) {
     funcname = Util::GetString(atom, mp_, jscontext_);
-  else
+    has_name = true;
+  } else {
     funcname = scope_->GetAnonyFunctionName(pc);
+  }
 
   JSMIRFunction *lambda = jsbuilder_->GetFunction(funcname);
   lambda->SetUserFunc();
@@ -1171,14 +1173,12 @@ base_node_t *JSCompiler::CompileOpLambda(jsbytecode *pc, JSFunction *jsfun) {
   MIRSymbol *funcsymbol = jsbuilder_->GetOrCreateGlobalDecl(funcname, jsvalue_type_, created);
   base_node_t *ptr = jsbuilder_->CreateExprAddroffunc(funcsymbol->value_.func_->puidx);
   MIRSymbol * env_var = NULL;
-  base_node_t *bn;
   base_node_t *node;
   DEBUGPRINT2((lambda->scope->GetName()));
   DEBUGPRINT2((lambda->scope->IsTopLevel()));
   if (parentFunc->scope->IsWithEnv()) {
     bool created;
     env_var = jsbuilder_->GetOrCreateLocalDecl("environment", parentFunc->envptr, created);
-
     node = jsbuilder_->CreateExprDread(parentFunc->envptr, env_var);
     lambda->penvtype = parentFunc->envptr;
   } else {
@@ -1191,11 +1191,17 @@ base_node_t *JSCompiler::CompileOpLambda(jsbytecode *pc, JSFunction *jsfun) {
   uint32_t length = nargs;
   uint32_t flag = jsfun->strict() ? JSFUNCPROP_STRICT | JSFUNCPROP_USERFUNC : JSFUNCPROP_USERFUNC;
   uint32_t attrs = varg_p << 24 | nargs << 16 | length << 8 | flag;
-  bn = CompileGeneric3(INTRN_JS_NEW_FUNCTION, ptr, node, jsbuilder_->GetConstUInt32(attrs), true);
+  base_node_t *bn = CompileGeneric3(INTRN_JS_NEW_FUNCTION, ptr, node, jsbuilder_->GetConstUInt32(attrs), true);
 
+  if(has_name) {
+    char *name = Util::GetNameWithSuffix(funcname, "_obj_", mp_);
+    MIRSymbol *func_obj = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalue_type_, created);
+    jsbuilder_->InsertGlobalName(name);
+    jsbuilder_->CreateStmtDassign(func_obj, 0, bn);
+    bn = jsbuilder_->CreateExprDread(func_obj);
+  }
   std::pair<JSScript *, JSMIRFunction *> P(jsfun->nonLazyScript(), lambda);
   scriptstack_.push(P);
-
   return bn;
 }
 
@@ -2611,7 +2617,15 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         break;
       }
       case JSOP_LAMBDA_ARROW: /*131, 5, 1, 1*/  { SIMULATESTACK(1, 1); break; }
-      case JSOP_CALLEE: /*132, 1, 0, 1*/  { SIMULATESTACK(0, 1); break; }
+      case JSOP_CALLEE: /*132, 1, 0, 1*/  {
+        char *name = funcstack_.top()->scope->GetName();
+        char * objname = Util::GetNameWithSuffix(name, "_obj_", mp_);
+        bool created;
+        MIRSymbol *var = jsbuilder_->GetOrCreateGlobalDecl(objname, jsvalue_type_, created);
+        base_node_t *bn = jsbuilder_->CreateExprDread(var);
+        Push(bn);
+        break;
+      }
       case JSOP_INITPROP_GETTER: /*97, 5, 2, 1*/  {
         JSString *str = script->getAtom(pc);
         DEBUGPRINT2(str);
