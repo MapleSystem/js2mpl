@@ -13,6 +13,7 @@ required = output/required
 JS2MPL=$(JS2MPLDIR)/build/$(FLAVOR)/js2mpl
 BUILD_ALL=$(MAPLEALL)/build/$(FLAVOR)
 BE = $(BUILD_ALL)/maplebe/be/mplbe
+ME = $(BUILD_ALL)/mapleme/mplme
 MAPLEINTERPRETER=$(BUILD_ALL)/maplevm/interpreter
 VM_CMPL=$(BUILD_ALL)/maplevm/jsvm-cmpl/jsvm-cmpl
 GEN_CMPL=$(BUILD_ALL)/mapleir/mmpl2cmpl
@@ -73,6 +74,7 @@ tt:
 	@echo gdb --args $(js2mpl) $(build)/$*.js $(OPT)
 	$(JS2MPL) $(BUILD)/$*.js $(OPT)
 	@echo gdb --args $(js2mpl) $(build)/$*.js $(OPT)
+	$(ME) $(BUILD)/$*.mpl > $(BUILD)/$*.log
 	@echo gdb --args $(BE) $(build)/$*.mpl
 	$(BE) $(BUILD)/$*.mpl > $(BUILD)/$*.log
 	@echo "\n====================== interpreter ==================="
@@ -100,6 +102,7 @@ tt:
 	@echo gdb --args $(js2mpl) $(build)/$*.js $(OPT)
 	$(JS2MPL) $(BUILD)/$*.js $(OPT)
 	@echo gdb --args $(js2mpl) $(build)/$*.js $(OPT)
+	$(ME) $(BUILD)/$*.mpl > $(BUILD)/$*.log
 	@echo gdb --args $(BE) $(build)/$*.mpl
 	$(BE) $(BUILD)/$*.mpl > $(BUILD)/$*.log
 	echo "(cd $(BUILD); gdb --args $(MAPLEINTERPRETER) $*.mmpl)"

@@ -23,6 +23,7 @@ if(!(-e $plugindir)) {
 }
 
 my @failed_mpl_file;
+my @failed_mplme_file;
 my @failed_mmpl_file;
 my @failed_gencmpl_file;
 my @failed_printcmpl_file;
@@ -35,6 +36,7 @@ opendir (DIR, $dirname ) || die "Error in opening dir $dirname\n";
 print("\n====================== run tests =====================\n");
 my @count = 0;
 my @countMPL = 0;
+my @countME = 0;
 my @countMMPL = 0;
 my @countgenCMPL = 0;
 my @countprintCMPL = 0;
@@ -79,6 +81,14 @@ foreach $srcdir (@required) {
         print " ==js2mpl===> $file\n";
         $countMPL ++;
         push(@failed_mpl_file, $file);
+        $flag ++;
+        next;
+      }
+      $res = system("$pwd/../../mapleall/build/gnu/mapleme/mplme $plugindir/$mpl_file >> $plugindir/$log_file");
+      if ($res > 0) {
+        print " ==mplme===> $file\n";
+        $countME ++;
+        push(@failed_mplme_file, $file);
         $flag ++;
         next;
       }
@@ -146,6 +156,14 @@ while( ($srcdir = readdir(DIR))){
         print " ==js2mpl===> $file\n";
         $countMPL ++;
         push(@failed_mpl_file, $file);
+        $flag ++;
+        next;
+      }
+      $res = system("$pwd/../../mapleall/build/gnu/mapleme/mplme $tempdir/$mpl_file >> $tempdir/$log_file");
+      if ($res > 0) {
+        print " ==mplme===> $file\n";
+        $countME ++;
+        push(@failed_mplme_file, $file);
         $flag ++;
         next;
       }
@@ -222,7 +240,7 @@ if ((scalar(@failed_mpl_file) + scalar(@failed_mmpl_file) + scalar(@failed_int_f
   print("\n all $count tests passed\n");
   print("======================================================\n");
 } else {
-  my $countFailed = $countMPL + $countMMPL + $countINT + $countrunCMPL + $countgenCMPL;
+  my $countFailed = $countMPL + $countME + $countMMPL + $countINT + $countrunCMPL + $countgenCMPL;
   my $countPassed = $count - $countFailed;
   if(scalar(@successed_file) > 0) {
     print "\n=========================\npassed $countPassed tests:\n\n";
@@ -237,6 +255,13 @@ if ((scalar(@failed_mpl_file) + scalar(@failed_mmpl_file) + scalar(@failed_int_f
   if(scalar(@failed_mpl_file) > 0){
     print("=== failed generation of maple IR: $countMPL tests\n");
     foreach $failed (@failed_mpl_file) {
+      print $failed."\n";
+    }
+    print "\n";
+  }
+  if(scalar(@failed_mplme_file) > 0){
+    print("=== failed maple ME: $countME tests\n");
+    foreach $failed (@failed_mplme_file) {
       print $failed."\n";
     }
     print "\n";
