@@ -861,12 +861,10 @@ base_node_t *JSCompiler::CompileOpGetLocal(uint32_t local_no) {
       std::pair<char*, char*> P(objname, name);
       objFuncMap.push_back(P);
     }
-    var = jsbuilder_->GetOrCreateGlobalDecl(objname, jsvalue_type_, created);
-  } else {
-    var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_, created);
-    InitWithUndefined(created, var);
+    name = objname;
   }
-
+  var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_, created);
+  InitWithUndefined(created, var);
   if (!created) {
     MIRType *type = module_->GetTypeFromTyIdx(var->GetTyIdx());
     return jsbuilder_->CreateExprDread(type, var);
@@ -888,11 +886,9 @@ StmtNode *JSCompiler::CompileOpSetLocal(uint32_t local_no, base_node_t *src) {
       std::pair<char*, char*> P(objname, name);
       objFuncMap.push_back(P);
     }
-    var = jsbuilder_->GetOrCreateGlobalDecl(objname, jsvalue_type_);
-  } else {
-    var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_);
+    name = objname;
   }
-
+  var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_);
   // if the stack is not empty, for each stack item that contains the 
   // variable being set, evaluate and store the result in a new temp and replace
   // the stack items by the temp
@@ -1108,8 +1104,13 @@ bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
     uint32_t attrs = varg_p << 24 | nargs << 16 | length << 8 | flag;
     base_node_t *func_node = CompileGeneric3(INTRN_JS_NEW_FUNCTION, ptr, jsbuilder_->GetConstInt(0), jsbuilder_->GetConstUInt32(attrs), true, true);
 
-    MIRSymbol *func_obj = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalue_type_);
-    jsbuilder_->InsertGlobalName(name);
+    MIRSymbol *func_obj;
+    if (mfun->scope->IsWithEnv()) {
+      func_obj = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_);
+    } else {
+      func_obj = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalue_type_);
+      jsbuilder_->InsertGlobalName(name);
+    }
 
     BaseNode *stmt = jsbuilder_->CreateStmtDassign(func_obj, 0, func_node);
     jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
@@ -1170,8 +1171,8 @@ base_node_t *JSCompiler::CompileOpLambda(jsbytecode *pc, JSFunction *jsfun) {
   DEBUGPRINT2((lambda->scope->GetName()));
   DEBUGPRINT2((lambda->scope->IsTopLevel()));
   if (parentFunc->scope->IsWithEnv()) {
-    env_var = jsbuilder_->GetOrCreateLocalDecl("environment", parentFunc->envptr);
-    node = jsbuilder_->CreateExprDread(parentFunc->envptr, env_var);
+    env_var = jsbuilder_->GetOrCreateLocalDecl("environment", jsbuilder_->GetDynany());
+    node = jsbuilder_->CreateExprDread(jsbuilder_->GetDynany(), env_var);
     lambda->penvtype = parentFunc->envptr;
   } else {
     node = jsbuilder_->GetConstInt(0);
@@ -1262,9 +1263,10 @@ int JSCompiler::ProcessAliasedVar(JSAtom *atom, MIRType *&env_ptr, base_node_t *
 
         env_ptr = pfunc->envptr;
         env_node = jsbuilder_->CreateExprDread(pfunc->envptr, env_var);
-        env_node = jsbuilder_->CreateExprIread(pfunc->envptr, pfunc->envptr, 1, env_node);
+        idx = jsbuilder_->GetStructFieldIdFromFieldName(pfunc->envtype, "parentenv");
+        env_node = jsbuilder_->CreateExprIread(pfunc->envptr, pfunc->envptr, idx, env_node);
 
-        env_name = Util::GetSequentialName("environment_", temp_var_no_, mp_);
+        env_name = Util::GetSequentialName("env_", temp_var_no_, mp_);
         env_var = jsbuilder_->GetOrCreateLocalDecl(env_name, pfunc->envptr);
         stmt = jsbuilder_->CreateStmtDassign(env_var, 0, env_node);
         env_node = jsbuilder_->CreateExprDread(pfunc->envptr, env_var);
@@ -1700,7 +1702,7 @@ void JSCompiler::EnvInit(JSMIRFunction *func) {
 
   MIRType * env_type = func->envtype;
   MIRType * env_ptr = func->envptr;
-  MIRSymbol *env_var = jsbuilder_->GetOrCreateLocalDecl("environment", env_ptr);
+  MIRSymbol *env_var = jsbuilder_->GetOrCreateLocalDecl("environment", jsbuilder_->GetDynany());
   DEBUGPRINTsv3("environment", env_ptr);
 
   base_node_t *size = jsbuilder_->CreateExprSizeoftype(env_type);
@@ -1709,19 +1711,24 @@ void JSCompiler::EnvInit(JSMIRFunction *func) {
   jsbuilder_->SaveReturnValue(env_var);
   func->env_setup = true;
 
+  base_node_t *env = jsbuilder_->CreateExprDread(env_ptr, 0, env_var);
+  MIRStructType *env_struct = static_cast<MIRStructType *>(env_type);
+  bn = jsbuilder_->GetConstInt(env_struct->fields.size() - 2);
+  int idx = jsbuilder_->GetStructFieldIdFromFieldName(env_type, "argnums");
+  stmt = jsbuilder_->CreateStmtIassign(env_ptr, idx, env, bn);
+  jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
+
   // set up parentenv in env
   if (func->with_env_arg) {
     MIRSymbol *env_arg = jsbuilder_->GetFunctionArgument(func, ENV_POSITION_IN_ARGS);
     bn = jsbuilder_->CreateExprDread(env_ptr, env_arg);
-    int idx = jsbuilder_->GetStructFieldIdFromFieldName(env_type, "parentenv");
-    base_node_t *base = jsbuilder_->CreateExprDread(env_ptr, env_var);
-    stmt_node_t *stmt = jsbuilder_->CreateStmtIassign(env_ptr, idx, base, bn);
+    idx = jsbuilder_->GetStructFieldIdFromFieldName(env_type, "parentenv");
+    stmt_node_t *stmt = jsbuilder_->CreateStmtIassign(env_ptr, idx, env, bn);
     jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   }
 
 #ifdef DYNAMICLANG
   // set up arguments in env
-  base_node_t *env = jsbuilder_->CreateExprDread(env_ptr, 0, env_var);
 
   std::vector<funcArgPair>::iterator I;
   for (I = funcFormals.begin(); I != funcFormals.end(); I++) {

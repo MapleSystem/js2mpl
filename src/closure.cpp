@@ -59,6 +59,9 @@ MIRType *JSClosure::GetOrCreateEnvType(JSMIRFunction *func) {
 
   FieldVector env_fields(jsbuilder_->module_->mp_allocator_.Adapter());
 
+  stridx_t argnums = jsbuilder_->GetOrCreateStringIndex("argnums");
+  env_fields.push_back(FieldPair(argnums, jsbuilder_->GetUInt32()->_ty_idx));
+
   stridx_t parentenv = jsbuilder_->GetOrCreateStringIndex("parentenv");
   if (func->scope->IsTopLevel()) {
     env_fields.push_back(FieldPair(parentenv, jsbuilder_->GetVoidPtr()->_ty_idx));
@@ -162,7 +165,7 @@ JSMIRFunction *JSClosure::ProcessFunc(JSFunction *jsfun, char *funcname) {
   if (!sn->IsTopLevel() && (sn->IsWithEnv() || sn->UseAliased())) {
     if (!func->with_env_arg) {
       JSMIRFunction *parent = sn->GetParentFunc();
-      arguments.push_back(ArgPair("_env", parent->envptr));
+      arguments.push_back(ArgPair("_env", jsbuilder_->GetDynany()));
       DEBUGPRINTsv3("_env", funcname);
       func->with_env_arg = true;
     }
