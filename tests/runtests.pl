@@ -248,7 +248,7 @@ while( ($srcdir = readdir(DIR))){
 print " $count\n";
 closedir(DIR);
 
-if ((scalar(@failed_mpl_file) + scalar(@failed_mmpl_file) + scalar(@failed_int_file) +
+if ((scalar(@failed_mpl_file) + scalar(@failed_mmpl_file) + scalar(@failed_int_file) + scalar(@failed_mplme_file) +
      scalar(@failed_gencmpl_file) + scalar(@failed_printcmpl_file) + scalar(@failed_jsvm_cmpl_file)) eq 0) {
   print("\n all $count tests passed\n");
   print("======================================================\n");
