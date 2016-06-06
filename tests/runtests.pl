@@ -51,29 +51,31 @@ foreach $srcdir (@required) {
     chdir $srcdir;
     my @files = <*.js>;
 
-    if(defined $ARGV[1]) {
-      @files = <*$ARGV[1]*.js>;
-    }
-
     foreach $fullname (@files) {
       $count ++;
       (my $file = $fullname) =~ s/\.[^.]+$//;
-      print ".";
+      if(defined $ARGV[2]) {
+        print "\n$file";
+      } else {
+        print ".";
+      }
       if ($count % 50 == 0) {
         print " $count\n";
-      }
-      if(defined $ARGV[1]) {
-        print "$file\n";
       }
       my $flag = 0;
       my $js_file = $file.'.js';
       my $mpl_file = $file.'.mpl';
+      my $origmpl_file = $file.'.orig.mpl';
+      my $optmpl_file = $file.'.opt.mpl';
       my $mmpl_file = $file.".mmpl";
       my $cmpl_file = $file.".cmpl";
       my $log_file = $file.'.log';
       my $out_file = $file.'.out';
       my $err_file = $file.'.err';
-      #my $option = $ARGV[0];
+      my $opt = 0;
+      if(defined $ARGV[1]) {
+        $opt = $ARGV[1];
+      }
       my $option = -plugin;
       system("cp $js_file $plugindir/$js_file");
       my $res = system("$pwd/../build/gnu/js2mpl $plugindir/$js_file $option > $plugindir/$log_file");
@@ -84,6 +86,7 @@ foreach $srcdir (@required) {
         $flag ++;
         next;
       }
+      system("cp $plugindir/$mpl_file $plugindir/$origmpl_file");
       $res = system("$pwd/../../mapleall/build/gnu/mapleme/mplme $plugindir/$mpl_file >> $plugindir/$log_file");
       if ($res > 0) {
         print " ==mplme===> $file\n";
@@ -91,6 +94,9 @@ foreach $srcdir (@required) {
         push(@failed_mplme_file, $file);
         $flag ++;
         next;
+      }
+      if ($opt & 1) {
+        system("cp $plugindir/$optmpl_file $plugindir/$mpl_file");
       }
       $res = system("$pwd/../../mapleall/build/gnu/maplebe/be/mplbe $plugindir/$mpl_file >> $plugindir/$log_file");
       if ($res > 0) {
@@ -126,29 +132,32 @@ while( ($srcdir = readdir(DIR))){
     my $predir = getcwd;
     chdir $srcdir;
     my @files = <*.js>;
-    if(defined $ARGV[1]) {
-      @files = <*$ARGV[1]*.js>;
-    }
 
     foreach $fullname (@files) {
       $count ++;
       (my $file = $fullname) =~ s/\.[^.]+$//;
-      print ".";
+      if(defined $ARGV[2]) {
+        print "\n$file";
+      } else {
+        print ".";
+      }
       if ($count % 50 == 0) {
         print " $count\n";
-      }
-      if(defined $ARGV[1]) {
-        print "$file\n";
       }
       my $flag = 0;
       my $js_file = $file.'.js';
       my $mpl_file = $file.'.mpl';
+      my $origmpl_file = $file.'.orig.mpl';
+      my $optmpl_file = $file.'.opt.mpl';
       my $mmpl_file = $file.".mmpl";
       my $cmpl_file = $file.".cmpl";
       my $log_file = $file.'.log';
       my $out_file = $file.'.out';
       my $err_file = $file.'.err';
-      #my $option = $ARGV[0];
+      my $opt = 0;
+      if(defined $ARGV[1]) {
+        $opt = $ARGV[1];
+      }
       my $option = 0;
       system("cp $js_file $tempdir/$js_file");
       my $res = system("$pwd/../build/gnu/js2mpl $tempdir/$js_file $option > $tempdir/$log_file");
@@ -159,6 +168,7 @@ while( ($srcdir = readdir(DIR))){
         $flag ++;
         next;
       }
+      system("cp $tempdir/$mpl_file $tempdir/$origmpl_file");
       $res = system("$pwd/../../mapleall/build/gnu/mapleme/mplme $tempdir/$mpl_file >> $tempdir/$log_file");
       if ($res > 0) {
         print " ==mplme===> $file\n";
@@ -166,6 +176,9 @@ while( ($srcdir = readdir(DIR))){
         push(@failed_mplme_file, $file);
         $flag ++;
         next;
+      }
+      if ($opt & 1) {
+        system("cp $tempdir/$optmpl_file $tempdir/$mpl_file");
       }
       $res = system("$pwd/../../mapleall/build/gnu/maplebe/be/mplbe $tempdir/$mpl_file >> $tempdir/$log_file");
       if ($res > 0) {
