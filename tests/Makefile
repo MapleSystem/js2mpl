@@ -140,6 +140,9 @@ run:
 
 plugin: $(REQ)
 
+checkme:
+	@./runtests.pl regression-tests 1
+
 checkin: regression
 
 regression:
