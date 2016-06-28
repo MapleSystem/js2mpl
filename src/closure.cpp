@@ -60,11 +60,11 @@ MIRType *JSClosure::GetOrCreateEnvType(JSMIRFunction *func) {
   FieldVector env_fields(jsbuilder_->module_->mp_allocator_.Adapter());
 
   stridx_t argnums = jsbuilder_->GetOrCreateStringIndex("argnums");
-  env_fields.push_back(FieldPair(argnums, jsbuilder_->GetUInt32()->_ty_idx));
+  env_fields.push_back(FieldPair(argnums, TyidxAttrPair(jsbuilder_->GetUInt32()->_ty_idx, TypeAttrs())));
 
   stridx_t parentenv = jsbuilder_->GetOrCreateStringIndex("parentenv");
   if (func->scope->IsTopLevel()) {
-    env_fields.push_back(FieldPair(parentenv, jsbuilder_->GetVoidPtr()->_ty_idx));
+    env_fields.push_back(FieldPair(parentenv, TyidxAttrPair(jsbuilder_->GetVoidPtr()->_ty_idx, TypeAttrs())));
   } else {
     ScopeNode *sn = func->scope;
     JSMIRFunction *parent = sn->GetParentFunc();
@@ -74,7 +74,7 @@ MIRType *JSClosure::GetOrCreateEnvType(JSMIRFunction *func) {
     DEBUGPRINT3(envptr);
     func->penvtype = parentenv_type;
     func->penvptr = envptr;
-    env_fields.push_back(FieldPair(parentenv, envptr->_ty_idx));
+    env_fields.push_back(FieldPair(parentenv, TyidxAttrPair(envptr->_ty_idx, TypeAttrs())));
   }
 
   MIRType *env_type = jsbuilder_->CreateStructType(env_name.c_str(), env_fields);
@@ -97,7 +97,7 @@ void JSClosure::AddAliasToEnvType(MIRType *env_type, char *name, MIRType *T) {
   stridx_t stridx = jsbuilder_->GetOrCreateStringIndex(name);
   MIRStructType *env_struct = static_cast<MIRStructType *>(env_type);
 
-  env_struct->fields.push_back(FieldPair(stridx, T->_ty_idx));
+  env_struct->fields.push_back(FieldPair(stridx, TyidxAttrPair(T->_ty_idx, TypeAttrs())));
 }
 
 void JSClosure::AddFuncFormalsToEnvType(JSMIRFunction *func) {

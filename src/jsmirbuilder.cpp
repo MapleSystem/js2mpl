@@ -99,6 +99,7 @@ JSMIRFunction *JSMIRBuilder::GetOrCreateFunction(const char *name,
   fn->_return_tyidx = return_type->_ty_idx;
 
   MapleVector<tyidx_t> funcvectype(module_->mp_allocator_.Adapter());
+  MapleVector<TypeAttrs> funcvecattr(module_->mp_allocator_.Adapter());
   for (uint32 i = 0; i < arguments.size(); i++) {
     MapleString var(arguments[i].first, module_->mp_);
     MIRSymbol *argst = fn->symtab->CreateSymbol();
@@ -110,8 +111,9 @@ JSMIRFunction *JSMIRBuilder::GetOrCreateFunction(const char *name,
     fn->symtab->AddToStringSymbolMap(argst);
     fn->AddArgument(argst);
     funcvectype.push_back(ty->_ty_idx);
+    funcvecattr.push_back(TypeAttrs());
   }
-  funcst->SetTyIdx(GetOrCreateFunctionType (return_type->_ty_idx, funcvectype, isvarg)->_ty_idx);
+  funcst->SetTyIdx(GetOrCreateFunctionType (return_type->_ty_idx, funcvectype, funcvecattr, isvarg)->_ty_idx);
   funcst->SetFunction(fn);
   fn->body = module_->mp_->New<BlockNode>();
 
