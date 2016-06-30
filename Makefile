@@ -10,7 +10,7 @@ arm2: maplearm2 src
 clang: mapleallclang src
 
 mapleall:
-	$(MAKE) -C ../mapleall
+	$(MAKE) -C ../mapleall gnubuild
 
 mapleallclang:
 	$(MAKE) -C ../mapleall USECLANG=1
@@ -34,22 +34,31 @@ todo:
 	$(MAKE) -C tests todo
 
 clean: 
-	$(MAKE) clean -C src
-	$(MAKE) clean -C tests
-
-cleanall:
 	rm -rf build
 
-rebuild: cleanall all
+rebuild: clean all
 
-checkin:
-	$(MAKE) -C ../mapleall cleanall
-	$(MAKE) -C ../js2mpl-vm cleanall
-	$(MAKE) -C ../js2mpl-vm build
-	$(MAKE) -C ../dex2mpl cleanall
-	$(MAKE) -C ../dex2mpl build
+cleanall:
+	$(MAKE) -C ../mapleall clean
+	$(MAKE) -C ../js2mpl-vm clean
+	$(MAKE) -C ../dex2mpl clean
+
+buildall:
+	$(MAKE) -C ../mapleall gnubuild
+	$(MAKE) -C ../js2mpl-vm src
+	$(MAKE) -C ../mapleall clangbuild
+	$(MAKE) -C ../dex2mpl src
+
+checkin: cleanall buildall
 	$(MAKE) -C ../js2mpl-vm regression
 	$(MAKE) -C ../dex2mpl regression
+
+localcheckin:
+	$(MAKE) -C ../mapleall clean
+	$(MAKE) -C ../js2mpl-vm clean
+	$(MAKE) -C ../mapleall gnubuild
+	$(MAKE) -C ../js2mpl-vm src
+	$(MAKE) -C ../js2mpl-vm regression
 
 .PHONY: $(TARGS)
 
