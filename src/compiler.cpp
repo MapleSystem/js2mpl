@@ -417,10 +417,9 @@ base_node_t *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool nee
 
     IntrinDesc *intrindesc = &IntrinDesc::intrintable[idx];
     MIRType *retty = intrindesc->GetReturnType();
-    stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallN((MIRIntrinsicId)idx, args);
-    jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
     MIRSymbol *temp = CreateTempVar(retty);
-    jsbuilder_->SaveReturnValue(temp);
+    stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssignedN((MIRIntrinsicId)idx, args, temp);
+    jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
     return jsbuilder_->CreateExprDread(retty, temp);
   }
 
@@ -435,10 +434,9 @@ base_node_t *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool nee
     }
     IntrinDesc *intrindesc = &IntrinDesc::intrintable[idx];
     MIRType *retty = intrindesc->GetReturnType();
-    stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCall1((MIRIntrinsicId)idx, argument);
-    jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
     MIRSymbol *temp = CreateTempVar(retty);
-    jsbuilder_->SaveReturnValue(temp);
+    stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned1((MIRIntrinsicId)idx, argument, temp);
+    jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
     return jsbuilder_->CreateExprDread(retty, temp);
   }
 
@@ -452,11 +450,10 @@ base_node_t *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool nee
   }
 
   MIRType *retty = intrindesc->GetReturnType();
-  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallN((MIRIntrinsicId)idx, arguments);
-  jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   MIRSymbol *temp = CreateTempVar(retty);
-  if (retty != jsbuilder_->GetVoid())
-    jsbuilder_->SaveReturnValue(temp);
+  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssignedN((MIRIntrinsicId)idx, arguments, temp);
+  jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
+
   return jsbuilder_->CreateExprDread(retty, temp);
 }
 
@@ -492,6 +489,7 @@ base_node_t *JSCompiler::CompileOpCall(uint32_t argc) {
   char *funcname = NULL;
   puidx_t puidx;
 
+
   if (funcnode->op == OP_dread) {
     AddrofNode *dread = static_cast<AddrofNode *>(funcnode);
     MIRSymbol *funcobj;
@@ -518,6 +516,8 @@ base_node_t *JSCompiler::CompileOpCall(uint32_t argc) {
     }
   }
 
+  MIRSymbol *returnVar = CreateTempVar(jsvalue_type_);
+
   if (useSimpleCall) {
     JSMIRFunction *func = closure_->GetJSMIRFunc(funcname);
     BaseNode *undefined = CompileOpConstValue(JSTYPE_UNDEFINED, 0);
@@ -533,7 +533,7 @@ base_node_t *JSCompiler::CompileOpCall(uint32_t argc) {
         args.push_back(undefined);
     }
 
-    stmt = jsbuilder_->CreateStmtCall(puidx, args);
+    stmt = jsbuilder_->CreateStmtCallAssigned(puidx, args, returnVar, OP_callassigned);
   } else if (funcname && IsCCall(funcname)) {
     args.push_back(argsvec[argc-1]);
     BaseNode *argc_node = jsbuilder_->GetConstUInt32((uint32_t)argc-1);
@@ -541,26 +541,24 @@ base_node_t *JSCompiler::CompileOpCall(uint32_t argc) {
     for (int32_t i = argc - 2; i >=0; i--)
       args.push_back(argsvec[i]);
 
-    stmt = jsbuilder_->CreateStmtIntrinsicCallN(INTRN_JSOP_CCALL, args);
+    stmt = jsbuilder_->CreateStmtIntrinsicCallAssignedN(INTRN_JSOP_CCALL, args, returnVar);
   } else if (funcname && IsXcCall(funcname)) {
     for (int32_t i = argc - 1; i >= 0; i--)
       args.push_back(argsvec[i]);
-    stmt = jsbuilder_->CreateStmtXintrinsicCallN((MIRIntrinsicId)0, args);
+    stmt = jsbuilder_->CreateStmtXintrinsicCallAssignedN((MIRIntrinsicId)0, args, returnVar);
   } else {
     args.push_back(funcnode);
     args.push_back(impnode);
     for (int32_t i = argc - 1; i >=0; i--)
       args.push_back(argsvec[i]);
 
-    stmt = jsbuilder_->CreateStmtIntrinsicCallN(INTRN_JSOP_CALL, args);
+    stmt = jsbuilder_->CreateStmtIntrinsicCallAssignedN(INTRN_JSOP_CALL, args, returnVar);
   }
 
   if (stmt)
     jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
 
-  MIRSymbol *retrunVar = CreateTempVar(jsvalue_type_);
-  jsbuilder_->SaveReturnValue(retrunVar);
-  return jsbuilder_->CreateExprDread(jsvalue_type_, 0, retrunVar);
+  return jsbuilder_->CreateExprDread(jsvalue_type_, 0, returnVar);
 }
 
 base_node_t *JSCompiler::CompileOpNew(uint32_t argc) {
@@ -580,12 +578,10 @@ base_node_t *JSCompiler::CompileOpNew(uint32_t argc) {
   args.push_back(impnode);
   for (int32_t i = argc - 1; i >=0; i--)
     args.push_back(argsvec[i]);
-  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallN(INTRN_JSOP_NEW, args);
+  MIRSymbol *returnVar = CreateTempVar(jsvalue_type_);
+  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssignedN(INTRN_JSOP_NEW, args, returnVar);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
-
-  MIRSymbol *retrunVar = CreateTempVar(jsvalue_type_);
-  jsbuilder_->SaveReturnValue(retrunVar);
-  return jsbuilder_->CreateExprDread(jsvalue_type_, 0, retrunVar);
+  return jsbuilder_->CreateExprDread(jsvalue_type_, 0, returnVar);
 }
 
 js_builtin_id JSCompiler::EcmaNameToId(char *name) {
@@ -794,21 +790,20 @@ base_node_t *JSCompiler::CompileOpNewIterator(base_node_t *bn, uint8_t flags)
   MIRType *retty = jsbuilder_->GetOrCreatePointerType(jsbuilder_->GetVoid());
   MIRSymbol *retsy = CreateTempVar(retty);
 
-  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCall2(
+  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned2(
       (MIRIntrinsicId)INTRN_JSOP_NEW_ITERATOR,bn,
-      jsbuilder_->GetConstUInt32(flags));
+      jsbuilder_->GetConstUInt32(flags), retsy);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
-  jsbuilder_->SaveReturnValue(retsy);
   return jsbuilder_->CreateExprDread(retty, 0, retsy);  
 }
 
 base_node_t *JSCompiler::CompileOpMoreIterator(base_node_t *iterator) 
 {
-  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCall1(
-                   (MIRIntrinsicId)INTRN_JSOP_MORE_ITERATOR, iterator);
-  jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   MIRSymbol *retsy = CreateTempVar(jsbuilder_->GetUInt32());
-  jsbuilder_->SaveReturnValue(retsy);
+  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned1(
+                   (MIRIntrinsicId)INTRN_JSOP_MORE_ITERATOR, iterator, retsy);
+  jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
+
   return jsbuilder_->CreateExprDread(jsbuilder_->GetUInt32(), retsy);
   
 }
@@ -816,12 +811,13 @@ base_node_t *JSCompiler::CompileOpMoreIterator(base_node_t *iterator)
 // JSOP_ITERNEXT 77
 base_node_t *JSCompiler::CompileOpIterNext(base_node_t *iterator)
 {
-  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCall1( 
-      (MIRIntrinsicId)INTRN_JSOP_NEXT_ITERATOR,
-      iterator);
-  jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   MIRSymbol *var = CreateTempJSValueTypeVar();
-  jsbuilder_->SaveReturnValue(var);
+  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned1( 
+      (MIRIntrinsicId)INTRN_JSOP_NEXT_ITERATOR,
+      iterator,
+      var);
+  jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
+
   return jsbuilder_->CreateExprDread(jsvalue_type_, var);
 } 
 
@@ -913,18 +909,15 @@ base_node_t *JSCompiler::CompileOpNewInit(uint32_t kind) {
 
 base_node_t *JSCompiler::CompileGenericN(int32_t intrin_id,
                                         MapleVector<base_node_t *> &arguments,
-                                        bool is_call, bool retvalOK) {
+                                        bool is_call) {
   IntrinDesc *intrindesc = &IntrinDesc::intrintable[intrin_id];
   MIRType *retty = intrindesc->GetReturnType();
   if (is_call) {
-    stmt_node_t *call = jsbuilder_->CreateStmtIntrinsicCallN(
-                       (MIRIntrinsicId)intrin_id, arguments);
+    MIRSymbol *var = CreateTempVar(retty);
+    stmt_node_t *call = jsbuilder_->CreateStmtIntrinsicCallAssignedN(
+                       (MIRIntrinsicId)intrin_id, arguments, var);
     jsbuilder_->AddStmtInCurrentFunctionBody(call);
     //  TODO: if retty is void, return NULL
-    if (retvalOK)
-      return jsbuilder_->CreateExprRegread(retty->GetPrimType(), -SREG_retval0);
-    MIRSymbol *var = CreateTempVar(retty);
-    jsbuilder_->SaveReturnValue(var);
     return jsbuilder_->CreateExprDread(retty, var);
   } else {
     return jsbuilder_->CreateExprIntrinsicopN(
@@ -932,43 +925,43 @@ base_node_t *JSCompiler::CompileGenericN(int32_t intrin_id,
   }
 }
 
-base_node_t *JSCompiler::CompileGeneric0(int32_t intrin_id, bool is_call, bool retvalOK) {
+base_node_t *JSCompiler::CompileGeneric0(int32_t intrin_id, bool is_call) {
   MapleVector<base_node_t *> arguments(module_->mp_allocator_.Adapter());
-  return CompileGenericN(intrin_id, arguments, is_call, retvalOK);
+  return CompileGenericN(intrin_id, arguments, is_call);
 }
 
 base_node_t *JSCompiler::CompileGeneric1(int32_t intrin_id,
-                                      base_node_t *arg, bool is_call, bool retvalOK) {
+                                      base_node_t *arg, bool is_call) {
   MapleVector<base_node_t *> arguments(module_->mp_allocator_.Adapter());
   arguments.push_back(arg);
-  return CompileGenericN(intrin_id, arguments, is_call, retvalOK);
+  return CompileGenericN(intrin_id, arguments, is_call);
 }
 
 base_node_t *JSCompiler::CompileGeneric2(int32_t intrin_id, base_node_t *arg1,
-                                      base_node_t *arg2, bool is_call, bool retvalOK) {
+                                      base_node_t *arg2, bool is_call) {
   MapleVector<base_node_t *> arguments(module_->mp_allocator_.Adapter());
   arguments.push_back(arg1);
   arguments.push_back(arg2);
-  return CompileGenericN(intrin_id, arguments, is_call, retvalOK);
+  return CompileGenericN(intrin_id, arguments, is_call);
 }
 
 base_node_t *JSCompiler::CompileGeneric3(int32_t intrin_id, base_node_t *arg1,
-                                      base_node_t *arg2, base_node_t *arg3, bool is_call, bool retvalOK) {
+                                      base_node_t *arg2, base_node_t *arg3, bool is_call) {
   MapleVector<base_node_t *> arguments(module_->mp_allocator_.Adapter());
   arguments.push_back(arg1);
   arguments.push_back(arg2);
   arguments.push_back(arg3);
-  return CompileGenericN(intrin_id, arguments, is_call, retvalOK);
+  return CompileGenericN(intrin_id, arguments, is_call);
 }
 
 base_node_t *JSCompiler::CompileGeneric4(int32_t intrin_id, base_node_t *arg1,
-                                      base_node_t *arg2, base_node_t *arg3, base_node_t *arg4, bool is_call, bool retvalOK) {
+                                      base_node_t *arg2, base_node_t *arg3, base_node_t *arg4, bool is_call) {
   MapleVector<base_node_t *> arguments(module_->mp_allocator_.Adapter());
   arguments.push_back(arg1);
   arguments.push_back(arg2);
   arguments.push_back(arg3);
   arguments.push_back(arg4);
-  return CompileGenericN(intrin_id, arguments, is_call, retvalOK);
+  return CompileGenericN(intrin_id, arguments, is_call);
 }
 
 bool JSCompiler::CompileOpSetElem(base_node_t *obj, base_node_t *index, base_node_t *val) {
@@ -1103,7 +1096,7 @@ bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
     uint32_t length = nargs;
     uint32_t flag = jsfun->strict() ? JSFUNCPROP_STRICT | JSFUNCPROP_USERFUNC : JSFUNCPROP_USERFUNC;
     uint32_t attrs = varg_p << 24 | nargs << 16 | length << 8 | flag;
-    base_node_t *func_node = CompileGeneric3(INTRN_JS_NEW_FUNCTION, ptr, jsbuilder_->GetConstInt(0), jsbuilder_->GetConstUInt32(attrs), true, true);
+    base_node_t *func_node = CompileGeneric3(INTRN_JS_NEW_FUNCTION, ptr, jsbuilder_->GetConstInt(0), jsbuilder_->GetConstUInt32(attrs), true);
 
     MIRSymbol *func_obj;
     if (mfun->scope->IsWithEnv()) {
@@ -1707,9 +1700,8 @@ void JSCompiler::EnvInit(JSMIRFunction *func) {
   DEBUGPRINTsv3("environment", env_ptr);
 
   base_node_t *size = jsbuilder_->CreateExprSizeoftype(env_type);
-  stmt = jsbuilder_->CreateStmtIntrinsicCall1(INTRN_JS_NEW, size);
+  stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned1(INTRN_JS_NEW, size, env_var);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
-  jsbuilder_->SaveReturnValue(env_var);
   func->env_setup = true;
 
   base_node_t *env = jsbuilder_->CreateExprDread(env_ptr, 0, env_var);
@@ -2682,8 +2674,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         base_node_t *obj = CheckConvertToJSValueType(Pop());
         base_node_t *name = CompileOpString(str);
         stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCall3(INTRN_JSOP_INITPROP_BY_NAME, obj,
-                                                                                             name,
-                                                                                             CheckConvertToJSValueType(val));
+                                                                 name,
+                                                                 CheckConvertToJSValueType(val));
         jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
         Push(obj);
         break;
