@@ -128,18 +128,18 @@ class JSCompiler{
   base_node_t *CompileOpBinary(JSOp op, base_node_t *opnd0, base_node_t *opnd1);
   base_node_t *CompileOpUnary(JSOp op, base_node_t *opnd);
   base_node_t *CompileGenericN(int32_t intrin_id,
-                            MapleVector<base_node_t *> &arguments,
-                            bool is_call, bool retvalOK = false);
+                               MapleVector<base_node_t *> &arguments,
+                               bool is_call);
   base_node_t *CompileGeneric0(int32_t intrin_id,
-                            bool is_call, bool retvalOK = false);
+                               bool is_call);
   base_node_t *CompileGeneric1(int32_t intrin_id, base_node_t *arg,
-                            bool is_call, bool retvalOK = false);
+                               bool is_call);
   base_node_t *CompileGeneric2(int32_t intrin_id, base_node_t *arg0,
-                            base_node_t *arg1, bool is_call, bool retvalOK = false);
+                               base_node_t *arg1, bool is_call);
   base_node_t *CompileGeneric3(int32_t intrin_id, base_node_t *arg0,
-                            base_node_t *arg1, base_node_t *arg2, bool is_call, bool retvalOK = false);
+                               base_node_t *arg1, base_node_t *arg2, bool is_call);
   base_node_t *CompileGeneric4(int32_t intrin_id, base_node_t *arg0,
-                            base_node_t *arg1, base_node_t *arg2, base_node_t *arg3, bool is_call, bool retvalOK = false);
+                               base_node_t *arg1, base_node_t *arg2, base_node_t *arg3, bool is_call);
   base_node_t *CompileOpGetProp(base_node_t *obj, JSString *name);
   base_node_t *CompileOpCallprop(base_node_t *obj, JSAtom *atom);
   base_node_t *CompileOpString(JSString *str);

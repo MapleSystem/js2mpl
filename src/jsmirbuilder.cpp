@@ -17,7 +17,7 @@ JSMIRFunction *JSMIRBuilder::CreateJSMain() {
     SetCurrentFunction(jsmain);
   } else {
     jsmain = GetOrCreateFunction("main", GetInt32(), arguments, false);
-    IntrinsiccallNode *stmt = CreateStmtIntrinsicCall0((MIRIntrinsicId)INTRN_JS_INIT_CONTEXT);
+    IntrinsiccallNode *stmt = CreateStmtIntrinsicCallAssigned0((MIRIntrinsicId)INTRN_JS_INIT_CONTEXT, NULL);
     SetCurrentFunction(jsmain);
     AddStmtInCurrentFunctionBody(stmt);
   }
