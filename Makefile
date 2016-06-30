@@ -38,14 +38,12 @@ clean:
 	$(MAKE) clean -C tests
 
 cleanall:
-	rm -rf build/$(FLAVOR) ../mapleall/build/$(FLAVOR)
-
-cleanallall:
-	rm -rf build ../mapleall/build
+	rm -rf build
 
 rebuild: cleanall all
 
 checkin:
+	$(MAKE) -C ../mapleall cleanall
 	$(MAKE) -C ../js2mpl-vm cleanall
 	$(MAKE) -C ../js2mpl-vm build
 	$(MAKE) -C ../dex2mpl cleanall
