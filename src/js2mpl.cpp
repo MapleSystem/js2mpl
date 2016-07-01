@@ -11,6 +11,9 @@
 #include "../include/js2mpl.h"
 #include "../include/compiler.h"
 
+maplemp::MemPoolCtrler Mpc;
+mapleir::MIRModule mapleir::themodule(Mpc);
+
 using namespace mapleir;
 using namespace std;
 
