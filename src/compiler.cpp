@@ -966,41 +966,41 @@ base_node_t *JSCompiler::CompileGeneric4(int32_t intrin_id, base_node_t *arg1,
 
 bool JSCompiler::CompileOpSetElem(base_node_t *obj, base_node_t *index, base_node_t *val) {
   index = CheckConvertToJSValueType(index);
-  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCall3(
+  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(
                      INTRN_JSOP_SETPROP,
-                     obj, index, CheckConvertToJSValueType(val));
+                     obj, index, CheckConvertToJSValueType(val), NULL);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return true;
 }
 
 bool JSCompiler::CompileOpInitPropGetter(base_node_t *obj, JSString *str, base_node_t *val) {
   base_node_t *name = CheckConvertToJSValueType(CompileOpString(str));
-  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCall3(INTRN_JSOP_INITPROP_GETTER,
-                                                        obj, name, val);
+  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_INITPROP_GETTER,
+                                                        obj, name, val, NULL);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return true;
 }
 
 bool JSCompiler::CompileOpInitPropSetter(base_node_t *obj, JSString *str, base_node_t *val) {
   base_node_t *name = CheckConvertToJSValueType(CompileOpString(str));
-  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCall3(INTRN_JSOP_INITPROP_SETTER,
-                                                        obj, name, val);
+  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_INITPROP_SETTER,
+                                                        obj, name, val, NULL);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return true;
 }
 
 bool JSCompiler::CompileOpInitElemGetter(base_node_t *obj, base_node_t *index, base_node_t *val) {
   index = CheckConvertToJSValueType(index);
-  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCall3(INTRN_JSOP_INITPROP_GETTER,
-                                                        obj, index, val);
+  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_INITPROP_GETTER,
+                                                        obj, index, val, NULL);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return true;
 }
 
 bool JSCompiler::CompileOpInitElemSetter(base_node_t *obj, base_node_t *index, base_node_t *val) {
   index = CheckConvertToJSValueType(index);
-  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCall3(INTRN_JSOP_INITPROP_SETTER,
-                                                        obj, index, val);
+  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_INITPROP_SETTER,
+                                                        obj, index, val, NULL);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return true;
 }
@@ -1009,9 +1009,9 @@ bool JSCompiler::CompileOpInitElemSetter(base_node_t *obj, base_node_t *index, b
 bool JSCompiler::CompileOpSetProp(base_node_t *obj, JSString *str,
                                   base_node_t *val) {
   base_node_t *name = CompileOpString(str);
-  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCall3(INTRN_JSOP_SETPROP_BY_NAME, obj,
+  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_SETPROP_BY_NAME, obj,
                                                         name,
-                                                        CheckConvertToJSValueType(val));
+                                                        CheckConvertToJSValueType(val), NULL);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return true;
 }
@@ -2340,9 +2340,9 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         base_node_t *index = Pop();
         base_node_t *obj = CheckConvertToJSValueType(Pop());
         index = CheckConvertToJSValueType(index);
-        stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCall3(INTRN_JSOP_SETPROP, obj,
+        stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_SETPROP, obj,
                                                               index,
-                                                              CheckConvertToJSValueType(val));
+                                                              CheckConvertToJSValueType(val), NULL);
         jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
         Push(obj);
         break;
@@ -2673,9 +2673,9 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         base_node_t *val = Pop();
         base_node_t *obj = CheckConvertToJSValueType(Pop());
         base_node_t *name = CompileOpString(str);
-        stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCall3(INTRN_JSOP_INITPROP_BY_NAME, obj,
+        stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_INITPROP_BY_NAME, obj,
                                                                  name,
-                                                                 CheckConvertToJSValueType(val));
+                                                                 CheckConvertToJSValueType(val), NULL);
         jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
         Push(obj);
         break;
