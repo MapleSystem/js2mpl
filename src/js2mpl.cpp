@@ -155,7 +155,7 @@ int main(int argc, const char *argv[]) {
   mapleir::themodule.num_funcs = mapleir::themodule._function_list.size();
 
   if (js2mplDebug > 0)
-    mapleir::themodule.dump();
+    mapleir::themodule.Dump();
 
   // form output file name
   string out_file_name;
@@ -171,7 +171,7 @@ int main(int argc, const char *argv[]) {
   cout.rdbuf(mplfile.rdbuf());
   mapleir::themodule.flavor_ = mapleir::FEproduced;
   mapleir::themodule.srclang_ = mapleir::SrcLangJS;
-  mapleir::themodule.dump();  // write out generated Maple IR
+  mapleir::themodule.Dump();  // write out generated Maple IR
   cout.rdbuf(backup);  // restore cout's buffer
   mplfile.close();
   return 0;

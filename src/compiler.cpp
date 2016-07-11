@@ -482,7 +482,7 @@ base_node_t *JSCompiler::CompileOpCall(uint32_t argc) {
   stmt_node_t *stmt = NULL;
   MIRSymbol *symbol;
   char *name;
-  if (js2mplDebug > 2) static_cast<BaseNode *>(funcnode)->dump();
+  if (js2mplDebug > 2) static_cast<BaseNode *>(funcnode)->Dump();
 
   MapleVector<base_node_t *> args(module_->mp_allocator_.Adapter());
   bool useSimpleCall = false;
