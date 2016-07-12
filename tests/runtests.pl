@@ -66,7 +66,7 @@ foreach $srcdir (@required) {
       my $js_file = $file.'.js';
       my $mpl_file = $file.'.mpl';
       my $origmpl_file = $file.'.orig.mpl';
-      my $optmpl_file = $file.'.hssa.mpl';
+      my $optmpl_file = $file.'.hdse.mpl';
       my $mmpl_file = $file.".mmpl";
       my $cmpl_file = $file.".cmpl";
       my $log_file = $file.'.log';
@@ -148,7 +148,7 @@ while( ($srcdir = readdir(DIR))){
       my $js_file = $file.'.js';
       my $mpl_file = $file.'.mpl';
       my $origmpl_file = $file.'.orig.mpl';
-      my $optmpl_file = $file.'.hssa.mpl';
+      my $optmpl_file = $file.'.hdse.mpl';
       my $mmpl_file = $file.".mmpl";
       my $cmpl_file = $file.".cmpl";
       my $log_file = $file.'.log';
