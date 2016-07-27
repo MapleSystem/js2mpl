@@ -98,7 +98,7 @@ foreach $srcdir (@required) {
       if ($opt & 1) {
         system("cp $plugindir/$optmpl_file $plugindir/$mpl_file");
       }
-      $res = system("$pwd/../../mapleall/build/gnu/maplebe/be/mplbe $plugindir/$mpl_file >> $plugindir/$log_file");
+      $res = system("$pwd/../../mapleall/build/gnu/maplebe/be/js/mplbe $plugindir/$mpl_file >> $plugindir/$log_file");
       if ($res > 0) {
         print " ==mplbe===> $file\n";
         $countMMPL ++;
@@ -106,7 +106,7 @@ foreach $srcdir (@required) {
         $flag ++;
         next;
       }
-      $res = system("$pwd/../../mapleall/build/gnu/maplebe/be/mplbe-c $plugindir/$mpl_file >> $plugindir/$log_file");
+      $res = system("$pwd/../../mapleall/build/gnu/maplebe/be/js/mplbe-c $plugindir/$mpl_file >> $plugindir/$log_file");
       if ($res > 0) {
         print " ==mmpl2cmpl===> $file\n";
         $countgenCMPL ++;
@@ -180,7 +180,7 @@ while( ($srcdir = readdir(DIR))){
       if ($opt & 1) {
         system("cp $tempdir/$optmpl_file $tempdir/$mpl_file");
       }
-      $res = system("$pwd/../../mapleall/build/gnu/maplebe/be/mplbe $tempdir/$mpl_file >> $tempdir/$log_file");
+      $res = system("$pwd/../../mapleall/build/gnu/maplebe/be/js/mplbe $tempdir/$mpl_file >> $tempdir/$log_file");
       if ($res > 0) {
         print " ==mplbe===> $file\n";
         $countMMPL ++;
@@ -188,7 +188,7 @@ while( ($srcdir = readdir(DIR))){
         $flag ++;
         next;
       }
-      $res = system("$pwd/../../mapleall/build/gnu/maplebe/be/mplbe-c $tempdir/$mpl_file >> $tempdir/$log_file");
+      $res = system("$pwd/../../mapleall/build/gnu/maplebe/be/js/mplbe-c $tempdir/$mpl_file >> $tempdir/$log_file");
       if ($res > 0) {
         print " ==mplbe-c===> $file\n";
         $countgenCMPL ++;
@@ -204,7 +204,7 @@ while( ($srcdir = readdir(DIR))){
         $flag ++;
         next;
       }
-      $res = system("cd $tempdir; $pwd/timeout.sh -t 1 -i 1 -d 0 $pwd/../../mapleall/build/gnu/maplevm/jsvm-cmpl/jsvm-cmpl $cmpl_file >> $tempdir/$log_file");
+      $res = system("cd $tempdir; $pwd/timeout.sh -t 1 -i 1 -d 0 $pwd/../../mapleall/build/gnu/maplevm/js/jsvm-cmpl/jsvm-cmpl $cmpl_file >> $tempdir/$log_file");
       if ($res > 0) {
         print " ==jsvm-cmpl===> $file\n";
         $countrunCMPL ++;
@@ -214,7 +214,7 @@ while( ($srcdir = readdir(DIR))){
       }
       # plugins have to be run in the local directory at moment due to the lacking of search path for required
       #$res = system("$pwd/../../mapleall/build/gnu/maplevm/interpreter $tempdir/$mmpl_file > $tempdir/$out_file");
-      $res = system("cd $tempdir; $pwd/../../mapleall/build/gnu/maplevm/interpreter $mmpl_file > $tempdir/$out_file");
+      $res = system("cd $tempdir; $pwd/../../mapleall/build/gnu/maplevm/js/interpreter $mmpl_file > $tempdir/$out_file");
       system("grep failed $tempdir/$out_file > $tempdir/$err_file");
       my $errfile = "$tempdir/$err_file";
       my $size = -s $errfile;
