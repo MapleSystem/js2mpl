@@ -664,7 +664,8 @@ base_node_t *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc) {
   }
 
   // print is a builtin function.
-  if (!strcmp(name, "print") || !strcmp(name, "$ERROR") || IsCCall(name) || IsXcCall(name)) {
+  if (!strcmp(name, "print") || !strcmp(name, "$ERROR") || !strcmp(name, "SetCycleHeader") ||
+      IsCCall(name) || IsXcCall(name)) {
     created = false;
   }
 
