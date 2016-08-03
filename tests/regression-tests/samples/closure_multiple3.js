@@ -3,6 +3,7 @@ function foo() {
   function changeBy(val) {
     counter += val;
   }
+//SetCycleHeader(changeBy);
   return {
     increment: function() {
       changeBy(1);

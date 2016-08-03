@@ -6,6 +6,7 @@ function foo() {
   function changeBy(val) {
     counter += val;
   }
+//SetCycleHeader(changeBy);
   inc = function() {
     changeBy(1);
   };
