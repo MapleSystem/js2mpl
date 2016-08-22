@@ -17,8 +17,8 @@ JSMIRFunction *JSMIRBuilder::CreateJSMain() {
     SetCurrentFunction(jsmain);
   } else {
     jsmain = GetOrCreateFunction("main", GetInt32(), arguments, false);
-    IntrinsiccallNode *stmt = CreateStmtIntrinsicCallAssigned0((MIRIntrinsicId)INTRN_JS_INIT_CONTEXT, NULL);
     SetCurrentFunction(jsmain);
+    IntrinsiccallNode *stmt = CreateStmtIntrinsicCallAssigned0((MIRIntrinsicId)INTRN_JS_INIT_CONTEXT, NULL);
     AddStmtInCurrentFunctionBody(stmt);
   }
   return jsmain;
@@ -115,7 +115,7 @@ JSMIRFunction *JSMIRBuilder::GetOrCreateFunction(const char *name,
   }
   funcst->SetTyIdx(GetOrCreateFunctionType (return_type->_ty_idx, funcvectype, funcvecattr, isvarg)->_ty_idx);
   funcst->SetFunction(fn);
-  fn->body = module_->mp_->New<BlockNode>();
+  fn->body = fn->code_mp->New<BlockNode>();
 
   AddNameFunc(name, fn);
 
@@ -196,8 +196,8 @@ StmtNode *JSMIRBuilder::CreateStmtDassign(MIRSymbol *symbol,
 
 IntrinsiccallNode *JSMIRBuilder::CreateStmtIntrinsicCall1N(
       MIRIntrinsicId idx, base_node_t *arg0, MapleVector<base_node_t *> &args) {
-  IntrinsiccallNode *stmt = MP_NEW(module_->mp_, IntrinsiccallNode(OP_intrinsiccall));
-  MapleVector<base_node_t *> arguments(module_->mp_allocator_.Adapter());
+  IntrinsiccallNode *stmt = MP_NEW(module_->CurFuncCodeMp(), IntrinsiccallNode(OP_intrinsiccall));
+  MapleVector<base_node_t *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
   arguments.push_back(arg0);
   for (int i=0; i<args.size(); i++)
     arguments.push_back(args[i]);
