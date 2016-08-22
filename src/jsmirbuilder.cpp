@@ -91,7 +91,7 @@ JSMIRFunction *JSMIRBuilder::GetOrCreateFunction(const char *name,
   funcst->sclass = SC_text;
   funcst->skind = ST_func;
 
-  fn =  MP_NEW(module_->mp_, JSMIRFunction(funcst->GetStIdx()));
+  fn =  MP_NEW(module_->mp_, JSMIRFunction(module_, funcst->GetStIdx()));
   fn->Init();
   fn->puidx = module_->functable.size();
   module_->functable.push_back(fn);

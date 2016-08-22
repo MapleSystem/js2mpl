@@ -10,7 +10,7 @@ class JSClosure;
 class JSMIRFunction : public MIRFunction {
 
   public:
-    JSMIRFunction(stidx_t stidx): MIRFunction(stidx) {}
+    JSMIRFunction(MIRModule *mod, stidx_t stidx): MIRFunction(mod, stidx) {}
 
   public:
     bool with_env_arg;
