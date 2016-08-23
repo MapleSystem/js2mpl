@@ -150,7 +150,7 @@ NaryStmtNode *JSMIRBuilder::CreateStmtReturn(base_node_t *rval, bool adj_type) {
     if (fid) {
       MIRStructType *Stype = static_cast<MIRStructType *>(type);
       // fieldid in a structure starts from 1 while type vector starts from 0
-      type = Stype->GetElemType(fid - 1);
+      type = Stype->GetElemType(module_, fid - 1);
     }
   }
   return stmt;

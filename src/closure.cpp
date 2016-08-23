@@ -81,7 +81,7 @@ MIRType *JSClosure::GetOrCreateEnvType(JSMIRFunction *func) {
   DEBUGPRINT2(env_name);
   DEBUGPRINT2(env_type);
   MIRStructType *stf = (MIRStructType *)(env_type);
-  DEBUGPRINT2(stf->GetElemType(0));
+  DEBUGPRINT2(stf->GetElemType(jsbuilder_->module_, 0));
   stridx_t idxf = jsbuilder_->module_->symtab->GetSymbolFromStidx(func->stidx)->GetNameStridx();
   DEBUGPRINT2(idxf);
   DEBUGPRINT2(func->stidx);
