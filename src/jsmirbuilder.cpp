@@ -144,7 +144,7 @@ NaryStmtNode *JSMIRBuilder::CreateStmtReturn(base_node_t *rval, bool adj_type) {
     } else {
       var = module_->symtab->GetSymbolFromStidx(stidx);
     }
-    MIRType *type = var->GetType();
+    MIRType *type = var->GetType(module_);
     DEBUGPRINT3(type);
     int fid = dn->fieldid;
     if (fid) {

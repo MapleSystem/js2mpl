@@ -48,8 +48,9 @@ class JSClosure {
       filename_(filename),
       jscontext_(context),
       jsscript_(script),
-      scope_(scope),
+      module_(module),
       mp_(module->mp_),
+      scope_(scope),
       jsbuilder_(jsbuilder),
       opstack_(opstack),
       temp_var_no_(0) {}

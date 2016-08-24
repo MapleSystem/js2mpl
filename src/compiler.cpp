@@ -14,7 +14,10 @@
 #include "../include/compiler.h"
 
 mapleir::OpcodeTable mapleir::opcodeinfo;
+
 namespace mapleir {
+
+extern MIRModule themodule;
 
 enum js_builtin_string_id{
 #define JSBUILTIN_STRING_DEF(id, length, str)  id,
@@ -140,7 +143,7 @@ MIRSymbol *JSCompiler::SymbolFromSavingInATemp(base_node_t *expr, bool jsvalue_p
 // of the new temporary
 AddrofNode *JSCompiler::NodeFromSavingInATemp(base_node_t *expr) {
   MIRSymbol *temp_var = SymbolFromSavingInATemp(expr, false);
-  return jsbuilder_->CreateExprDread(temp_var->GetType(), temp_var);
+  return jsbuilder_->CreateExprDread(temp_var->GetType(module_), temp_var);
 }
 
 // JSOP_UNDEFINED 1
@@ -276,7 +279,7 @@ base_node_t *JSCompiler::CompileOpUnary(JSOp opcode, base_node_t *val) {
     if (val->op == OP_dread) {
       AddrofNode *node = static_cast<AddrofNode *>(val);
       MIRSymbol *st = module_->GetSymbolFromStidx(node->stidx, node->islocal);
-      MIRType *type = st->GetType();
+      MIRType *type = st->GetType(module_);
       pty = type->GetPrimType();
     }
 
@@ -329,7 +332,7 @@ int32_t JSCompiler::GetBuiltinMethod(uint32_t argc, bool *need_this) {
   assert (drn);
   // MIRSymbol *var = module_->symtab->GetSymbolFromStidx(drn->stidx);
   MIRSymbol *var = module_->GetSymbolFromStidx(drn->stidx, drn->islocal);
-  const MapleString &name = var->GetName();
+  const MapleString &name = var->GetName(module_);
   DEBUGPRINT3(name);
 
 #define DEFBUILTINMETHOD(name, intrn_code, need_this)  \
@@ -391,7 +394,7 @@ base_node_t *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool nee
     tyidx_t tyidx = array_type->_ty_idx;
     arguments->SetTyIdx(tyidx);
     base_node_t *bn;
-    MIRType *pargtype = jsbuilder_->GetOrCreatePointerType(arguments->GetType());
+    MIRType *pargtype = jsbuilder_->GetOrCreatePointerType(arguments->GetType(module_));
     base_node_t *addr_base = jsbuilder_->CreateExprAddrof(0, arguments);
 
     for (uint32_t i = 0; i < arg_num; i++) {
@@ -499,7 +502,7 @@ base_node_t *JSCompiler::CompileOpCall(uint32_t argc) {
       funcobj = module_->symtab->GetSymbolFromStidx(dread->stidx, /*checkfirst*/true);
     // the function might not be a global one, embeded in obj
     if (funcobj) {
-      char *funcobjname = (char *)(funcobj->GetName().c_str());
+      char *funcobjname = (char *)(funcobj->GetName(module_).c_str());
       DEBUGPRINT3(funcobjname);
 
       funcname = GetFuncName(funcobjname);
@@ -741,7 +744,7 @@ base_node_t *JSCompiler::CompileOpString(JSString *str) {
   MIRType *type = jsbuilder_->GetOrCreateArrayType(unit_type, 1, &(padding_length));
   const char *temp_name = Util::GetSequentialName("const_chars_", temp_var_no_, mp_);
   MIRSymbol *var = jsbuilder_->GetOrCreateGlobalDecl(temp_name, type);
-  MIRAggConst *init =  MP_NEW(module_->mp_, MIRAggConst(type));
+  MIRAggConst *init =  MP_NEW(module_->mp_, MIRAggConst(module_, type));
 
   uint8_t cl[4];
   cl[0] = string_class;
@@ -1200,7 +1203,7 @@ int JSCompiler::ProcessAliasedVar(JSAtom *atom, MIRType *&env_ptr, base_node_t *
   char *name = Util::GetString(atom, mp_, jscontext_);
   JS_ASSERT(!name && "empty name");
   MIRSymbol *func_st = module_->symtab->GetSymbolFromStidx(func->stidx);
-  const char *funcname = func_st->GetName().c_str();
+  const char *funcname = func_st->GetName(module_).c_str();
   ScopeNode *sn = scope_->GetOrCreateSN((char *)funcname);
   ScopeNode *psn = sn->GetParent();
 
@@ -1341,7 +1344,7 @@ void JSCompiler::CloseFuncBookKeeping() {
     jsbuilder_->SetCurrentFunction(lambda);
     DEBUGPRINT0;
     MIRSymbol *lambda_st = module_->symtab->GetSymbolFromStidx(lambda->stidx);
-    DEBUGPRINTfunc((lambda_st->GetName().c_str()));
+    DEBUGPRINTfunc((lambda_st->GetName(module_).c_str()));
     funcstack_.push(lambda);
     scriptstack_.pop();
 
@@ -1731,7 +1734,7 @@ void JSCompiler::EnvInit(JSMIRFunction *func) {
       int i = (func->with_env_arg) ? 2 : 1;
       for (IN = (*I).second.begin(); IN != (*I).second.end(); IN++, i++) {
         MIRSymbol *arg = jsbuilder_->GetFunctionArgument(func, i);
-        bn = jsbuilder_->CreateExprDread(arg->GetType(), 0, arg);
+        bn = jsbuilder_->CreateExprDread(arg->GetType(module_), 0, arg);
         uint32_t id = jsbuilder_->GetStructFieldIdFromFieldName(env_type, *IN);
         stmt = jsbuilder_->CreateStmtIassign(env_ptr, id, env, bn);
         jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
@@ -1887,12 +1890,12 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
             base_node_t *top_value = Top();
             if (!(top_value->op == OP_dread && top_value->islocal &&
                ((addrof_node_t*)top_value)->stidx == tempvar->GetStIdx())) {
-              Push(jsbuilder_->CreateExprDread(tempvar->GetType(), tempvar));
+              Push(jsbuilder_->CreateExprDread(tempvar->GetType(module_), tempvar));
             } else {
               scope_->DecDepth();
             }
           } else {
-            Push(jsbuilder_->CreateExprDread(tempvar->GetType(), tempvar));
+            Push(jsbuilder_->CreateExprDread(tempvar->GetType(module_), tempvar));
           }
         }
         label_tempvar_map_[labidx] = 0;  // re-initialize to 0
@@ -2104,7 +2107,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
           // TODO should not pop from opstack_
           base_node_t *expr = Pop();
           MIRSymbol *tempvar = SymbolFromSavingInATemp(expr, true);
-          Push(jsbuilder_->CreateExprDread(tempvar->GetType(), tempvar));
+          Push(jsbuilder_->CreateExprDread(tempvar->GetType(module_), tempvar));
           CompileOpGoto(pc, pc + offset, tempvar);
         }
         else CompileOpGoto(pc, pc + offset, NULL);
@@ -2139,7 +2142,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         CompileScriptBytecodes(script, start, pc, NULL);
         base_node_t *opnd1 = CheckConvertToJSValueType(Pop());
         jsbuilder_->CreateStmtDassign(temp_var, 0, opnd1);
-        opnd0 = jsbuilder_->CreateExprDread(temp_var->GetType(), temp_var);
+        opnd0 = jsbuilder_->CreateExprDread(temp_var->GetType(module_), temp_var);
         Push(opnd0);
         continue;
       }

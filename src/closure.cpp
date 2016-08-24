@@ -28,7 +28,7 @@ MIRSymbol *JSClosure::GetSymbolFromEnclosingScope(JSMIRFunction *func,
 
   MIRSymbol *st = func->symtab->GetSymbolFromStridx(idx);
   if (st) return st;
-  st = jsbuilder_->module_->symtab->GetSymbolFromStridx(idx);
+  st = module_->symtab->GetSymbolFromStridx(idx);
   if (st) return st;
   return NULL;
 }
@@ -40,15 +40,15 @@ MIRSymbol *JSClosure::GetSymbolFromEnclosingScope(JSMIRFunction *func,
 
   MIRSymbol *st = func->symtab->GetSymbolFromStidx(stidx);
   if (st) return st;
-  st = jsbuilder_->module_->symtab->GetSymbolFromStidx(stidx);
+  st = module_->symtab->GetSymbolFromStidx(stidx);
   if (st) return st;
   return NULL;
 }
 
 MIRType *JSClosure::GetOrCreateEnvType(JSMIRFunction *func) {
   std::stringstream ss;
-  MIRSymbol *func_st = jsbuilder_->module_->symtab->GetSymbolFromStidx(func->stidx);
-  ss << func_st->GetName();
+  MIRSymbol *func_st = module_->symtab->GetSymbolFromStidx(func->stidx);
+  ss << func_st->GetName(module_);
   std::string env_name = ss.str() + "_env_type";
   DEBUGPRINT2(env_name);
 
@@ -57,7 +57,7 @@ MIRType *JSClosure::GetOrCreateEnvType(JSMIRFunction *func) {
     return func->envtype;
   }
 
-  FieldVector env_fields(jsbuilder_->module_->mp_allocator_.Adapter());
+  FieldVector env_fields(module_->mp_allocator_.Adapter());
 
   stridx_t argnums = jsbuilder_->GetOrCreateStringIndex("argnums");
   env_fields.push_back(FieldPair(argnums, TyidxAttrPair(jsbuilder_->GetUInt32()->_ty_idx, TypeAttrs())));
@@ -81,8 +81,8 @@ MIRType *JSClosure::GetOrCreateEnvType(JSMIRFunction *func) {
   DEBUGPRINT2(env_name);
   DEBUGPRINT2(env_type);
   MIRStructType *stf = (MIRStructType *)(env_type);
-  DEBUGPRINT2(stf->GetElemType(jsbuilder_->module_, 0));
-  stridx_t idxf = jsbuilder_->module_->symtab->GetSymbolFromStidx(func->stidx)->GetNameStridx();
+  DEBUGPRINT2(stf->GetElemType(module_, 0));
+  stridx_t idxf = module_->symtab->GetSymbolFromStidx(func->stidx)->GetNameStridx();
   DEBUGPRINT2(idxf);
   DEBUGPRINT2(func->stidx);
 
@@ -119,8 +119,8 @@ void JSClosure::AddFuncFormalsToEnvType(JSMIRFunction *func) {
       funcname = (char*)Util::GetSequentialName0("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_);
     }
     DEBUGPRINT2(funcname);
-    MIRSymbol *func_st = jsbuilder_->module_->symtab->GetSymbolFromStidx(func->stidx);
-    if (func_st && strcmp(funcname, func_st->GetName().c_str()) == 0) {
+    MIRSymbol *func_st = module_->symtab->GetSymbolFromStidx(func->stidx);
+    if (func_st && strcmp(funcname, func_st->GetName(module_).c_str()) == 0) {
       std::vector<JSAtom *> args = (*I).second;
       std::vector<JSAtom *>::iterator IA;
       DEBUGPRINTsv3("AddFuncFormalsToEnvType", funcname);
@@ -142,10 +142,10 @@ void JSClosure::AddFuncFormalsToEnvType(JSMIRFunction *func) {
 
 JSMIRFunction *JSClosure::ProcessFunc(JSFunction *jsfun, char *funcname) {
   MIRType *retuen_type = jsvalue_type_;
-  ArgVector arguments(jsbuilder_->module_->mp_allocator_.Adapter());
+  ArgVector arguments(module_->mp_allocator_.Adapter());
 
   JSMIRFunction *func = jsbuilder_->GetOrCreateFunction(funcname, retuen_type, arguments, false);
-  jsbuilder_->module_->AddFunction(func);
+  module_->AddFunction(func);
   SetJSMIRFunc(funcname, func);
   DEBUGPRINT2(funcname);
   DEBUGPRINT2(func);
@@ -183,7 +183,7 @@ JSMIRFunction *JSClosure::ProcessFunc(JSFunction *jsfun, char *funcname) {
       for (uint32 i = 0; i < jsfun->nargs(); i++) {
         char *name = Util::GetString(args[i], mp_, jscontext_);
         DEBUGPRINT3(name);
-        MapleString argname(name, jsbuilder_->module_->mp_);
+        MapleString argname(name, module_->mp_);
         arguments.push_back(ArgPair(argname.c_str(), jsbuilder_->GetDynany()));
       }
       break;
@@ -203,7 +203,7 @@ bool JSClosure::ProcessOpDefFun(jsbytecode *pc) {
   JSFunction *jsfun = currscr_->getFunction(GET_UINT32_INDEX(pc));
   JSScript *scr = jsfun->nonLazyScript();
   MIRType *retuen_type = jsvalue_type_;
-  ArgVector arguments(jsbuilder_->module_->mp_allocator_.Adapter());
+  ArgVector arguments(module_->mp_allocator_.Adapter());
   JSAtom *atom = jsfun->displayAtom();
   DEBUGPRINT2(atom);
   char *funcname = Util::GetString(atom, mp_, jscontext_);
@@ -255,8 +255,8 @@ bool JSClosure::IsLocalVar(JSMIRFunction *func, char *name) {
       funcname = (char*)Util::GetSequentialName0("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_);
     }
     DEBUGPRINT2(funcname);
-    MIRSymbol *func_st = jsbuilder_->module_->symtab->GetSymbolFromStidx(func->stidx);
-    if (func_st && strcmp(funcname, func_st->GetName().c_str()) == 0) {
+    MIRSymbol *func_st = module_->symtab->GetSymbolFromStidx(func->stidx);
+    if (func_st && strcmp(funcname, func_st->GetName(module_).c_str()) == 0) {
       std::vector<JSAtom *> vars = (*I).second;
       std::vector<JSAtom *>::iterator IA;
       DEBUGPRINTsv3("IsLocalVar", funcname);
@@ -292,8 +292,8 @@ char *JSClosure::GetLocalVar(JSMIRFunction *func, uint32_t local_no) {
     }
     DEBUGPRINT2(funcname);
     // found the function
-    MIRSymbol *func_st = jsbuilder_->module_->symtab->GetSymbolFromStidx(func->stidx);
-    if (func_st && strcmp(funcname, func_st->GetName().c_str()) == 0) {
+    MIRSymbol *func_st = module_->symtab->GetSymbolFromStidx(func->stidx);
+    if (func_st && strcmp(funcname, func_st->GetName(module_).c_str()) == 0) {
       std::vector<JSAtom *> args = locals[i].second;
       if (local_no < args.size())
         name = Util::GetString(args[local_no], mp_, jscontext_);
@@ -315,8 +315,8 @@ void JSClosure::ProcessAliasedVar(jsbytecode *pc) {
   if (!name)
     return;
   DEBUGPRINT3(name);
-  MIRSymbol *func_st = jsbuilder_->module_->symtab->GetSymbolFromStidx(func->stidx);
-  const char *funcname = func_st->GetName().c_str();
+  MIRSymbol *func_st = module_->symtab->GetSymbolFromStidx(func->stidx);
+  const char *funcname = func_st->GetName(module_).c_str();
   ScopeNode *sn = scope_->GetOrCreateSN((char *)funcname);
   ScopeNode *psn = sn->GetParent();
 

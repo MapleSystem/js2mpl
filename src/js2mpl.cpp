@@ -12,7 +12,10 @@
 #include "../include/compiler.h"
 
 maplemp::MemPoolCtrler Mpc;
-mapleir::MIRModule mapleir::themodule(Mpc);
+
+namespace mapleir {
+MIRModule themodule(Mpc);
+}
 
 using namespace mapleir;
 using namespace std;
@@ -149,7 +152,7 @@ int main(int argc, const char *argv[]) {
   if (! isplugin)
     mapleir::themodule.entryfunc_ = "main";
   else {  // entryfunc_ is the last function generated
-    mapleir::themodule.entryfunc_ = mapleir::themodule.symtab->GetSymbolFromStidx(mapleir::themodule._function_list.back()->stidx)->GetName();
+    mapleir::themodule.entryfunc_ = mapleir::themodule.symtab->GetSymbolFromStidx(mapleir::themodule._function_list.back()->stidx)->GetName(&mapleir::themodule);
   }
   // set numfuncs_ in MIRModule
   mapleir::themodule.num_funcs = mapleir::themodule._function_list.size();
