@@ -12,7 +12,7 @@ void OperandStack::ReplaceStackItemsWithTemps(JSCompiler *compiler,
     base_node_t *cur = (base_node_t *)stack_[i];
     if (cur == NULL)
       continue;
-    if (GenericFindSymbol(cur, var))
+    if (GenericFindSymbol(compiler->module_, cur, var))
       stack_[i] = (void *) compiler->NodeFromSavingInATemp(cur);
   }
 }

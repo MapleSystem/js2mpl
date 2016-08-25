@@ -2174,7 +2174,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_DUP: /*12, 1, 1, 2*/  {
         base_node_t *bn = Pop();
         Push(bn);
-        Push(GenericCloneTree(bn));
+        Push(GenericCloneTree(module_, bn));
         break;
       }
       case JSOP_DUP2: /*13, 1, 2, 4*/  {
@@ -2182,8 +2182,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         base_node_t *bn2 = Pop();
         Push(bn2);
         Push(bn1);
-        Push(GenericCloneTree(bn2));
-        Push(GenericCloneTree(bn1));
+        Push(GenericCloneTree(module_, bn2));
+        Push(GenericCloneTree(module_, bn1));
         break;
       }
       case JSOP_SWAP: /*10, 1, 2, 2*/  {

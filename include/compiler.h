@@ -35,7 +35,9 @@ class JSCompiler{
   std::stack<std::pair<JSScript *, JSMIRFunction *>> scriptstack_;
 
   MemPool *mp_;
+ public:
   mapleir::MIRModule *module_;
+ private:
   base_node_t *dummyNode;
 
   uint32_t anon_func_no_;
