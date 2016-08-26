@@ -17,8 +17,6 @@ mapleir::OpcodeTable mapleir::opcodeinfo;
 
 namespace mapleir {
 
-extern MIRModule themodule;
-
 enum js_builtin_string_id{
 #define JSBUILTIN_STRING_DEF(id, length, str)  id,
 #include "../include/jsbuiltinstrings.inc.h"
@@ -401,7 +399,7 @@ base_node_t *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool nee
       bn = CheckConvertToJSValueType(tmp_stack.top());
       DEBUGPRINT3(bn->op);
       tmp_stack.pop();
-      MapleVector<base_node_t *> opnds(themodule.CurFuncCodeMpAllocator()->Adapter());
+      MapleVector<base_node_t *> opnds(module_->CurFuncCodeMpAllocator()->Adapter());
       opnds.push_back(addr_base);
       BaseNode *addr_offset = jsbuilder_->GetConstInt(i);
       opnds.push_back(addr_offset);
@@ -2565,7 +2563,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
           bn = CheckConvertToJSValueType(tmp_stack.top());
           DEBUGPRINT3(bn->op);
           tmp_stack.pop();
-          MapleVector<base_node_t *> opnds(themodule.CurFuncCodeMpAllocator()->Adapter());
+          MapleVector<base_node_t *> opnds(module_.CurFuncCodeMpAllocator()->Adapter());
           opnds.push_back(addr_base);
           BaseNode *addr_offset = jsbuilder_->GetConstInt(length - i - 1);
           opnds.push_back(addr_offset);

@@ -11,12 +11,6 @@
 #include "../include/js2mpl.h"
 #include "../include/compiler.h"
 
-maplemp::MemPoolCtrler Mpc;
-
-namespace mapleir {
-MIRModule themodule(Mpc);
-}
-
 using namespace mapleir;
 using namespace std;
 
@@ -89,6 +83,9 @@ static void help() {
 
 int main(int argc, const char *argv[]) {
 
+  maplemp::MemPoolCtrler Mpc;
+  MIRModule themodule(Mpc);
+
   if (!strcmp(argv[1], "-help")) {
     help();
     exit(1);
@@ -144,21 +141,21 @@ int main(int argc, const char *argv[]) {
 
   JSMIRContext jsmirctx(isplugin, name, with_main, jsop_only, simp_call);
 
-  if (!mapleir::js2mpldriver(fn, &mapleir::themodule, jsmirctx)) {
+  if (!mapleir::js2mpldriver(fn, &themodule, jsmirctx)) {
     exit(1);
   }
 
   // set entryfunc_ in MIRModule
   if (! isplugin)
-    mapleir::themodule.entryfunc_ = "main";
+    themodule.entryfunc_ = "main";
   else {  // entryfunc_ is the last function generated
-    mapleir::themodule.entryfunc_ = mapleir::themodule.symtab->GetSymbolFromStidx(mapleir::themodule._function_list.back()->stidx)->GetName(&mapleir::themodule);
+    themodule.entryfunc_ = themodule.symtab->GetSymbolFromStidx(themodule._function_list.back()->stidx)->GetName(&themodule);
   }
   // set numfuncs_ in MIRModule
-  mapleir::themodule.num_funcs = mapleir::themodule._function_list.size();
+  themodule.num_funcs = themodule._function_list.size();
 
   if (js2mplDebug > 0)
-    mapleir::themodule.Dump();
+    themodule.Dump();
 
   // form output file name
   string out_file_name;
@@ -172,9 +169,9 @@ int main(int argc, const char *argv[]) {
   // save and then change cout's buffer to that of mplfile
   streambuf *backup = cout.rdbuf();
   cout.rdbuf(mplfile.rdbuf());
-  mapleir::themodule.flavor_ = mapleir::FEproduced;
-  mapleir::themodule.srclang_ = mapleir::SrcLangJS;
-  mapleir::themodule.Dump();  // write out generated Maple IR
+  themodule.flavor_ = mapleir::FEproduced;
+  themodule.srclang_ = mapleir::SrcLangJS;
+  themodule.Dump();  // write out generated Maple IR
   cout.rdbuf(backup);  // restore cout's buffer
   mplfile.close();
   return 0;
