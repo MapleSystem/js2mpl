@@ -38,6 +38,11 @@ clean:
 
 rebuild: clean all
 
+checkin: cleanall buildall checkall
+checkinme: cleanall buildall checkallme
+
+doit: buildall checkall
+
 cleanall:
 	$(MAKE) -C ../mapleall clean
 	$(MAKE) -C ../js2mpl clean
@@ -49,9 +54,13 @@ buildall:
 	$(MAKE) -C ../mapleall clangbuild
 	$(MAKE) -C ../dex2mpl src
 
-checkin: cleanall buildall
+checkall:
 	$(MAKE) -C ../js2mpl regression
 	$(MAKE) -C ../dex2mpl regression
+
+checkallme:
+	$(MAKE) -C ../js2mpl regression OPT=1
+	$(MAKE) -C ../dex2mpl regression OPT=3
 
 localcheckin:
 	$(MAKE) -C ../mapleall clean
