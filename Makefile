@@ -40,25 +40,25 @@ rebuild: clean all
 
 cleanall:
 	$(MAKE) -C ../mapleall clean
-	$(MAKE) -C ../js2mpl-vm clean
+	$(MAKE) -C ../js2mpl clean
 	$(MAKE) -C ../dex2mpl clean
 
 buildall:
 	$(MAKE) -C ../mapleall gnubuild
-	$(MAKE) -C ../js2mpl-vm src
+	$(MAKE) -C ../js2mpl src
 	$(MAKE) -C ../mapleall clangbuild
 	$(MAKE) -C ../dex2mpl src
 
 checkin: cleanall buildall
-	$(MAKE) -C ../js2mpl-vm regression
+	$(MAKE) -C ../js2mpl regression
 	$(MAKE) -C ../dex2mpl regression
 
 localcheckin:
 	$(MAKE) -C ../mapleall clean
-	$(MAKE) -C ../js2mpl-vm clean
+	$(MAKE) -C ../js2mpl clean
 	$(MAKE) -C ../mapleall gnubuild
-	$(MAKE) -C ../js2mpl-vm src
-	$(MAKE) -C ../js2mpl-vm regression
+	$(MAKE) -C ../js2mpl src
+	$(MAKE) -C ../js2mpl regression
 
 .PHONY: $(TARGS)
 
