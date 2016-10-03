@@ -108,7 +108,7 @@ MIRType *JSCompiler::DetermineTypeFromNode(base_node_t *node) {
   }
   if (node->op == OP_dread) {
     AddrofNode *dread = static_cast<AddrofNode *>(node);
-    MIRSymbol *st = module_->GetSymbolFromStidx(dread->stidx, dread->islocal);
+    MIRSymbol *st = module_->GetSymbolFromStidx(dread->stidx);
     tyidx = st->GetTyIdx();
   } else if (node->op == OP_iread) {
     IreadNode *iread = static_cast<IreadNode *>(node);
@@ -276,7 +276,7 @@ base_node_t *JSCompiler::CompileOpUnary(JSOp opcode, base_node_t *val) {
       pty = val->ptyp;
     if (val->op == OP_dread) {
       AddrofNode *node = static_cast<AddrofNode *>(val);
-      MIRSymbol *st = module_->GetSymbolFromStidx(node->stidx, node->islocal);
+      MIRSymbol *st = module_->GetSymbolFromStidx(node->stidx);
       MIRType *type = st->GetType(module_);
       pty = type->GetPrimType();
     }
@@ -329,7 +329,7 @@ int32_t JSCompiler::GetBuiltinMethod(uint32_t argc, bool *need_this) {
   AddrofNode *drn = static_cast<AddrofNode *> (bn);
   assert (drn);
   // MIRSymbol *var = module_->symtab->GetSymbolFromStidx(drn->stidx);
-  MIRSymbol *var = module_->GetSymbolFromStidx(drn->stidx, drn->islocal);
+  MIRSymbol *var = module_->GetSymbolFromStidx(drn->stidx);
   const MapleString &name = var->GetName(module_);
   DEBUGPRINT3(name);
 
@@ -377,7 +377,7 @@ base_node_t *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool nee
   if((MIRIntrinsicId)idx == INTRN_JS_NEW_ARR_ELEMS) {
     MapleVector<base_node_t *> args(module_->CurFuncCodeMpAllocator()->Adapter());
     MIRSymbol *arguments = NULL;
-    arguments = jsbuilder_->GetCurrentFunction()->symtab->CreateSymbol();
+    arguments = jsbuilder_->GetCurrentFunction()->symtab->CreateSymbol(SCOPE_LOCAL);
     const char *temp_name = Util::GetSequentialName("js_arguments_", temp_var_no_, mp_);
     MapleString argname(temp_name, mp_);
     arguments->SetNameStridx(module_->stringtable.GetOrCreateStridxFromName(argname));
@@ -493,11 +493,7 @@ base_node_t *JSCompiler::CompileOpCall(uint32_t argc) {
 
   if (funcnode->op == OP_dread) {
     AddrofNode *dread = static_cast<AddrofNode *>(funcnode);
-    MIRSymbol *funcobj;
-    if (dread->islocal)
-      funcobj = module_->CurFunction()->symtab->GetSymbolFromStidx(dread->stidx, /*checkfirst*/true);
-    else
-      funcobj = module_->symtab->GetSymbolFromStidx(dread->stidx, /*checkfirst*/true);
+    MIRSymbol *funcobj = module_->GetSymbolFromStidx(dread->stidx, true);
     // the function might not be a global one, embeded in obj
     if (funcobj) {
       char *funcobjname = (char *)(funcobj->GetName(module_).c_str());
@@ -1886,7 +1882,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
           jsbuilder_->CreateStmtDassign(tempvar, 0, expr); 
           if (! opstack_->Empty()) {
             base_node_t *top_value = Top();
-            if (!(top_value->op == OP_dread && top_value->islocal &&
+            if (!(top_value->op == OP_dread && ST_IS_LOCAL(static_cast<AddrofNode *>(top_value)->stidx) &&
                ((addrof_node_t*)top_value)->stidx == tempvar->GetStIdx())) {
               Push(jsbuilder_->CreateExprDread(tempvar->GetType(module_), tempvar));
             } else {

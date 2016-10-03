@@ -34,7 +34,7 @@ void JSMIRBuilder::InitBuiltinMethod() {
 
   for (uint32_t i = 0; i < sizeof (name) / sizeof (const char *); i++) {
     if (!name[i]) return;
-    MIRSymbol *st = module_->symtab->CreateSymbol();
+    MIRSymbol *st = module_->symtab->CreateSymbol(SCOPE_LOCAL + 1);
     st->SetNameStridx(GetOrCreateStringIndex(name[i]));
     if (!module_->symtab->AddToStringSymbolMap(st))
       return;
@@ -78,7 +78,7 @@ JSMIRFunction *JSMIRBuilder::GetOrCreateFunction(const char *name,
   }
 
   MapleString fname(name, module_->mp_);
-  MIRSymbol *funcst = module_->symtab->CreateSymbol();
+  MIRSymbol *funcst = module_->symtab->CreateSymbol(SCOPE_LOCAL + 1);
   stridx_t stridx = GetOrCreateStringIndex(fname);
   stidx_t stidx = module_->symtab->GetStidxFromStridx(stridx);
   DEBUGPRINT3(fname);
@@ -102,7 +102,7 @@ JSMIRFunction *JSMIRBuilder::GetOrCreateFunction(const char *name,
   MapleVector<TypeAttrs> funcvecattr(module_->mp_allocator_.Adapter());
   for (uint32 i = 0; i < arguments.size(); i++) {
     MapleString var(arguments[i].first, module_->mp_);
-    MIRSymbol *argst = fn->symtab->CreateSymbol();
+    MIRSymbol *argst = fn->symtab->CreateSymbol(SCOPE_LOCAL);
     argst->SetNameStridx(GetOrCreateStringIndex(var));
     MIRType *ty = arguments[i].second;
     argst->SetTyIdx(ty->_ty_idx);
@@ -138,12 +138,7 @@ NaryStmtNode *JSMIRBuilder::CreateStmtReturn(base_node_t *rval, bool adj_type) {
     DEBUGPRINTsv2("modify _return_type", (rval->op));
     AddrofNode *dn = (AddrofNode *)rval;
     stidx_t stidx = dn->stidx;
-    MIRSymbol *var;
-    if (dn->islocal) {
-      var = func->symtab->GetSymbolFromStidx(stidx);
-    } else {
-      var = module_->symtab->GetSymbolFromStidx(stidx);
-    }
+    MIRSymbol *var = module_->GetSymbolFromStidx(stidx);
     MIRType *type = var->GetType(module_);
     DEBUGPRINT3(type);
     int fid = dn->fieldid;
@@ -165,7 +160,7 @@ void JSMIRBuilder::UpdateFunction(JSMIRFunction *func,
 
   for (uint32 i = 0; i < arguments.size(); i++) {
     MapleString var(arguments[i].first, module_->mp_);
-    MIRSymbol *st = func->symtab->CreateSymbol();
+    MIRSymbol *st = func->symtab->CreateSymbol(SCOPE_LOCAL);
     st->SetNameStridx(GetOrCreateStringIndex(var));
     MIRType *ty = arguments[i].second;
     st->SetTyIdx(ty->_ty_idx);
