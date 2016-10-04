@@ -108,7 +108,7 @@ MIRType *JSCompiler::DetermineTypeFromNode(base_node_t *node) {
   }
   if (node->op == OP_dread) {
     AddrofNode *dread = static_cast<AddrofNode *>(node);
-    MIRSymbol *st = module_->GetSymbolFromStidx(dread->stidx);
+    MIRSymbol *st = module_->GetStFromCurFuncOrMd(dread->stidx);
     tyidx = st->GetTyIdx();
   } else if (node->op == OP_iread) {
     IreadNode *iread = static_cast<IreadNode *>(node);
@@ -276,7 +276,7 @@ base_node_t *JSCompiler::CompileOpUnary(JSOp opcode, base_node_t *val) {
       pty = val->ptyp;
     if (val->op == OP_dread) {
       AddrofNode *node = static_cast<AddrofNode *>(val);
-      MIRSymbol *st = module_->GetSymbolFromStidx(node->stidx);
+      MIRSymbol *st = module_->GetStFromCurFuncOrMd(node->stidx);
       MIRType *type = st->GetType(module_);
       pty = type->GetPrimType();
     }
@@ -329,7 +329,7 @@ int32_t JSCompiler::GetBuiltinMethod(uint32_t argc, bool *need_this) {
   AddrofNode *drn = static_cast<AddrofNode *> (bn);
   assert (drn);
   // MIRSymbol *var = module_->symtab->GetSymbolFromStidx(drn->stidx);
-  MIRSymbol *var = module_->GetSymbolFromStidx(drn->stidx);
+  MIRSymbol *var = module_->GetStFromCurFuncOrMd(drn->stidx);
   const MapleString &name = var->GetName(module_);
   DEBUGPRINT3(name);
 
@@ -493,7 +493,7 @@ base_node_t *JSCompiler::CompileOpCall(uint32_t argc) {
 
   if (funcnode->op == OP_dread) {
     AddrofNode *dread = static_cast<AddrofNode *>(funcnode);
-    MIRSymbol *funcobj = module_->GetSymbolFromStidx(dread->stidx, true);
+    MIRSymbol *funcobj = module_->GetStFromCurFuncOrMd(dread->stidx, true);
     // the function might not be a global one, embeded in obj
     if (funcobj) {
       char *funcobjname = (char *)(funcobj->GetName(module_).c_str());

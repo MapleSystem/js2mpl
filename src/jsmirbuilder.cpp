@@ -138,7 +138,7 @@ NaryStmtNode *JSMIRBuilder::CreateStmtReturn(base_node_t *rval, bool adj_type) {
     DEBUGPRINTsv2("modify _return_type", (rval->op));
     AddrofNode *dn = (AddrofNode *)rval;
     stidx_t stidx = dn->stidx;
-    MIRSymbol *var = module_->GetSymbolFromStidx(stidx);
+    MIRSymbol *var = module_->GetStFromCurFuncOrMd(stidx);
     MIRType *type = var->GetType(module_);
     DEBUGPRINT3(type);
     int fid = dn->fieldid;
