@@ -139,13 +139,13 @@ NaryStmtNode *JSMIRBuilder::CreateStmtReturn(base_node_t *rval, bool adj_type) {
     AddrofNode *dn = (AddrofNode *)rval;
     stidx_t stidx = dn->stidx;
     MIRSymbol *var = module_->GetStFromCurFuncOrMd(stidx);
-    MIRType *type = var->GetType(module_);
+    MIRType *type = var->GetType(&gtypetable);
     DEBUGPRINT3(type);
     int fid = dn->fieldid;
     if (fid) {
       MIRStructType *Stype = static_cast<MIRStructType *>(type);
       // fieldid in a structure starts from 1 while type vector starts from 0
-      type = Stype->GetElemType(module_, fid - 1);
+      type = Stype->GetElemType(&gtypetable, fid - 1);
     }
   }
   return stmt;
@@ -174,7 +174,7 @@ void JSMIRBuilder::UpdateFunction(JSMIRFunction *func,
 void JSMIRBuilder::SaveReturnValue(MIRSymbol *var) {
   DEBUGPRINT4("in SaveReturnValue")
 
-  base_node_t *bn = CreateExprRegread(module_->type_table_[var->GetTyIdx()]->GetPrimType(), -SREG_retval0);
+  base_node_t *bn = CreateExprRegread(gtypetable.type_table_[var->GetTyIdx()]->GetPrimType(), -SREG_retval0);
   StmtNode *stmt = CreateStmtDassign(var, 0, bn);
   MIRBuilder::AddStmtInCurrentFunctionBody(stmt);
 }
