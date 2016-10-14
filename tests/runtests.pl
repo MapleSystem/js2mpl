@@ -36,6 +36,7 @@ opendir (DIR, $dirname ) || die "Error in opening dir $dirname\n";
 print("\n====================== run tests =====================\n");
 my @count = 0;
 my @countMPL = 0;
+my @countIPA = 0;
 my @countME = 0;
 my @countMMPL = 0;
 my @countgenCMPL = 0;
@@ -54,7 +55,7 @@ foreach $srcdir (@required) {
     foreach $fullname (@files) {
       $count ++;
       (my $file = $fullname) =~ s/\.[^.]+$//;
-      if(defined $ARGV[2]) {
+      if(defined $ARGV[3]) {
         print "\n$file";
       } else {
         print ".";
@@ -66,6 +67,7 @@ foreach $srcdir (@required) {
       my $js_file = $file.'.js';
       my $mpl_file = $file.'.mpl';
       my $origmpl_file = $file.'.orig.mpl';
+      my $ipampl_file = $file.'.inline.mpl';
 #my $optmpl_file = $file.'.hdse.mpl';
       my $optmpl_file = $file.'.ssapre.mpl';
       my $mmpl_file = $file.".mmpl";
@@ -76,6 +78,10 @@ foreach $srcdir (@required) {
       my $opt = 0;
       if(defined $ARGV[1]) {
         $opt = $ARGV[1];
+      }
+      my $ipa = 0;
+      if(defined $ARGV[2]) {
+        $ipa = $ARGV[2];
       }
       my $option = -plugin;
       system("cp $js_file $plugindir/$js_file");
@@ -88,6 +94,17 @@ foreach $srcdir (@required) {
         next;
       }
       system("cp $plugindir/$mpl_file $plugindir/$origmpl_file");
+      $res = system("$pwd/../../mapleall/build/gnu/mapleipa/mplipa $plugindir/$mpl_file >> $plugindir/$log_file");
+      if ($res > 0) {
+        print " ==mplipa===> $file\n";
+        $countIPA ++;
+        push(@failed_mplipa_file, $file);
+        $flag ++;
+        next;
+      }
+      if ($ipa != 0) {
+        system("cp $plugindir/$ipampl_file $plugindir/$mpl_file");
+      }
       $res = system("$pwd/../../mapleall/build/gnu/mapleme/mplme $plugindir/$mpl_file >> $plugindir/$log_file");
       if ($res > 0) {
         print " ==mplme===> $file\n";
@@ -137,7 +154,7 @@ while( ($srcdir = readdir(DIR))){
     foreach $fullname (@files) {
       $count ++;
       (my $file = $fullname) =~ s/\.[^.]+$//;
-      if(defined $ARGV[2]) {
+      if(defined $ARGV[3]) {
         print "\n$file";
       } else {
         print ".";
@@ -149,6 +166,7 @@ while( ($srcdir = readdir(DIR))){
       my $js_file = $file.'.js';
       my $mpl_file = $file.'.mpl';
       my $origmpl_file = $file.'.orig.mpl';
+      my $ipampl_file = $file.'.inline.mpl';
 #my $optmpl_file = $file.'.hdse.mpl';
       my $optmpl_file = $file.'.ssapre.mpl';
       my $mmpl_file = $file.".mmpl";
@@ -159,6 +177,10 @@ while( ($srcdir = readdir(DIR))){
       my $opt = 0;
       if(defined $ARGV[1]) {
         $opt = $ARGV[1];
+      }
+      my $ipa = 0;
+      if(defined $ARGV[2]) {
+        $ipa = $ARGV[2];
       }
       my $option = 0;
       system("cp $js_file $tempdir/$js_file");
@@ -171,6 +193,17 @@ while( ($srcdir = readdir(DIR))){
         next;
       }
       system("cp $tempdir/$mpl_file $tempdir/$origmpl_file");
+      $res = system("$pwd/../../mapleall/build/gnu/mapleipa/mplipa $tempdir/$mpl_file >> $tempdir/$log_file");
+      if ($res > 0) {
+        print " ==mplipa===> $file\n";
+        $countIPA ++;
+        push(@failed_mplipa_file, $file);
+        $flag ++;
+        next;
+      }
+      if ($ipa != 0) {
+        system("cp $tempdir/$ipampl_file $tempdir/$mpl_file");
+      }
       $res = system("$pwd/../../mapleall/build/gnu/mapleme/mplme $tempdir/$mpl_file >> $tempdir/$log_file");
       if ($res > 0) {
         print " ==mplme===> $file\n";
@@ -250,12 +283,13 @@ while( ($srcdir = readdir(DIR))){
 print " $count\n";
 closedir(DIR);
 
-if ((scalar(@failed_mpl_file) + scalar(@failed_mmpl_file) + scalar(@failed_int_file) + scalar(@failed_mplme_file) +
+if ((scalar(@failed_mpl_file) + scalar(@failed_mmpl_file) + scalar(@failed_int_file) + scalar(@failed_mplipa_file) + 
+     scalar(@failed_mplme_file) +
      scalar(@failed_gencmpl_file) + scalar(@failed_printcmpl_file) + scalar(@failed_jsvm_cmpl_file)) eq 0) {
   print("\n all $count tests passed\n");
   print("======================================================\n");
 } else {
-  my $countFailed = $countMPL + $countME + $countMMPL + $countINT + $countrunCMPL + $countgenCMPL;
+  my $countFailed = $countMPL + $countIPA + $countME + $countMMPL + $countINT + $countrunCMPL + $countgenCMPL;
   my $countPassed = $count - $countFailed;
   if(scalar(@successed_file) > 0) {
     print "\n=========================\npassed $countPassed tests:\n\n";
@@ -270,6 +304,13 @@ if ((scalar(@failed_mpl_file) + scalar(@failed_mmpl_file) + scalar(@failed_int_f
   if(scalar(@failed_mpl_file) > 0){
     print("=== failed generation of maple IR: $countMPL tests\n");
     foreach $failed (@failed_mpl_file) {
+      print $failed."\n";
+    }
+    print "\n";
+  }
+  if(scalar(@failed_mplipa_file) > 0){
+    print("=== failed maple IPA: $countIPA tests\n");
+    foreach $failed (@failed_mplipa_file) {
       print $failed."\n";
     }
     print "\n";

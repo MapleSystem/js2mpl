@@ -28,7 +28,7 @@ src:
 	$(MAKE) -C $@
 
 regression:
-	$(MAKE) -C tests regression OPT=1
+	$(MAKE) -C tests regression OPT=1 IPA=1
 
 todo:
 	$(MAKE) -C tests todo

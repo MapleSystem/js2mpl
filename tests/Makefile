@@ -71,7 +71,7 @@ tt:
 
 % : %.js $(JS2MPL) $(BE) $(MAPLEINTERPRETER) DIRECTORIES
 	cp $< $(BUILD)/$*.js
-	@echo gdb --args $(js2mpl) $(build)/$*.js $(OPT)
+	@echo gdb --args $(js2mpl) $(build)/$*.js $(OPT) 
 	$(JS2MPL) $(BUILD)/$*.js $(OPT)
 	@echo gdb --args $(js2mpl) $(build)/$*.js $(OPT)
 	$(ME) $(BUILD)/$*.mpl > $(BUILD)/$*.log
@@ -136,17 +136,20 @@ src:
 todo: run
 
 run:
-	@./runtests.pl todo-tests $(OPT)
+	@./runtests.pl todo-tests $(OPT) $(IPA)
 
 plugin: $(REQ)
 
 checkme:
 	@./runtests.pl regression-tests 1
 
+checkmeipa:
+	@./runtests.pl regression-tests 1 1
+
 checkin: regression
 
 regression:
-	@./runtests.pl regression-tests $(OPT)
+	@./runtests.pl regression-tests $(OPT) $(IPA)
 
 clean:
 	rm -rf $(BUILD)
