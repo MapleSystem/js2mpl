@@ -23,7 +23,7 @@ void JSClosure::UpdateFuncMod(char *name) {
 MIRSymbol *JSClosure::GetSymbolFromEnclosingScope(JSMIRFunction *func,
                                                   const char *name) {
   stridx_t idx = jsbuilder_->GetStringIndex(name);
-  if (!idx)
+  if (idx == 0)
     return NULL;
 
   MIRSymbol *st = func->symtab->GetSymbolFromStridx(idx);
@@ -83,7 +83,7 @@ MIRType *JSClosure::GetOrCreateEnvType(JSMIRFunction *func) {
   MIRStructType *stf = (MIRStructType *)(env_type);
   DEBUGPRINT2(stf->GetElemType(&gtypetable, 0));
   stridx_t idxf = module_->symtab->GetSymbolFromStidx(func->stidx)->GetNameStridx();
-  DEBUGPRINT2(idxf);
+  DEBUGPRINT2(idxf.idx);
   DEBUGPRINT2(func->stidx);
 
   func->envtype = env_type;

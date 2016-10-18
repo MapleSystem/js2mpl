@@ -1087,7 +1087,7 @@ bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
   assert(jsfun && "not a jsfunction");
 
   char *name = Util::GetNameWithSuffix(funcname, "_obj_", mp_);
-  if (!jsbuilder_->GetStringIndex(name)) {
+  if (jsbuilder_->GetStringIndex(name).idx == 0) {
     DEBUGPRINT2(name);
     uint32_t varg_p = 0;
     uint32_t nargs = (uint32_t)(uint8_t)jsfun->nargs();

@@ -82,7 +82,7 @@ JSMIRFunction *JSMIRBuilder::GetOrCreateFunction(const char *name,
   stridx_t stridx = GetOrCreateStringIndex(fname);
   stidx_t stidx = module_->symtab->GetStidxFromStridx(stridx);
   DEBUGPRINT3(fname);
-  DEBUGPRINT3(stridx);
+  DEBUGPRINT3(stridx.idx);
   DEBUGPRINT3(stidx);
 
   funcst->SetNameStridx(stridx);
