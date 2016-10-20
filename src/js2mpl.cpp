@@ -14,7 +14,7 @@
 using namespace mapleir;
 using namespace std;
 
-TypeTable mapleir::gtypetable;
+GlobalTables mapleir::globaltable;
 
 // extract base name and plugin name from input js file name with path
 static void ProcessSrcInfo(string infile, string &basename,  string &pluginname) {
