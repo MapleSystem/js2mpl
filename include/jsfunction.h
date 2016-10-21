@@ -18,7 +18,7 @@ class JSMIRFunction : public MIRFunction {
 
     int argc;
 
-    std::list<stridx_t> alias_vars;
+    std::list<gstridx_t> alias_vars;
     ScopeNode * scope;
 
     MIRType *envtype;
@@ -42,8 +42,8 @@ class JSMIRFunction : public MIRFunction {
     }
 
     void initAliasList() { alias_vars.empty(); }
-    void AddToAliasList(stridx_t);
-    int GetAliasPosition(stridx_t);
+    void AddToAliasList(gstridx_t);
+    int GetAliasPosition(gstridx_t);
 };
 }   // namespace mapleir
 #endif  // JS2MPL_INCLUDE_JSFUNCTION_H_

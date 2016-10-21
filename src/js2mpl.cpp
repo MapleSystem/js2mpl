@@ -151,7 +151,7 @@ int main(int argc, const char *argv[]) {
   if (! isplugin)
     themodule.entryfunc_ = "main";
   else {  // entryfunc_ is the last function generated
-    themodule.entryfunc_ = themodule.symtab->GetSymbolFromStidx(themodule._function_list.back()->stidx)->GetName(&themodule);
+    themodule.entryfunc_ = themodule.symtab->GetSymbolFromStidx(themodule._function_list.back()->stidx)->GetName();
   }
   // set numfuncs_ in MIRModule
   themodule.num_funcs = themodule._function_list.size();

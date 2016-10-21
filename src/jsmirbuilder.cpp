@@ -79,7 +79,7 @@ JSMIRFunction *JSMIRBuilder::GetOrCreateFunction(const char *name,
 
   MapleString fname(name, module_->mp_);
   MIRSymbol *funcst = module_->symtab->CreateSymbol(SCOPE_LOCAL + 1);
-  stridx_t stridx = GetOrCreateStringIndex(fname);
+  gstridx_t stridx = GetOrCreateStringIndex(fname);
   stidx_t stidx = module_->symtab->GetStidxFromStridx(stridx);
   DEBUGPRINT3(fname);
   DEBUGPRINT3(stridx.idx);

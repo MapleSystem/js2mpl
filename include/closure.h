@@ -10,7 +10,6 @@
 #include "mapleir/include/primtypes.h"
 #include "mapleir/include/mirtype.h"
 #include "mapleir/include/mirconst.h"
-#include "mapleir/include/mirstring.h"
 #include "mapleir/include/mirsymbol.h"
 #include "mapleir/include/mirnodes.h"
 #include "mapleir/include/mirmodule.h"

@@ -22,7 +22,7 @@ void JSClosure::UpdateFuncMod(char *name) {
 // ??? Use scope chain.
 MIRSymbol *JSClosure::GetSymbolFromEnclosingScope(JSMIRFunction *func,
                                                   const char *name) {
-  stridx_t idx = jsbuilder_->GetStringIndex(name);
+  gstridx_t idx = jsbuilder_->GetStringIndex(name);
   if (idx == 0)
     return NULL;
 
@@ -48,7 +48,7 @@ MIRSymbol *JSClosure::GetSymbolFromEnclosingScope(JSMIRFunction *func,
 MIRType *JSClosure::GetOrCreateEnvType(JSMIRFunction *func) {
   std::stringstream ss;
   MIRSymbol *func_st = module_->symtab->GetSymbolFromStidx(func->stidx);
-  ss << func_st->GetName(module_);
+  ss << func_st->GetName();
   std::string env_name = ss.str() + "_env_type";
   DEBUGPRINT2(env_name);
 
@@ -59,10 +59,10 @@ MIRType *JSClosure::GetOrCreateEnvType(JSMIRFunction *func) {
 
   FieldVector env_fields(module_->mp_allocator_.Adapter());
 
-  stridx_t argnums = jsbuilder_->GetOrCreateStringIndex("argnums");
+  gstridx_t argnums = jsbuilder_->GetOrCreateStringIndex("argnums");
   env_fields.push_back(FieldPair(argnums, TyidxAttrPair(jsbuilder_->GetUInt32()->_ty_idx, TypeAttrs())));
 
-  stridx_t parentenv = jsbuilder_->GetOrCreateStringIndex("parentenv");
+  gstridx_t parentenv = jsbuilder_->GetOrCreateStringIndex("parentenv");
   if (func->scope->IsTopLevel()) {
     env_fields.push_back(FieldPair(parentenv, TyidxAttrPair(jsbuilder_->GetVoidPtr()->_ty_idx, TypeAttrs())));
   } else {
@@ -82,7 +82,7 @@ MIRType *JSClosure::GetOrCreateEnvType(JSMIRFunction *func) {
   DEBUGPRINT2(env_type);
   MIRStructType *stf = (MIRStructType *)(env_type);
   DEBUGPRINT2(stf->GetElemType(&globaltable, 0));
-  stridx_t idxf = module_->symtab->GetSymbolFromStidx(func->stidx)->GetNameStridx();
+  gstridx_t idxf = module_->symtab->GetSymbolFromStidx(func->stidx)->GetNameStridx();
   DEBUGPRINT2(idxf.idx);
   DEBUGPRINT2(func->stidx);
 
@@ -94,7 +94,7 @@ MIRType *JSClosure::GetOrCreateEnvType(JSMIRFunction *func) {
 
 void JSClosure::AddAliasToEnvType(MIRType *env_type, char *name, MIRType *T) {
   DEBUGPRINTsv3("add env", name);
-  stridx_t stridx = jsbuilder_->GetOrCreateStringIndex(name);
+  gstridx_t stridx = jsbuilder_->GetOrCreateStringIndex(name);
   MIRStructType *env_struct = static_cast<MIRStructType *>(env_type);
 
   env_struct->fields.push_back(FieldPair(stridx, TyidxAttrPair(T->_ty_idx, TypeAttrs())));
@@ -120,7 +120,7 @@ void JSClosure::AddFuncFormalsToEnvType(JSMIRFunction *func) {
     }
     DEBUGPRINT2(funcname);
     MIRSymbol *func_st = module_->symtab->GetSymbolFromStidx(func->stidx);
-    if (func_st && strcmp(funcname, func_st->GetName(module_).c_str()) == 0) {
+    if (func_st && strcmp(funcname, func_st->GetName().c_str()) == 0) {
       std::vector<JSAtom *> args = (*I).second;
       std::vector<JSAtom *>::iterator IA;
       DEBUGPRINTsv3("AddFuncFormalsToEnvType", funcname);
@@ -256,7 +256,7 @@ bool JSClosure::IsLocalVar(JSMIRFunction *func, char *name) {
     }
     DEBUGPRINT2(funcname);
     MIRSymbol *func_st = module_->symtab->GetSymbolFromStidx(func->stidx);
-    if (func_st && strcmp(funcname, func_st->GetName(module_).c_str()) == 0) {
+    if (func_st && strcmp(funcname, func_st->GetName().c_str()) == 0) {
       std::vector<JSAtom *> vars = (*I).second;
       std::vector<JSAtom *>::iterator IA;
       DEBUGPRINTsv3("IsLocalVar", funcname);
@@ -293,7 +293,7 @@ char *JSClosure::GetLocalVar(JSMIRFunction *func, uint32_t local_no) {
     DEBUGPRINT2(funcname);
     // found the function
     MIRSymbol *func_st = module_->symtab->GetSymbolFromStidx(func->stidx);
-    if (func_st && strcmp(funcname, func_st->GetName(module_).c_str()) == 0) {
+    if (func_st && strcmp(funcname, func_st->GetName().c_str()) == 0) {
       std::vector<JSAtom *> args = locals[i].second;
       if (local_no < args.size())
         name = Util::GetString(args[local_no], mp_, jscontext_);
@@ -316,7 +316,7 @@ void JSClosure::ProcessAliasedVar(jsbytecode *pc) {
     return;
   DEBUGPRINT3(name);
   MIRSymbol *func_st = module_->symtab->GetSymbolFromStidx(func->stidx);
-  const char *funcname = func_st->GetName(module_).c_str();
+  const char *funcname = func_st->GetName().c_str();
   ScopeNode *sn = scope_->GetOrCreateSN((char *)funcname);
   ScopeNode *psn = sn->GetParent();
 

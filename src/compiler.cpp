@@ -330,7 +330,7 @@ int32_t JSCompiler::GetBuiltinMethod(uint32_t argc, bool *need_this) {
   assert (drn);
   // MIRSymbol *var = module_->symtab->GetSymbolFromStidx(drn->stidx);
   MIRSymbol *var = module_->GetStFromCurFuncOrMd(drn->stidx);
-  const MapleString &name = var->GetName(module_);
+  const MapleString &name = var->GetName();
   DEBUGPRINT3(name);
 
 #define DEFBUILTINMETHOD(name, intrn_code, need_this)  \
@@ -380,7 +380,7 @@ base_node_t *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool nee
     arguments = jsbuilder_->GetCurrentFunction()->symtab->CreateSymbol(SCOPE_LOCAL);
     const char *temp_name = Util::GetSequentialName("js_arguments_", temp_var_no_, mp_);
     MapleString argname(temp_name, mp_);
-    arguments->SetNameStridx(module_->stringtable.GetOrCreateStridxFromName(argname));
+    arguments->SetNameStridx(globaltable.GetOrCreateGstridxFromName(argname));
     jsbuilder_->GetCurrentFunction()->symtab->AddToStringSymbolMap(arguments);
     arguments->sclass = SC_auto;
     arguments->skind  = ST_var;
@@ -496,7 +496,7 @@ base_node_t *JSCompiler::CompileOpCall(uint32_t argc) {
     MIRSymbol *funcobj = module_->GetStFromCurFuncOrMd(dread->stidx, true);
     // the function might not be a global one, embeded in obj
     if (funcobj) {
-      char *funcobjname = (char *)(funcobj->GetName(module_).c_str());
+      char *funcobjname = (char *)(funcobj->GetName().c_str());
       DEBUGPRINT3(funcobjname);
 
       funcname = GetFuncName(funcobjname);
@@ -1197,7 +1197,7 @@ int JSCompiler::ProcessAliasedVar(JSAtom *atom, MIRType *&env_ptr, base_node_t *
   char *name = Util::GetString(atom, mp_, jscontext_);
   JS_ASSERT(!name && "empty name");
   MIRSymbol *func_st = module_->symtab->GetSymbolFromStidx(func->stidx);
-  const char *funcname = func_st->GetName(module_).c_str();
+  const char *funcname = func_st->GetName().c_str();
   ScopeNode *sn = scope_->GetOrCreateSN((char *)funcname);
   ScopeNode *psn = sn->GetParent();
 
@@ -1338,7 +1338,7 @@ void JSCompiler::CloseFuncBookKeeping() {
     jsbuilder_->SetCurrentFunction(lambda);
     DEBUGPRINT0;
     MIRSymbol *lambda_st = module_->symtab->GetSymbolFromStidx(lambda->stidx);
-    DEBUGPRINTfunc((lambda_st->GetName(module_).c_str()));
+    DEBUGPRINTfunc((lambda_st->GetName().c_str()));
     funcstack_.push(lambda);
     scriptstack_.pop();
 
