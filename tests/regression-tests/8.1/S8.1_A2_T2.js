@@ -18,7 +18,9 @@ if (!(test1() === void 0)) {
 }
 
 // CHECK#2
-function test2() {  
+function test2() { 
+  // If no return undefined, the case will fail.
+  return undefined;
 }
 
 if (!(test2() === void 0)) {
