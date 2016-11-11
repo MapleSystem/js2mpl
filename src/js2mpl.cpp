@@ -85,9 +85,6 @@ static void help() {
 
 int main(int argc, const char *argv[]) {
 
-  maplemp::MemPoolCtrler Mpc;
-  MIRModule themodule(Mpc);
-
   if (!strcmp(argv[1], "-help")) {
     help();
     exit(1);
@@ -143,6 +140,8 @@ int main(int argc, const char *argv[]) {
 
   JSMIRContext jsmirctx(isplugin, name, with_main, jsop_only, simp_call);
 
+  maplemp::MemPoolCtrler Mpc;
+  MIRModule themodule(Mpc, fn);
   if (!mapleir::js2mpldriver(fn, &themodule, jsmirctx)) {
     exit(1);
   }
@@ -159,23 +158,9 @@ int main(int argc, const char *argv[]) {
   if (js2mplDebug > 0)
     themodule.Dump();
 
-  // form output file name
-  string out_file_name;
-  unsigned lastdot = file_name.find_last_of(".");
-  if (lastdot == string::npos)
-    out_file_name = file_name.append(".mpl");
-  else
-    out_file_name = file_name.substr(0, lastdot).append(".mpl");
-  ofstream mplfile;
-  mplfile.open(out_file_name.c_str(), ios::trunc);
-  // save and then change cout's buffer to that of mplfile
-  streambuf *backup = cout.rdbuf();
-  cout.rdbuf(mplfile.rdbuf());
   themodule.flavor_ = mapleir::FEproduced;
   themodule.srclang_ = mapleir::SrcLangJS;
-  themodule.Dump();  // write out generated Maple IR
-  cout.rdbuf(backup);  // restore cout's buffer
-  mplfile.close();
+  themodule.OutputAsciiMpl("");
   return 0;
 }
 
