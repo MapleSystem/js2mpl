@@ -26,7 +26,7 @@ class JSMIRBuilder : public MIRBuilder {
                                      ArgVector arguments,
                                      bool isvarg);
   NaryStmtNode *CreateStmtReturn(base_node_t *rval, bool adj_type);
-  StmtNode *CreateStmtDassign(MIRSymbol *symbol, uint32_t field_id, base_node_t *src);
+  StmtNode *CreateStmtDassign(MIRSymbol *symbol, fldid_t field_id, base_node_t *src);
   IntrinsiccallNode *CreateStmtIntrinsicCall1N( MIRIntrinsicId idx,
                                        base_node_t *arg0,
                                        MapleVector<base_node_t *> &args);

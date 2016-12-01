@@ -180,7 +180,7 @@ void JSMIRBuilder::SaveReturnValue(MIRSymbol *var) {
 }
 
 StmtNode *JSMIRBuilder::CreateStmtDassign(MIRSymbol *symbol,
-                                          uint32_t field_id,
+                                          fldid_t field_id,
                                           base_node_t *src) {
   DEBUGPRINT4("in CreateStmtDassign")
 

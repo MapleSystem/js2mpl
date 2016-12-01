@@ -58,6 +58,7 @@ MIRType *JSClosure::GetOrCreateEnvType(JSMIRFunction *func) {
   }
 
   FieldVector env_fields(module_->mp_allocator_.Adapter());
+  FieldVector prnt_fields(module_->mp_allocator_.Adapter());
 
   gstridx_t argnums = jsbuilder_->GetOrCreateStringIndex("argnums");
   env_fields.push_back(FieldPair(argnums, TyidxAttrPair(jsbuilder_->GetUInt32()->_ty_idx, TypeAttrs())));
@@ -77,7 +78,7 @@ MIRType *JSClosure::GetOrCreateEnvType(JSMIRFunction *func) {
     env_fields.push_back(FieldPair(parentenv, TyidxAttrPair(envptr->_ty_idx, TypeAttrs())));
   }
 
-  MIRType *env_type = jsbuilder_->CreateStructType(env_name.c_str(), env_fields);
+  MIRType *env_type = jsbuilder_->CreateStructType(env_name.c_str(), env_fields, prnt_fields);
   DEBUGPRINT2(env_name);
   DEBUGPRINT2(env_type);
   MIRStructType *stf = (MIRStructType *)(env_type);
