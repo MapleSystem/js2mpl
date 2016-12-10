@@ -174,7 +174,7 @@ void JSMIRBuilder::UpdateFunction(JSMIRFunction *func,
 void JSMIRBuilder::SaveReturnValue(MIRSymbol *var) {
   DEBUGPRINT4("in SaveReturnValue")
 
-  base_node_t *bn = CreateExprRegread(globaltable.type_table_[var->GetTyIdx()]->GetPrimType(), -SREG_retval0);
+  base_node_t *bn = CreateExprRegread(globaltable.type_table_[var->GetTyIdx().idx]->GetPrimType(), -SREG_retval0);
   StmtNode *stmt = CreateStmtDassign(var, 0, bn);
   MIRBuilder::AddStmtInCurrentFunctionBody(stmt);
 }
