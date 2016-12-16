@@ -35,19 +35,19 @@ MIRSymbol *JSClosure::GetSymbolFromEnclosingScope(JSMIRFunction *func,
 
 MIRSymbol *JSClosure::GetSymbolFromEnclosingScope(JSMIRFunction *func,
                                                   stidx_t stidx) {
-  if (!stidx)
+  if (stidx.Fullidx() == 0)
     return NULL;
 
-  MIRSymbol *st = func->symtab->GetSymbolFromStidx(stidx);
+  MIRSymbol *st = func->symtab->GetSymbolFromStidx(stidx.Idx());
   if (st) return st;
-  st = globaltable.symtab->GetSymbolFromStidx(stidx);
+  st = globaltable.symtab->GetSymbolFromStidx(stidx.Idx());
   if (st) return st;
   return NULL;
 }
 
 MIRType *JSClosure::GetOrCreateEnvType(JSMIRFunction *func) {
   std::stringstream ss;
-  MIRSymbol *func_st = globaltable.symtab->GetSymbolFromStidx(func->stidx);
+  MIRSymbol *func_st = globaltable.symtab->GetSymbolFromStidx(func->stidx.Idx());
   ss << func_st->GetName();
   std::string env_name = ss.str() + "_env_type";
   DEBUGPRINT2(env_name);
@@ -83,9 +83,9 @@ MIRType *JSClosure::GetOrCreateEnvType(JSMIRFunction *func) {
   DEBUGPRINT2(env_type);
   MIRStructType *stf = (MIRStructType *)(env_type);
   DEBUGPRINT2(stf->GetElemType(&globaltable, 0));
-  gstridx_t idxf = globaltable.symtab->GetSymbolFromStidx(func->stidx)->GetNameStridx();
+  gstridx_t idxf = globaltable.symtab->GetSymbolFromStidx(func->stidx.Idx())->GetNameStridx();
   DEBUGPRINT2(idxf.idx);
-  DEBUGPRINT2(func->stidx);
+  DEBUGPRINT2(func->stidx.Fullidx());
 
   func->envtype = env_type;
   func->envptr = jsbuilder_->GetOrCreatePointerType(env_type);
@@ -120,7 +120,7 @@ void JSClosure::AddFuncFormalsToEnvType(JSMIRFunction *func) {
       funcname = (char*)Util::GetSequentialName0("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_);
     }
     DEBUGPRINT2(funcname);
-    MIRSymbol *func_st = globaltable.symtab->GetSymbolFromStidx(func->stidx);
+    MIRSymbol *func_st = globaltable.symtab->GetSymbolFromStidx(func->stidx.Idx());
     if (func_st && strcmp(funcname, func_st->GetName().c_str()) == 0) {
       std::vector<JSAtom *> args = (*I).second;
       std::vector<JSAtom *>::iterator IA;
@@ -256,7 +256,7 @@ bool JSClosure::IsLocalVar(JSMIRFunction *func, char *name) {
       funcname = (char*)Util::GetSequentialName0("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_);
     }
     DEBUGPRINT2(funcname);
-    MIRSymbol *func_st = globaltable.symtab->GetSymbolFromStidx(func->stidx);
+    MIRSymbol *func_st = globaltable.symtab->GetSymbolFromStidx(func->stidx.Idx());
     if (func_st && strcmp(funcname, func_st->GetName().c_str()) == 0) {
       std::vector<JSAtom *> vars = (*I).second;
       std::vector<JSAtom *>::iterator IA;
@@ -293,7 +293,7 @@ char *JSClosure::GetLocalVar(JSMIRFunction *func, uint32_t local_no) {
     }
     DEBUGPRINT2(funcname);
     // found the function
-    MIRSymbol *func_st = globaltable.symtab->GetSymbolFromStidx(func->stidx);
+    MIRSymbol *func_st = globaltable.symtab->GetSymbolFromStidx(func->stidx.Idx());
     if (func_st && strcmp(funcname, func_st->GetName().c_str()) == 0) {
       std::vector<JSAtom *> args = locals[i].second;
       if (local_no < args.size())
@@ -316,7 +316,7 @@ void JSClosure::ProcessAliasedVar(jsbytecode *pc) {
   if (!name)
     return;
   DEBUGPRINT3(name);
-  MIRSymbol *func_st = globaltable.symtab->GetSymbolFromStidx(func->stidx);
+  MIRSymbol *func_st = globaltable.symtab->GetSymbolFromStidx(func->stidx.Idx());
   const char *funcname = func_st->GetName().c_str();
   ScopeNode *sn = scope_->GetOrCreateSN((char *)funcname);
   ScopeNode *psn = sn->GetParent();

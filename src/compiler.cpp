@@ -328,7 +328,7 @@ int32_t JSCompiler::GetBuiltinMethod(uint32_t argc, bool *need_this) {
     return -1;
   AddrofNode *drn = static_cast<AddrofNode *> (bn);
   assert (drn);
-  // MIRSymbol *var = module_->symtab->GetSymbolFromStidx(drn->stidx);
+  // MIRSymbol *var = module_->symtab->GetSymbolFromStidx(drn->stidx.Idx());
   MIRSymbol *var = module_->GetStFromCurFuncOrMd(drn->stidx);
   const MapleString &name = var->GetName();
   DEBUGPRINT3(name);
@@ -669,7 +669,7 @@ base_node_t *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc) {
   InitWithUndefined(created, var);
 
   stidx_t stidx = var->GetStIdx();
-  DEBUGPRINT3(stidx);
+  DEBUGPRINT3(stidx.Idx());
 
   bn = jsbuilder_->CreateExprDread(jsvalue_type_, var);
 
@@ -1196,7 +1196,7 @@ int JSCompiler::ProcessAliasedVar(JSAtom *atom, MIRType *&env_ptr, base_node_t *
   DEBUGPRINT3(func);
   char *name = Util::GetString(atom, mp_, jscontext_);
   JS_ASSERT(!name && "empty name");
-  MIRSymbol *func_st = globaltable.symtab->GetSymbolFromStidx(func->stidx);
+  MIRSymbol *func_st = globaltable.symtab->GetSymbolFromStidx(func->stidx.Idx());
   const char *funcname = func_st->GetName().c_str();
   ScopeNode *sn = scope_->GetOrCreateSN((char *)funcname);
   ScopeNode *psn = sn->GetParent();
@@ -1337,7 +1337,7 @@ void JSCompiler::CloseFuncBookKeeping() {
     JSMIRFunction *lambda = scriptstack_.top().second;
     jsbuilder_->SetCurrentFunction(lambda);
     DEBUGPRINT0;
-    MIRSymbol *lambda_st = globaltable.symtab->GetSymbolFromStidx(lambda->stidx);
+    MIRSymbol *lambda_st = globaltable.symtab->GetSymbolFromStidx(lambda->stidx.Idx());
     DEBUGPRINTfunc((lambda_st->GetName().c_str()));
     funcstack_.push(lambda);
     scriptstack_.pop();
@@ -1882,7 +1882,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
           jsbuilder_->CreateStmtDassign(tempvar, 0, expr); 
           if (! opstack_->Empty()) {
             base_node_t *top_value = Top();
-            if (!(top_value->op == OP_dread && ST_IS_LOCAL(static_cast<AddrofNode *>(top_value)->stidx) &&
+            if (!(top_value->op == OP_dread && static_cast<AddrofNode *>(top_value)->stidx.Islocal() &&
                ((addrof_node_t*)top_value)->stidx == tempvar->GetStIdx())) {
               Push(jsbuilder_->CreateExprDread(tempvar->GetType(&globaltable), tempvar));
             } else {
