@@ -146,11 +146,11 @@ int main(int argc, const char *argv[]) {
     exit(1);
   }
 
-  // set entryfunc_ in MIRModule
+  // set entryfuncname_ in MIRModule
   if (! isplugin)
-    themodule.entryfunc_ = "main";
+    themodule.entryfuncname_ = "main";
   else {  // entryfunc_ is the last function generated
-    themodule.entryfunc_ = globaltable.symtab->GetSymbolFromStidx(themodule._function_list.back()->stidx.Idx())->GetName();
+    themodule.entryfuncname_ = globaltable.symtab->GetSymbolFromStidx(themodule._function_list.back()->stidx.Idx())->GetName();
   }
   // set numfuncs_ in MIRModule
   themodule.num_funcs = themodule._function_list.size();
