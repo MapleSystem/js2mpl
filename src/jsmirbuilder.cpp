@@ -124,7 +124,7 @@ JSMIRFunction *JSMIRBuilder::GetOrCreateFunction(const char *name,
   return fn;
 }
 
-void JSMIRBuilder::AddStmtInCurrentFunctionBody(stmt_node_t *n) {
+void JSMIRBuilder::AddStmtInCurrentFunctionBody(StmtNode *n) {
   MIRBuilder::AddStmtInCurrentFunctionBody(n);
   DEBUGPRINTnode(n);
 }

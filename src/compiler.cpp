@@ -404,7 +404,7 @@ base_node_t *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool nee
       BaseNode *addr_offset = jsbuilder_->GetConstInt(i);
       opnds.push_back(addr_offset);
       BaseNode *array_expr = jsbuilder_->CreateExprArray(array_type, opnds);
-      BaseNode *stmt = jsbuilder_->CreateStmtIassign(array_ptr_type, 0, array_expr, bn);
+      StmtNode *stmt = jsbuilder_->CreateStmtIassign(array_ptr_type, 0, array_expr, bn);
       jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
     }
 
@@ -419,7 +419,7 @@ base_node_t *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool nee
     IntrinDesc *intrindesc = &IntrinDesc::intrintable[idx];
     MIRType *retty = intrindesc->GetReturnType();
     MIRSymbol *temp = CreateTempVar(retty);
-    stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssignedN((MIRIntrinsicId)idx, args, temp);
+    StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssignedN((MIRIntrinsicId)idx, args, temp);
     jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
     return jsbuilder_->CreateExprDread(retty, temp);
   }
@@ -436,7 +436,7 @@ base_node_t *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool nee
     IntrinDesc *intrindesc = &IntrinDesc::intrintable[idx];
     MIRType *retty = intrindesc->GetReturnType();
     MIRSymbol *temp = CreateTempVar(retty);
-    stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned1((MIRIntrinsicId)idx, argument, temp);
+    StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned1((MIRIntrinsicId)idx, argument, temp);
     jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
     return jsbuilder_->CreateExprDread(retty, temp);
   }
@@ -452,7 +452,7 @@ base_node_t *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool nee
 
   MIRType *retty = intrindesc->GetReturnType();
   MIRSymbol *temp = CreateTempVar(retty);
-  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssignedN((MIRIntrinsicId)idx, arguments, temp);
+  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssignedN((MIRIntrinsicId)idx, arguments, temp);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
 
   return jsbuilder_->CreateExprDread(retty, temp);
@@ -480,7 +480,7 @@ base_node_t *JSCompiler::CompileOpCall(uint32_t argc) {
   // funcnode: it is intervened with arg setup
   base_node_t *impnode = CheckConvertToJSValueType(Pop());
   base_node_t *funcnode = CheckConvertToJSValueType(Pop());
-  stmt_node_t *stmt = NULL;
+  StmtNode *stmt = NULL;
   MIRSymbol *symbol;
   char *name;
   if (js2mplDebug > 2) static_cast<BaseNode *>(funcnode)->Dump(module_);
@@ -576,7 +576,7 @@ base_node_t *JSCompiler::CompileOpNew(uint32_t argc) {
   for (int32_t i = argc - 1; i >=0; i--)
     args.push_back(argsvec[i]);
   MIRSymbol *returnVar = CreateTempVar(jsvalue_type_);
-  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssignedN(INTRN_JSOP_NEW, args, returnVar);
+  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssignedN(INTRN_JSOP_NEW, args, returnVar);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return jsbuilder_->CreateExprDread(jsvalue_type_, 0, returnVar);
 }
@@ -674,7 +674,7 @@ base_node_t *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc) {
   bn = jsbuilder_->CreateExprDread(jsvalue_type_, var);
 
   if (created && eh_->IsInEHrange(pc)) {
-    BaseNode *throwstmt = jsbuilder_->CreateStmtThrow(bn);
+    StmtNode *throwstmt = jsbuilder_->CreateStmtThrow(bn);
     jsbuilder_->AddStmtInCurrentFunctionBody(throwstmt);
   }
 
@@ -788,7 +788,7 @@ base_node_t *JSCompiler::CompileOpNewIterator(base_node_t *bn, uint8_t flags)
   MIRType *retty = jsbuilder_->GetOrCreatePointerType(jsbuilder_->GetVoid());
   MIRSymbol *retsy = CreateTempVar(retty);
 
-  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned2(
+  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned2(
       (MIRIntrinsicId)INTRN_JSOP_NEW_ITERATOR,bn,
       jsbuilder_->GetConstUInt32(flags), retsy);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
@@ -798,7 +798,7 @@ base_node_t *JSCompiler::CompileOpNewIterator(base_node_t *bn, uint8_t flags)
 base_node_t *JSCompiler::CompileOpMoreIterator(base_node_t *iterator) 
 {
   MIRSymbol *retsy = CreateTempVar(jsbuilder_->GetUInt32());
-  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned1(
+  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned1(
                    (MIRIntrinsicId)INTRN_JSOP_MORE_ITERATOR, iterator, retsy);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
 
@@ -810,7 +810,7 @@ base_node_t *JSCompiler::CompileOpMoreIterator(base_node_t *iterator)
 base_node_t *JSCompiler::CompileOpIterNext(base_node_t *iterator)
 {
   MIRSymbol *var = CreateTempJSValueTypeVar();
-  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned1( 
+  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned1( 
       (MIRIntrinsicId)INTRN_JSOP_NEXT_ITERATOR,
       iterator,
       var);
@@ -912,7 +912,7 @@ base_node_t *JSCompiler::CompileGenericN(int32_t intrin_id,
   MIRType *retty = intrindesc->GetReturnType();
   if (is_call) {
     MIRSymbol *var = CreateTempVar(retty);
-    stmt_node_t *call = jsbuilder_->CreateStmtIntrinsicCallAssignedN(
+    StmtNode *call = jsbuilder_->CreateStmtIntrinsicCallAssignedN(
                        (MIRIntrinsicId)intrin_id, arguments, var);
     jsbuilder_->AddStmtInCurrentFunctionBody(call);
     //  TODO: if retty is void, return NULL
@@ -964,7 +964,7 @@ base_node_t *JSCompiler::CompileGeneric4(int32_t intrin_id, base_node_t *arg1,
 
 bool JSCompiler::CompileOpSetElem(base_node_t *obj, base_node_t *index, base_node_t *val) {
   index = CheckConvertToJSValueType(index);
-  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(
+  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(
                      INTRN_JSOP_SETPROP,
                      obj, index, CheckConvertToJSValueType(val), NULL);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
@@ -973,7 +973,7 @@ bool JSCompiler::CompileOpSetElem(base_node_t *obj, base_node_t *index, base_nod
 
 bool JSCompiler::CompileOpInitPropGetter(base_node_t *obj, JSString *str, base_node_t *val) {
   base_node_t *name = CheckConvertToJSValueType(CompileOpString(str));
-  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_INITPROP_GETTER,
+  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_INITPROP_GETTER,
                                                         obj, name, val, NULL);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return true;
@@ -981,7 +981,7 @@ bool JSCompiler::CompileOpInitPropGetter(base_node_t *obj, JSString *str, base_n
 
 bool JSCompiler::CompileOpInitPropSetter(base_node_t *obj, JSString *str, base_node_t *val) {
   base_node_t *name = CheckConvertToJSValueType(CompileOpString(str));
-  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_INITPROP_SETTER,
+  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_INITPROP_SETTER,
                                                         obj, name, val, NULL);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return true;
@@ -989,7 +989,7 @@ bool JSCompiler::CompileOpInitPropSetter(base_node_t *obj, JSString *str, base_n
 
 bool JSCompiler::CompileOpInitElemGetter(base_node_t *obj, base_node_t *index, base_node_t *val) {
   index = CheckConvertToJSValueType(index);
-  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_INITPROP_GETTER,
+  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_INITPROP_GETTER,
                                                         obj, index, val, NULL);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return true;
@@ -997,7 +997,7 @@ bool JSCompiler::CompileOpInitElemGetter(base_node_t *obj, base_node_t *index, b
 
 bool JSCompiler::CompileOpInitElemSetter(base_node_t *obj, base_node_t *index, base_node_t *val) {
   index = CheckConvertToJSValueType(index);
-  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_INITPROP_SETTER,
+  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_INITPROP_SETTER,
                                                         obj, index, val, NULL);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return true;
@@ -1007,7 +1007,7 @@ bool JSCompiler::CompileOpInitElemSetter(base_node_t *obj, base_node_t *index, b
 bool JSCompiler::CompileOpSetProp(base_node_t *obj, JSString *str,
                                   base_node_t *val) {
   base_node_t *name = CompileOpString(str);
-  stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_SETPROP_BY_NAME, obj,
+  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_SETPROP_BY_NAME, obj,
                                                         name,
                                                         CheckConvertToJSValueType(val), NULL);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
@@ -1104,7 +1104,7 @@ bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
       jsbuilder_->InsertGlobalName(name);
     }
 
-    BaseNode *stmt = jsbuilder_->CreateStmtDassign(func_obj, 0, func_node);
+    StmtNode *stmt = jsbuilder_->CreateStmtDassign(func_obj, 0, func_node);
     jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   }
 
@@ -1213,7 +1213,7 @@ int JSCompiler::ProcessAliasedVar(JSAtom *atom, MIRType *&env_ptr, base_node_t *
   MIRSymbol *env_var = NULL;
   const char *env_name;
   base_node_t *bn = NULL;
-  stmt_node_t *stmt = NULL;
+  StmtNode *stmt = NULL;
 
   // search in current func's alias list
   // depth = 0
@@ -1310,7 +1310,7 @@ base_node_t *JSCompiler::CompileOpSetAliasedVar(JSAtom *atom, base_node_t *val) 
 
   int idx = ProcessAliasedVar(atom, env_ptr, env_node, depth);
 
-  base_node_t *bn = NULL;
+  StmtNode *bn = NULL;
   if (idx) {
     bn = jsbuilder_->CreateStmtIassign(env_ptr, idx, env_node, val);
   } else {
@@ -1356,10 +1356,10 @@ void JSCompiler::CloseFuncBookKeeping() {
   }
 }
 
-stmt_node_t *JSCompiler::CompileOpIfJump(JSOp op, base_node_t *cond, jsbytecode *pcend) 
+StmtNode *JSCompiler::CompileOpIfJump(JSOp op, base_node_t *cond, jsbytecode *pcend) 
 {
   labidx_t labidx = GetorCreateLabelofPc(pcend);
-  stmt_node_t* gotonode =  jsbuilder_->CreateStmtCondGoto(cond, (op == JSOP_IFEQ || op==JSOP_AND)?OP_brfalse:OP_brtrue, labidx);
+  StmtNode* gotonode =  jsbuilder_->CreateStmtCondGoto(cond, (op == JSOP_IFEQ || op==JSOP_AND)?OP_brfalse:OP_brtrue, labidx);
   jsbuilder_->AddStmtInCurrentFunctionBody(gotonode);
   return gotonode;
 }
@@ -1497,7 +1497,7 @@ GotoNode *JSCompiler::CompileOpGoto(jsbytecode *pc, jsbytecode *jumptopc, MIRSym
   EHstruct *ehjump = eh_->GetEHstruct(jumptopc);
   if (eh && eh != ehjump) {
     DEBUGPRINTs("creating cleanuptry");
-    BaseNode* cleanuptrynode = MP_NEW(module_->CurFuncCodeMp(), StmtNode(OP_cleanuptry));
+    StmtNode* cleanuptrynode = MP_NEW(module_->CurFuncCodeMp(), StmtNode(OP_cleanuptry));
     jsbuilder_->AddStmtInCurrentFunctionBody(cleanuptrynode);
   }
 
@@ -1559,7 +1559,7 @@ BaseNode *JSCompiler::CompileOpLoopHead(jsbytecode *pc) {
     mirlabel = jsbuilder_->GetorCreateMIRLabel(temp_name);
     label_map_[pc] = mirlabel;
   }
-  BaseNode *stmt = jsbuilder_->CreateStmtLabel(label_map_[pc]);
+  StmtNode *stmt = jsbuilder_->CreateStmtLabel(label_map_[pc]);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return stmt;
 }
@@ -1690,7 +1690,7 @@ void JSCompiler::EnvInit(JSMIRFunction *func) {
     return;
 
   base_node_t *bn;
-  stmt_node_t *stmt;
+  StmtNode *stmt;
 
   MIRType * env_type = func->envtype;
   MIRType * env_ptr = func->envptr;
@@ -1714,7 +1714,7 @@ void JSCompiler::EnvInit(JSMIRFunction *func) {
     MIRSymbol *env_arg = jsbuilder_->GetFunctionArgument(func, ENV_POSITION_IN_ARGS);
     bn = jsbuilder_->CreateExprDread(env_ptr, env_arg);
     idx = jsbuilder_->GetStructFieldIdFromFieldName(env_type, "parentenv");
-    stmt_node_t *stmt = jsbuilder_->CreateStmtIassign(env_ptr, idx, env, bn);
+    StmtNode *stmt = jsbuilder_->CreateStmtIassign(env_ptr, idx, env, bn);
     jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   }
 
@@ -1853,7 +1853,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         lastLinePrinted = lineNo;
       }
       //Create Comments node, line no text and src text
-      BaseNode *cmntstmt = jsbuilder_->CreateStmtComment(strcat(linenoText, srcText));
+      StmtNode *cmntstmt = jsbuilder_->CreateStmtComment(strcat(linenoText, srcText));
       jsbuilder_->AddStmtInCurrentFunctionBody(cmntstmt);
       lastLineNo = lineNo;
     }
@@ -1864,9 +1864,9 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
     if (eh) {
       labidx_t labidx;
       labidx = eh->label;
-      BaseNode *stmt = jsbuilder_->CreateStmtLabel(labidx);
+      StmtNode *stmt = jsbuilder_->CreateStmtLabel(labidx);
       jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
-      BaseNode* endtrynode = MP_NEW(module_->CurFuncCodeMp(), StmtNode(OP_endtry));
+      StmtNode* endtrynode = MP_NEW(module_->CurFuncCodeMp(), StmtNode(OP_endtry));
       jsbuilder_->AddStmtInCurrentFunctionBody(endtrynode);
     }
 
@@ -1894,7 +1894,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         }
         label_tempvar_map_[labidx] = 0;  // re-initialize to 0
       }
-      BaseNode *stmt = jsbuilder_->CreateStmtLabel(labidx);
+      StmtNode *stmt = jsbuilder_->CreateStmtLabel(labidx);
       jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
 
       // jump to finally for catch = pc
@@ -2338,7 +2338,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         base_node_t *index = Pop();
         base_node_t *obj = CheckConvertToJSValueType(Pop());
         index = CheckConvertToJSValueType(index);
-        stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_SETPROP, obj,
+        StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_SETPROP, obj,
                                                               index,
                                                               CheckConvertToJSValueType(val), NULL);
         jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
@@ -2671,7 +2671,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         base_node_t *val = Pop();
         base_node_t *obj = CheckConvertToJSValueType(Pop());
         base_node_t *name = CompileOpString(str);
-        stmt_node_t *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_INITPROP_BY_NAME, obj,
+        StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_INITPROP_BY_NAME, obj,
                                                                  name,
                                                                  CheckConvertToJSValueType(val), NULL);
         jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
@@ -2722,7 +2722,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         break;
       case JSOP_THROW: /*112, 1, 1, 0*/  { 
         base_node_t *rval = Pop();
-        stmt_node_t *throwstmt = jsbuilder_->CreateStmtThrow(CheckConvertToJSValueType(rval));
+        StmtNode *throwstmt = jsbuilder_->CreateStmtThrow(CheckConvertToJSValueType(rval));
         jsbuilder_->AddStmtInCurrentFunctionBody(throwstmt);
         break;
         }
