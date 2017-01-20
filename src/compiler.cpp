@@ -330,7 +330,7 @@ int32_t JSCompiler::GetBuiltinMethod(uint32_t argc, bool *need_this) {
   assert (drn);
   // MIRSymbol *var = module_->symtab->GetSymbolFromStidx(drn->stidx.Idx());
   MIRSymbol *var = module_->GetStFromCurFuncOrMd(drn->stidx);
-  const MapleString &name = var->GetName();
+  std::string name = var->GetName();
   DEBUGPRINT3(name);
 
 #define DEFBUILTINMETHOD(name, intrn_code, need_this)  \
@@ -346,7 +346,7 @@ int32_t JSCompiler::GetBuiltinMethod(uint32_t argc, bool *need_this) {
 #undef DEFBUILTINMETHOD
   for (uint32_t i = 0; i < sizeof (map) / sizeof (builtin_method_map); i++) {
     if (!map[i].name) break;
-    if (!strcmp(name, map[i].name)) {
+    if (!strcmp(name.c_str(), map[i].name)) {
       *need_this = map[i].need_this;
       return (int32_t) map[i].intrn_code;
     }
@@ -379,7 +379,7 @@ base_node_t *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool nee
     MIRSymbol *arguments = NULL;
     arguments = jsbuilder_->GetCurrentFunction()->symtab->CreateSymbol(SCOPE_LOCAL);
     const char *temp_name = Util::GetSequentialName("js_arguments_", temp_var_no_, mp_);
-    MapleString argname(temp_name, mp_);
+    std::string argname(temp_name);
     arguments->SetNameStridx(globaltable.GetOrCreateGstridxFromName(argname));
     jsbuilder_->GetCurrentFunction()->symtab->AddToStringSymbolMap(arguments);
     arguments->sclass = SC_auto;
@@ -2539,7 +2539,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         MIRSymbol *arguments = NULL;
         arguments = jsbuilder_->GetCurrentFunction()->symtab->CreateSymbol();
         const char *temp_name = Util::GetSequentialName("js_arguments_", temp_var_no_, mp_);
-        MapleString argname(temp_name, mp_);
+        std::string argname(temp_name, mp_);
         arguments->SetNameStridx(module_->stringtable.GetOrCreateStridxFromName(argname));
         jsbuilder_->GetCurrentFunction()->symtab->AddToStringSymbolMap(arguments);
         arguments->sclass = SC_auto;
