@@ -150,7 +150,7 @@ int main(int argc, const char *argv[]) {
   if (! isplugin)
     themodule.entryfuncname_ = "main";
   else {  // entryfunc_ is the last function generated
-    themodule.entryfuncname_ = globaltable.symtab->GetSymbolFromStidx(themodule._function_list.back()->stidx.Idx())->GetName();
+    themodule.entryfuncname_ = globaltable.GetSymbolFromStidx(themodule._function_list.back()->stidx.Idx())->GetName();
   }
   // set numfuncs_ in MIRModule
   themodule.num_funcs = themodule._function_list.size();

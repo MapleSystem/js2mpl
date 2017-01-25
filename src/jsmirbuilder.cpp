@@ -34,9 +34,9 @@ void JSMIRBuilder::InitBuiltinMethod() {
 
   for (uint32_t i = 0; i < sizeof (name) / sizeof (const char *); i++) {
     if (!name[i]) return;
-    MIRSymbol *st = globaltable.symtab->CreateSymbol(SCOPE_GLOBAL);
+    MIRSymbol *st = globaltable.CreateSymbol(SCOPE_GLOBAL);
     st->SetNameStridx(GetOrCreateStringIndex(name[i]));
-    if (!globaltable.symtab->AddToStringSymbolMap(st))
+    if (!globaltable.AddToStringSymbolMap(st))
       return;
     st->sclass = SC_text;
     st->skind = ST_func;
@@ -78,15 +78,15 @@ JSMIRFunction *JSMIRBuilder::GetOrCreateFunction(const char *name,
   }
 
   MapleString fname(name, module_->mp_);
-  MIRSymbol *funcst = globaltable.symtab->CreateSymbol(SCOPE_GLOBAL);
+  MIRSymbol *funcst = globaltable.CreateSymbol(SCOPE_GLOBAL);
   gstridx_t stridx = GetOrCreateStringIndex(fname);
-  stidx_t stidx = globaltable.symtab->GetStidxFromStridx(stridx);
+  stidx_t stidx = globaltable.GetStidxFromStridx(stridx);
   DEBUGPRINT3(fname);
   DEBUGPRINT3(stridx.idx);
   DEBUGPRINT3(stidx.Idx());
 
   funcst->SetNameStridx(stridx);
-  if (!globaltable.symtab->AddToStringSymbolMap(funcst))
+  if (!globaltable.AddToStringSymbolMap(funcst))
     return NULL;
   funcst->sclass = SC_text;
   funcst->skind = ST_func;

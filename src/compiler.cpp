@@ -1196,7 +1196,7 @@ int JSCompiler::ProcessAliasedVar(JSAtom *atom, MIRType *&env_ptr, base_node_t *
   DEBUGPRINT3(func);
   char *name = Util::GetString(atom, mp_, jscontext_);
   JS_ASSERT(!name && "empty name");
-  MIRSymbol *func_st = globaltable.symtab->GetSymbolFromStidx(func->stidx.Idx());
+  MIRSymbol *func_st = globaltable.GetSymbolFromStidx(func->stidx.Idx());
   const char *funcname = func_st->GetName().c_str();
   ScopeNode *sn = scope_->GetOrCreateSN((char *)funcname);
   ScopeNode *psn = sn->GetParent();
@@ -1337,7 +1337,7 @@ void JSCompiler::CloseFuncBookKeeping() {
     JSMIRFunction *lambda = scriptstack_.top().second;
     jsbuilder_->SetCurrentFunction(lambda);
     DEBUGPRINT0;
-    MIRSymbol *lambda_st = globaltable.symtab->GetSymbolFromStidx(lambda->stidx.Idx());
+    MIRSymbol *lambda_st = globaltable.GetSymbolFromStidx(lambda->stidx.Idx());
     DEBUGPRINTfunc((lambda_st->GetName().c_str()));
     funcstack_.push(lambda);
     scriptstack_.pop();
