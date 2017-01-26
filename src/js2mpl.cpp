@@ -140,8 +140,7 @@ int main(int argc, const char *argv[]) {
 
   JSMIRContext jsmirctx(isplugin, name, with_main, jsop_only, simp_call);
 
-  maplemp::MemPoolCtrler Mpc;
-  MIRModule themodule(Mpc, fn);
+  MIRModule themodule(fn);
   if (!mapleir::js2mpldriver(fn, &themodule, jsmirctx)) {
     exit(1);
   }
