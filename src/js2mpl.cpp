@@ -141,6 +141,7 @@ int main(int argc, const char *argv[]) {
   JSMIRContext jsmirctx(isplugin, name, with_main, jsop_only, simp_call);
 
   MIRModule themodule(fn);
+  themodule.srclang_ = mapleir::SrcLangJS;
   if (!mapleir::js2mpldriver(fn, &themodule, jsmirctx)) {
     exit(1);
   }
@@ -158,7 +159,6 @@ int main(int argc, const char *argv[]) {
     themodule.Dump();
 
   themodule.flavor_ = mapleir::FEproduced;
-  themodule.srclang_ = mapleir::SrcLangJS;
   themodule.OutputAsciiMpl("");
   return 0;
 }
