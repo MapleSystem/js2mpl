@@ -116,7 +116,7 @@ foreach $srcdir (@required) {
       if ($opt & 1) {
         system("cp $plugindir/$optmpl_file $plugindir/$mpl_file");
       }
-      $res = system("$pwd/../../mapleall/build/gnu/maplebe/be/js/mplbe $plugindir/$mpl_file >> $plugindir/$log_file");
+      $res = system("$pwd/../../mapleall/build/gnu/maplebe/be/mplbe $plugindir/$mpl_file >> $plugindir/$log_file");
       if ($res > 0) {
         print " ==mplbe===> $file\n";
         $countMMPL ++;
@@ -124,7 +124,7 @@ foreach $srcdir (@required) {
         $flag ++;
         next;
       }
-      $res = system("$pwd/../../mapleall/build/gnu/maplebe/be/js/mplbe-c $plugindir/$mpl_file >> $plugindir/$log_file");
+      $res = system("$pwd/../../mapleall/build/gnu/maplebe/be/mplbe-c $plugindir/$mpl_file >> $plugindir/$log_file");
       if ($res > 0) {
         print " ==mmpl2cmpl===> $file\n";
         $countgenCMPL ++;
@@ -215,7 +215,7 @@ while( ($srcdir = readdir(DIR))){
       if ($opt & 1) {
         system("cp $tempdir/$optmpl_file $tempdir/$mpl_file");
       }
-      $res = system("$pwd/../../mapleall/build/gnu/maplebe/be/js/mplbe $tempdir/$mpl_file >> $tempdir/$log_file");
+      $res = system("$pwd/../../mapleall/build/gnu/maplebe/be/mplbe $tempdir/$mpl_file >> $tempdir/$log_file");
       if ($res > 0) {
         print " ==mplbe===> $file\n";
         $countMMPL ++;
@@ -223,7 +223,7 @@ while( ($srcdir = readdir(DIR))){
         $flag ++;
         next;
       }
-      $res = system("$pwd/../../mapleall/build/gnu/maplebe/be/js/mplbe-c $tempdir/$mpl_file >> $tempdir/$log_file");
+      $res = system("$pwd/../../mapleall/build/gnu/maplebe/be/mplbe-c $tempdir/$mpl_file >> $tempdir/$log_file");
       if ($res > 0) {
         print " ==mplbe-c===> $file\n";
         $countgenCMPL ++;
