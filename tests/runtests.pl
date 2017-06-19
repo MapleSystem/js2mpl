@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 use Cwd;
 my $pwd = getcwd;
+my $REPORT_DIR="$pwd/../../dex2mpl/tests/";
 
 if(!(defined $ARGV[0])) {
   print "------------------------------------------------\n";
@@ -283,16 +284,25 @@ while( ($srcdir = readdir(DIR))){
 print " $count\n";
 closedir(DIR);
 
+chdir $REPORT_DIR;
+
+my $reportFile = 'report.txt';
+open(my $fh, '>>', $reportFile) or die "Could not open file '$reportFile' $!";
+print $fh "$ARGV[0] $ARGV[1] report: \n";
+
 if ((scalar(@failed_mpl_file) + scalar(@failed_mmpl_file) + scalar(@failed_int_file) + scalar(@failed_mplipa_file) + 
      scalar(@failed_mplme_file) +
      scalar(@failed_gencmpl_file) + scalar(@failed_printcmpl_file) + scalar(@failed_jsvm_cmpl_file)) eq 0) {
   print("\n all $count tests passed\n");
   print("======================================================\n");
+  print $fh "all $count tests passed\n";
+  close $fh;
 } else {
   my $countFailed = $countMPL + $countIPA + $countME + $countMMPL + $countINT + $countrunCMPL + $countgenCMPL;
   my $countPassed = $count - $countFailed;
   if(scalar(@successed_file) > 0) {
     print "\n=========================\npassed $countPassed tests:\n\n";
+    print $fh "$countPassed testcases passed\n";
     foreach $successed (@successed_file) {
       print $successed."\n";
     }
@@ -303,6 +313,7 @@ if ((scalar(@failed_mpl_file) + scalar(@failed_mmpl_file) + scalar(@failed_int_f
   print "\n=========================\nfailed $countFailed tests:\n\n";
   if(scalar(@failed_mpl_file) > 0){
     print("=== failed generation of maple IR: $countMPL tests\n");
+    print $fh "$countMPL testcases failed with generation of maple IR\n";
     foreach $failed (@failed_mpl_file) {
       print $failed."\n";
     }
@@ -310,6 +321,7 @@ if ((scalar(@failed_mpl_file) + scalar(@failed_mmpl_file) + scalar(@failed_int_f
   }
   if(scalar(@failed_mplipa_file) > 0){
     print("=== failed maple IPA: $countIPA tests\n");
+    print $fh "$countIPA testcases failed with maple IPA\n";
     foreach $failed (@failed_mplipa_file) {
       print $failed."\n";
     }
@@ -317,6 +329,7 @@ if ((scalar(@failed_mpl_file) + scalar(@failed_mmpl_file) + scalar(@failed_int_f
   }
   if(scalar(@failed_mplme_file) > 0){
     print("=== failed maple ME: $countME tests\n");
+    print $fh "$countME testcases failed with maple ME\n";
     foreach $failed (@failed_mplme_file) {
       print $failed."\n";
     }
@@ -324,6 +337,7 @@ if ((scalar(@failed_mpl_file) + scalar(@failed_mmpl_file) + scalar(@failed_int_f
   }
   if(scalar(@failed_mmpl_file) > 0){
     print("=== failed generation of machine maple IR: $countMMPL tests\n");
+    print $fh "$countMMPL testcases failed with generation of machine maple IR\n";
     foreach $failed (@failed_mmpl_file) {
       print $failed."\n";
     }
@@ -331,28 +345,33 @@ if ((scalar(@failed_mpl_file) + scalar(@failed_mmpl_file) + scalar(@failed_int_f
   }
   if(scalar(@failed_int_file) > 0){
     print("=== failed interpretation: $countINT tests\n");
+    print $fh "$countINT testcases failed with interpretation\n";
     foreach $failed (@failed_int_file) {
       print $failed."\n";
     }
   }
   if(scalar(@failed_gencmpl_file) > 0) {
     print("=== failed gen-compact maple IR: $countgenCMPL tests\n");
+    print $fh "$countgenCMPL testcases failed with gen-compact maple IR\n";
     foreach $failed (@failed_gencmpl_file) {
       print $failed."\n";
     }
   }
   if(scalar(@failed_printcmpl_file) > 0) {
     print("=== failed print-compact maple IR: $countprintCMPL tests\n");
+    print $fh "$countprintCMPL testcases failed with print-compact maple IR\n";
     foreach $failed (@failed_printcmpl_file) {
       print $failed."\n";
     }
   }
   if(scalar(@failed_jsvm_cmpl_file) > 0) {
     print("=== failed interprete-compact maple IR: $countrunCMPL tests\n");
+    print $fh "$countrunCMPL testcases failed with interprete-compact maple IR\n";
     foreach $failed (@failed_jsvm_cmpl_file) {
       print $failed."\n";
     }
     print "\n";
   }
   print "=========================\n";
+  close $fh;
 }
