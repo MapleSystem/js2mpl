@@ -82,7 +82,7 @@ MIRType *JSClosure::GetOrCreateEnvType(JSMIRFunction *func) {
   DEBUGPRINT2(env_name);
   DEBUGPRINT2(env_type);
   MIRStructType *stf = (MIRStructType *)(env_type);
-  DEBUGPRINT2(stf->GetElemType(&globaltable, 0));
+  DEBUGPRINT2(stf->GetElemType(0));
   gstridx_t idxf = globaltable.GetSymbolFromStidx(func->stidx.Idx())->GetNameStridx();
   DEBUGPRINT2(idxf.idx);
   DEBUGPRINT2(func->stidx.Fullidx());
