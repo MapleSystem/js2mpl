@@ -34,7 +34,7 @@ todo:
 	$(MAKE) -C tests todo
 
 clean: 
-	rm -rf build
+	rm -rf build build_cmake
 
 rebuild: clean all
 
