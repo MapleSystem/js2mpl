@@ -8,12 +8,13 @@ BUILD_CMAKE_DIR=build_cmake
 
 function do_build()
 {
-  BUILD_DIR=$1
-  CMAKE_OPTIONS=$2
+  local BUILD_DIR=$1
+  local CMAKE_OPTIONS=$2
+  local nthrs=$3
   mkdir -p $BUILD_DIR
   cd $BUILD_DIR
   cmake $JS2MPLROOT $CMAKE_OPTIONS
-  make -j 
+  make -j $nthrs
   cd $JS2MPLROOT
 }
 
@@ -34,6 +35,12 @@ function do_install()
   /bin/cp $srcdir/bin/js2mpl ${tgtdir}
 }
 
+nthrs=
+if [ "x$1" = "x-j" ];
+then
+  nthrs=$2
+fi
+
 gnu_targets="32"
 
 GNU_BUILD=$BUILD_CMAKE_DIR/gnu/build
@@ -47,7 +54,7 @@ do
   echo "Build mozjs"
   (cd ../mozjs; make -j > /dev/null )
   echo "Build js2mpl ${arch}"
-  do_build $builddir   "-DDEX=0 -DHOST_ARCH=${arch}"
+  do_build $builddir   "-DDEX=0 -DHOST_ARCH=${arch}" $nthrs
   echo "Install js2mpl ${arch}"
   do_install gnu $arch $builddir
 done
