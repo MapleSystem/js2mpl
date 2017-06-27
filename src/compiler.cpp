@@ -1753,10 +1753,10 @@ void JSCompiler::EnvInit(JSMIRFunction *func) {
       std::vector<char *>::iterator IN;
       for (IN = (*I).second.begin(); IN != (*I).second.end(); IN++, i++) {
         if (i) {
-          offset = jsbuilder_->CreateExprBinary(OP_mul, jsbuilder_->GetVoidPtr(),
+          offset = jsbuilder_->CreateExprBinary(OP_mul, jsbuilder_->GetOrCreateVoidPtr(),
                                                 jsbuilder_->GetConstInt(i), size);
           addr = jsbuilder_->CreateExprBinary(OP_add,
-                                              jsbuilder_->GetVoidPtr(),
+                                              jsbuilder_->GetOrCreateVoidPtr(),
                                               base,
                                               offset);
         }
