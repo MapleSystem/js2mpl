@@ -240,7 +240,7 @@ while( ($srcdir = readdir(DIR))){
         $flag ++;
         next;
       }
-      $res = system("cd $tempdir; $pwd/timeout.sh -t 1 -i 1 -d 0 $pwd/../../mapleall/build/gnu/maplevm/js/jsvm-cmpl/jsvm-cmpl $cmpl_file >> $tempdir/$log_file");
+      $res = system("cd $tempdir; $pwd/timeout.sh -t 3 -i 1 -d 0 $pwd/../../mapleall/build/gnu/maplevm/js/jsvm-cmpl/jsvm-cmpl $cmpl_file >> $tempdir/$log_file");
       if ($res > 0) {
         print " ==jsvm-cmpl===> $file\n";
         $countrunCMPL ++;
