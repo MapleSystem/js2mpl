@@ -6,6 +6,8 @@ MAPLEROOT=$JS2MPLROOT/../mapleall
 
 BUILD_CMAKE_DIR=build_cmake
 
+NINJA=`which ninja`
+
 function do_build()
 {
   local BUILD_DIR=$1
@@ -13,8 +15,14 @@ function do_build()
   local nthrs=$3
   mkdir -p $BUILD_DIR
   cd $BUILD_DIR
-  cmake $JS2MPLROOT $CMAKE_OPTIONS
-  make -j $nthrs
+  if [ "x$NINJA" = "x" ];
+  then
+    cmake $JS2MPLROOT $CMAKE_OPTIONS
+    make -j $nthrs
+  else
+    cmake -GNinja $JS2MPLROOT $CMAKE_OPTIONS
+    $NINJA
+  fi
   cd $JS2MPLROOT
 }
 
@@ -46,14 +54,18 @@ gnu_targets="32"
 GNU_BUILD=$BUILD_CMAKE_DIR/gnu/build
 for arch in $gnu_targets;
 do
-  builddir=$GNU_BUILD
+  builddir=$GNU_BUILD ;
   if [ $arch = 64 ];
   then
     builddir="${builddir}${arch}"
-  fi
-  echo "Build mozjs"
+  fi ;
+  echo "Build mozjs" ;
+  if [ ! -e "../mozjs/mozjs-build/Makefile" ];
+  then
+    (cd ../mozjs; make config > /dev/null )
+  fi ;
   (cd ../mozjs; make -j $nthrs > /dev/null )
-  echo "Build js2mpl ${arch}"
+  echo "Build js2mpl ${arch}" ;
   do_build $builddir   "-DDEX=0 -DHOST_ARCH=${arch}" $nthrs
   echo "Install js2mpl ${arch}"
   do_install gnu $arch $builddir
