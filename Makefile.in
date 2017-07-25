@@ -21,10 +21,12 @@ endif
 DYNAMICFLAG = -DDYNAMICLANG -DMIR_FEATURE_FULL=1 -m32
 
 # Compile time flags
+DEBUG = 1
 ifeq ($(DEBUG),1)
-  CXXFLAGS = -O0 -g3 -Wall -DDEBUG  $(DYNAMICFLAG)
+  CXXFLAGS = -O0 -g3 -Wall $(DYNAMICFLAG)
+  #CXXFLAGS = -O0 -g3 -Wall -DDEBUG  $(DYNAMICFLAG)
 else
-  CXXFLAGS = -O0 -g3 -Wall  $(DYNAMICFLAG)
+  CXXFLAGS = -O3 -g3 -Wall  $(DYNAMICFLAG)
 endif
 
 # Library paths in addition to /usr/lib
