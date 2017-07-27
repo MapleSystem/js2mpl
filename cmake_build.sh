@@ -43,7 +43,7 @@ function do_install()
   /bin/cp $srcdir/bin/js2mpl ${tgtdir}
 }
 
-nthrs=
+nthrs=4
 if [ "x$1" = "x-j" ];
 then
   nthrs=$2
@@ -64,7 +64,7 @@ do
   then
     (cd ../mozjs; make config > /dev/null )
   fi ;
-  make -C ../mozjs -j > /dev/null ;
+  (cd ../mozjs; make -j $nthrs > /dev/null )
   echo "Build js2mpl ${arch}" ;
   do_build $builddir   "-DDEX=0 -DHOST_ARCH=${arch}" $nthrs
   echo "Install js2mpl ${arch}"
