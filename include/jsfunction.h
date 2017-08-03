@@ -1,7 +1,7 @@
 /// Copyright [year] <Copyright Owner>
 #ifndef JS2MPL_INCLUDE_JSFUNCTION_H_
 #define JS2MPL_INCLUDE_JSFUNCTION_H_
-#include "mapleir/include/function.h"
+#include "mapleir/include/mirfunction.h"
 namespace mapleir {
 
 class ScopeNode;
