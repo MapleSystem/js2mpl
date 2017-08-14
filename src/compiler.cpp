@@ -738,7 +738,7 @@ base_node_t *JSCompiler::CompileOpString(JSString *str) {
   MIRType *type = jsbuilder_->GetOrCreateArrayType(unit_type, 1, &(padding_length));
   const char *temp_name = Util::GetSequentialName("const_chars_", temp_var_no_, mp_);
   MIRSymbol *var = jsbuilder_->GetOrCreateGlobalDecl(temp_name, type);
-  MIRAggConst *init =  MP_NEW(module_->mp_, MIRAggConst(module_, type));
+  MIRAggConst *init =  module_->mp_->New<MIRAggConst>(module_, type);
 
   uint8_t cl[4];
   cl[0] = string_class;
@@ -748,31 +748,31 @@ base_node_t *JSCompiler::CompileOpString(JSString *str) {
 
   if ((string_class & JSSTRING_UNICODE) == 0) {
     uint64_t val = (uint64_t)(cl[0]);
-    MIRIntConst *int_const = MP_NEW(mp_, MIRIntConst(val, unit_type));
+    MIRIntConst *int_const = mp_->New<MIRIntConst>(val, unit_type);
     init->const_vec.push_back(int_const);
     val = (uint64_t)(cl[1]);
-    int_const = MP_NEW(mp_, MIRIntConst(val, unit_type));
+    int_const = mp_->New<MIRIntConst>(val, unit_type);
     init->const_vec.push_back(int_const);
 
     val = (uint64_t)(cl[2]);
-    int_const = MP_NEW(mp_, MIRIntConst(val, unit_type));
+    int_const = mp_->New<MIRIntConst>(val, unit_type);
     init->const_vec.push_back(int_const);
     val = (uint64_t)(cl[3]);
-    int_const = MP_NEW(mp_, MIRIntConst(val, unit_type));
+    int_const = mp_->New<MIRIntConst>(val, unit_type);
     init->const_vec.push_back(int_const);
   } else {
     uint16_t *tmp = (uint16_t *)cl;
     uint64_t val = (uint64_t)(cl[0]);
-    MIRIntConst *int_const = MP_NEW(mp_, MIRIntConst(val, unit_type));
+    MIRIntConst *int_const = mp_->New<MIRIntConst>(val, unit_type);
     init->const_vec.push_back(int_const);
     val = (uint64_t)(tmp[1]);
-    int_const = MP_NEW(mp_, MIRIntConst(val, unit_type));
+    int_const = mp_->New<MIRIntConst>(val, unit_type);
     init->const_vec.push_back(int_const);
   }
 
   for (uint32_t i = 0; i < length; i++) {
     uint64_t val = chars[i];
-    MIRIntConst *int_const = MP_NEW(mp_, MIRIntConst(val, unit_type));
+    MIRIntConst *int_const = mp_->New<MIRIntConst>(val, unit_type);
     init->const_vec.push_back(int_const);
   }
   var->value_.const_ = init;
@@ -1497,7 +1497,7 @@ GotoNode *JSCompiler::CompileOpGoto(jsbytecode *pc, jsbytecode *jumptopc, MIRSym
   EHstruct *ehjump = eh_->GetEHstruct(jumptopc);
   if (eh && eh != ehjump) {
     DEBUGPRINTs("creating cleanuptry");
-    StmtNode* cleanuptrynode = MP_NEW(module_->CurFuncCodeMp(), StmtNode(OP_cleanuptry));
+    StmtNode* cleanuptrynode = module_->CurFuncCodeMp()->New<StmtNode>(OP_cleanuptry);
     jsbuilder_->AddStmtInCurrentFunctionBody(cleanuptrynode);
   }
 
@@ -1866,7 +1866,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       labidx = eh->label;
       StmtNode *stmt = jsbuilder_->CreateStmtLabel(labidx);
       jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
-      StmtNode* endtrynode = MP_NEW(module_->CurFuncCodeMp(), StmtNode(OP_endtry));
+      StmtNode* endtrynode = module_->CurFuncCodeMp()->New<StmtNode>(OP_endtry);
       jsbuilder_->AddStmtInCurrentFunctionBody(endtrynode);
     }
 
@@ -1900,7 +1900,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       // jump to finally for catch = pc
       eh = eh_->GetEHstruct(0, pc, 0, 0);
       if (eh) {
-        StmtNode* catchnode = MP_NEW(module_->CurFuncCodeMp(), StmtNode(OP_catch));
+        StmtNode* catchnode = module_->CurFuncCodeMp()->New<StmtNode>(OP_catch);
         jsbuilder_->AddStmtInCurrentFunctionBody(catchnode);
       }
 
@@ -2697,7 +2697,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_RETSUB: /*117, 1, 2, 0*/  { 
         base_node_t *lval = Pop();
         base_node_t *rval = Pop();
-        StmtNode* retsub = MP_NEW(module_->CurFuncCodeMp(), StmtNode(OP_retsub));
+        StmtNode* retsub = module_->CurFuncCodeMp()->New<StmtNode>(OP_retsub);
         jsbuilder_->AddStmtInCurrentFunctionBody(retsub);
         break;
         }
@@ -2707,7 +2707,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         break; 
         }
       case JSOP_FINALLY: /*135, 1, 0, 2*/  {
-        StmtNode* finally = MP_NEW(module_->CurFuncCodeMp(), StmtNode(OP_finally));
+        StmtNode* finally = module_->CurFuncCodeMp()->New<StmtNode>(OP_finally);
         jsbuilder_->AddStmtInCurrentFunctionBody(finally);
         // TODO: need to Push two entries onto stack.  false, (next bytecode's PC)
         base_node_t *bval = CompileOpConstValue(JSTYPE_BOOLEAN, 0);

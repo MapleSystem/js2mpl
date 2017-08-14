@@ -261,22 +261,22 @@ bool js2mpldriver(const char *fn, mapleir::MIRModule *module, JSMIRContext &jsmi
     mapleir::JSMIRBuilder jsbuilder(module, jsmirctx);
     jsbuilder.Init();
 
-    mapleir::OperandStack *opstack = MP_NEW(module->mp_, mapleir::OperandStack(50));
+    mapleir::OperandStack *opstack = module->mp_->New<mapleir::OperandStack>(50);
 
     ///////////////////////////////////////////////
     // Pass To Set Up Scope Chain
     ///////////////////////////////////////////////
     DEBUGPRINTs("\n\n =====> Pass To Set Up Scope Chain <====\n");
-    mapleir::Scope *scope = MP_NEW(module->mp_, mapleir::Scope(cx, script, module, &jsbuilder));
-    scope->Init();
-    scope->Build(script);
+    mapleir::Scope scope(cx, script, module, &jsbuilder);
+    scope.Init();
+    scope.Build(script);
 
     if (jsbuilder.JSOPOnly())
       goto finish;
 
     if (js2mplDebug>2) {
       cout << "========== After Scope Chain  ====" << endl;
-      scope->DumpScopeChain();
+      scope.DumpScopeChain();
       cout << "==================================" << endl;
     }
 
@@ -284,21 +284,20 @@ bool js2mpldriver(const char *fn, mapleir::MIRModule *module, JSMIRContext &jsmi
     // Pass To Set Up Exception Handling
     ///////////////////////////////////////////////
     DEBUGPRINTs("\n\n =====> Pass To Set Up Exception Handling <====\n");
-    mapleir::EH *eh = MP_NEW(module->mp_, mapleir::EH(cx, script, module, &jsbuilder, scope));
-    eh->Build(script);
+    mapleir::EH eh(cx, script, module, &jsbuilder, &scope);
+    eh.Build(script);
 
     ///////////////////////////////////////////////
     // Pass To Set Up Closure Environment
     ///////////////////////////////////////////////
     DEBUGPRINTs("\n\n =====> Pass To Set Up Closure Env <====\n");
-    mapleir::JSClosure *closure = MP_NEW(module->mp_,
-        mapleir::JSClosure(fn, cx, script, module, scope, &jsbuilder, opstack));
-    closure->Init();
-    closure->Build(script);
+    mapleir::JSClosure closure(fn, cx, script, module, &scope, &jsbuilder, opstack);
+    closure.Init();
+    closure.Build(script);
 
     if (js2mplDebug>2) {
       cout << "==== After Closure Environment ===" << endl;
-      scope->DumpScopeChain();
+      scope.DumpScopeChain();
       cout << "==================================" << endl;
     }
 
@@ -306,15 +305,14 @@ bool js2mpldriver(const char *fn, mapleir::MIRModule *module, JSMIRContext &jsmi
     // Pass To Build MapleIR.
     ///////////////////////////////////////////////
     DEBUGPRINTs("\n\n =====> Pass To Build MapleIR <=========\n");
-    mapleir::JSCompiler *compiler = MP_NEW(module->mp_,
-        mapleir::JSCompiler(fn, cx, script, module, &jsbuilder, scope, eh, closure, opstack));
+    mapleir::JSCompiler compiler(fn, cx, script, module, &jsbuilder, &scope, &eh, &closure, opstack);
 
-    compiler->Init();
+    compiler.Init();
 
     // first pass collect info, including function hirachy and closure setting
-    compiler->CompileScript(script);
+    compiler.CompileScript(script);
 
-    compiler->Finish();
+    compiler.Finish();
 
 #if 0
     // Execute the script any times.

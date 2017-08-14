@@ -99,7 +99,7 @@ ScopeNode *Scope::GetOrCreateSN(char *name) {
   }
 
   // create new one
-  ScopeNode *sn = MP_NEW(mp_, ScopeNode(name));
+  ScopeNode *sn = mp_->New<ScopeNode>(name);
   pair<char *, ScopeNode *> P(name, sn);
   scopeChain.push_back(P);
 

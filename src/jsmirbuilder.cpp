@@ -91,7 +91,7 @@ JSMIRFunction *JSMIRBuilder::GetOrCreateFunction(const char *name,
   funcst->sclass = SC_text;
   funcst->skind = ST_func;
 
-  fn =  MP_NEW(module_->mp_, JSMIRFunction(module_, funcst->GetStIdx()));
+  fn =  module_->mp_->New<JSMIRFunction>(module_, funcst->GetStIdx());
   fn->Init();
   fn->puidx = globaltable.functable.size();
   globaltable.functable.push_back(fn);
@@ -191,7 +191,7 @@ StmtNode *JSMIRBuilder::CreateStmtDassign(MIRSymbol *symbol,
 
 IntrinsiccallNode *JSMIRBuilder::CreateStmtIntrinsicCall1N(
       MIRIntrinsicId idx, base_node_t *arg0, MapleVector<base_node_t *> &args) {
-  IntrinsiccallNode *stmt = MP_NEW(module_->CurFuncCodeMp(), IntrinsiccallNode(module_, OP_intrinsiccall));
+  IntrinsiccallNode *stmt = module_->CurFuncCodeMp()->New<IntrinsiccallNode>(module_, OP_intrinsiccall);
   MapleVector<base_node_t *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
   arguments.push_back(arg0);
   for (int i=0; i<args.size(); i++)
