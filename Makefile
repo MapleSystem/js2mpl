@@ -35,6 +35,7 @@ todo:
 
 clean: 
 	rm -rf build build_cmake
+	rm -rf tests/output
 
 rebuild: clean all
 
