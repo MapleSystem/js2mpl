@@ -16,6 +16,7 @@ namespace mapleir {
 class JSCompiler{
  private:
   const char *filename_;
+  unsigned linenum_;
   JSContext *jscontext_;
   JSScript *jsscript_;
   JSMIRBuilder *jsbuilder_;
@@ -62,6 +63,7 @@ class JSCompiler{
                       JSClosure *closure,
                       OperandStack *opstack):
       filename_(filename),
+      linenum_(0),
       jscontext_(context),
       jsscript_(script),
       module_(module),

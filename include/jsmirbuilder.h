@@ -25,14 +25,14 @@ class JSMIRBuilder : public MIRBuilder {
                                      MIRType *return_type,
                                      ArgVector arguments,
                                      bool isvarg);
-  NaryStmtNode *CreateStmtReturn(base_node_t *rval, bool adj_type);
-  StmtNode *CreateStmtDassign(MIRSymbol *symbol, fldid_t field_id, base_node_t *src);
+  NaryStmtNode *CreateStmtReturn(base_node_t *rval, bool adj_type, unsigned linenum);
+  StmtNode *CreateStmtDassign(MIRSymbol *symbol, fldid_t field_id, base_node_t *src, unsigned linenum);
   IntrinsiccallNode *CreateStmtIntrinsicCall1N( MIRIntrinsicId idx,
                                        base_node_t *arg0,
                                        MapleVector<base_node_t *> &args);
 
   void UpdateFunction(JSMIRFunction *fn, MIRType *return_type, ArgVector arguments);
-  void SaveReturnValue(MIRSymbol *var);
+//void SaveReturnValue(MIRSymbol *var);
   void AddStmtInCurrentFunctionBody(StmtNode *n);
 
   std::vector<std::pair<const char *, JSMIRFunction *>> name_func_vec_;

@@ -129,8 +129,9 @@ void JSMIRBuilder::AddStmtInCurrentFunctionBody(StmtNode *n) {
   DEBUGPRINTnode(n);
 }
 
-NaryStmtNode *JSMIRBuilder::CreateStmtReturn(base_node_t *rval, bool adj_type) {
+NaryStmtNode *JSMIRBuilder::CreateStmtReturn(base_node_t *rval, bool adj_type, unsigned linenum) {
   NaryStmtNode *stmt = MIRBuilder::CreateStmtReturn(rval);
+  stmt->srcpos.SetLinenum(linenum);
   AddStmtInCurrentFunctionBody(stmt);
 
   JSMIRFunction *func = GetCurrentFunction();
@@ -171,20 +172,25 @@ void JSMIRBuilder::UpdateFunction(JSMIRFunction *func,
   }
 }
 
+#if 0
 void JSMIRBuilder::SaveReturnValue(MIRSymbol *var) {
   DEBUGPRINT4("in SaveReturnValue")
 
   base_node_t *bn = CreateExprRegread(globaltable.type_table_[var->GetTyIdx().idx]->GetPrimType(), -SREG_retval0);
   StmtNode *stmt = CreateStmtDassign(var, 0, bn);
+  stmt->srcpos.SetLinenum(lineNo);
   MIRBuilder::AddStmtInCurrentFunctionBody(stmt);
 }
+#endif
 
 StmtNode *JSMIRBuilder::CreateStmtDassign(MIRSymbol *symbol,
                                           fldid_t field_id,
-                                          base_node_t *src) {
+                                          base_node_t *src,
+                                          unsigned linenum) {
   DEBUGPRINT4("in CreateStmtDassign")
 
   StmtNode *stmt = MIRBuilder::CreateStmtDassign(symbol, field_id, src);
+  stmt->srcpos.SetLinenum(linenum);
   AddStmtInCurrentFunctionBody(stmt);
   return stmt;
 }
