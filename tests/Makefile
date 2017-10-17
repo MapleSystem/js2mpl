@@ -143,6 +143,9 @@ plugin: $(REQ)
 checkme:
 	@./runtests.pl regression-tests 1
 
+checkwpo:
+	@./runtests.pl regression-tests 2
+
 checkmeipa:
 	@./runtests.pl regression-tests 1 1
 

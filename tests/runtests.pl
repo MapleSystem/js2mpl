@@ -71,6 +71,7 @@ foreach $srcdir (@required) {
       my $ipampl_file = $file.'.inline.mpl';
 #my $optmpl_file = $file.'.hdse.mpl';
       my $optmpl_file = $file.'.ssapre.mpl';
+      my $wpompl_file = $file.'.wpo.mpl';
       my $mmpl_file = $file.".mmpl";
       my $cmpl_file = $file.".cmpl";
       my $log_file = $file.'.log';
@@ -79,6 +80,12 @@ foreach $srcdir (@required) {
       my $opt = 0;
       if(defined $ARGV[1]) {
         $opt = $ARGV[1];
+      }
+      my $mplmeorwpo = "mplme";
+      my $maplemeorwpo = "mapleme";
+      if ($opt != 1) {
+        $mplmeorwpo = "mplwpo";
+        $maplemeorwpo = "maplewpo";
       }
       my $ipa = 0;
       if(defined $ARGV[2]) {
@@ -106,16 +113,18 @@ foreach $srcdir (@required) {
       if ($ipa != 0) {
         system("cp $plugindir/$ipampl_file $plugindir/$mpl_file");
       }
-      $res = system("$pwd/../../mapleall/build/gnu/mapleme/mplme $plugindir/$mpl_file >> $plugindir/$log_file");
+      $res = system("$pwd/../../mapleall/build/gnu/$maplemeorwpo/$mplmeorwpo -quiet $plugindir/$mpl_file >> $plugindir/$log_file");
       if ($res > 0) {
-        print " ==mplme===> $file\n";
+        print " ==$mplmeorwpo===> $file\n";
         $countME ++;
         push(@failed_mplme_file, $file);
         $flag ++;
         next;
       }
-      if ($opt & 1) {
+      if ($opt == 1) {
         system("cp $plugindir/$optmpl_file $plugindir/$mpl_file");
+      } else {
+        system("cp $plugindir/$wpompl_file $plugindir/$mpl_file");
       }
       $res = system("$pwd/../../mapleall/build/gnu/maplebe/be/mplbe $plugindir/$mpl_file >> $plugindir/$log_file");
       if ($res > 0) {
@@ -170,6 +179,7 @@ while( ($srcdir = readdir(DIR))){
       my $ipampl_file = $file.'.inline.mpl';
 #my $optmpl_file = $file.'.hdse.mpl';
       my $optmpl_file = $file.'.ssapre.mpl';
+      my $wpompl_file = $file.'.wpo.mpl';
       my $mmpl_file = $file.".mmpl";
       my $cmpl_file = $file.".cmpl";
       my $log_file = $file.'.log';
@@ -178,6 +188,12 @@ while( ($srcdir = readdir(DIR))){
       my $opt = 0;
       if(defined $ARGV[1]) {
         $opt = $ARGV[1];
+      }
+      my $mplmeorwpo = "mplme";
+      my $maplemeorwpo = "mapleme";
+      if ($opt != 1) {
+        $mplmeorwpo = "mplwpo";
+        $maplemeorwpo = "maplewpo";
       }
       my $ipa = 0;
       if(defined $ARGV[2]) {
@@ -205,16 +221,18 @@ while( ($srcdir = readdir(DIR))){
       if ($ipa != 0) {
         system("cp $tempdir/$ipampl_file $tempdir/$mpl_file");
       }
-      $res = system("$pwd/../../mapleall/build/gnu/mapleme/mplme $tempdir/$mpl_file >> $tempdir/$log_file");
+      $res = system("$pwd/../../mapleall/build/gnu/$maplemeorwpo/$mplmeorwpo -quiet $tempdir/$mpl_file >> $tempdir/$log_file");
       if ($res > 0) {
-        print " ==mplme===> $file\n";
+        print " ==$mplmeorwpo===> $file\n";
         $countME ++;
         push(@failed_mplme_file, $file);
         $flag ++;
         next;
       }
-      if ($opt & 1) {
+      if ($opt == 1) {
         system("cp $tempdir/$optmpl_file $tempdir/$mpl_file");
+      } else {
+        system("cp $tempdir/$wpompl_file $tempdir/$mpl_file");
       }
       $res = system("$pwd/../../mapleall/build/gnu/maplebe/be/mplbe $tempdir/$mpl_file >> $tempdir/$log_file");
       if ($res > 0) {
