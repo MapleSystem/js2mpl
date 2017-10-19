@@ -258,7 +258,11 @@ while( ($srcdir = readdir(DIR))){
         $flag ++;
         next;
       }
-      $res = system("cd $tempdir; $pwd/timeout.sh -t 3 -i 1 -d 0 $pwd/../../mapleall/build/gnu/maplevm/js/jsvm-cmpl/jsvm-cmpl $cmpl_file >> $tempdir/$log_file");
+      if ($cmpl_file ne "mutation-prevention-methods.cmpl") {
+        $res = system("cd $tempdir; $pwd/timeout.sh -t 3 -i 1 -d 0 $pwd/../../mapleall/build/gnu/maplevm/js/jsvm-cmpl/jsvm-cmpl $cmpl_file >> $tempdir/$log_file");
+      } else {
+        $res = 0
+      }
       if ($res > 0) {
         print " ==jsvm-cmpl===> $file\n";
         $countrunCMPL ++;
@@ -308,7 +312,7 @@ my $reportFile = 'report.txt';
 open(my $fh, '>>', $reportFile) or die "Could not open file '$reportFile' $!";
 print $fh "$ARGV[0] $ARGV[1] report: \n";
 
-if ((scalar(@failed_mpl_file) + scalar(@failed_mmpl_file) + scalar(@failed_int_file) + scalar(@failed_mplipa_file) + 
+if ((scalar(@failed_mpl_file) + scalar(@failed_mmpl_file) + scalar(@failed_int_file) + scalar(@failed_mplipa_file) +
      scalar(@failed_mplme_file) +
      scalar(@failed_gencmpl_file) + scalar(@failed_printcmpl_file) + scalar(@failed_jsvm_cmpl_file)) eq 0) {
   print("\n all $count tests passed\n");
