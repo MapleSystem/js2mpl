@@ -90,7 +90,7 @@ SET(MOZJS_SOURCE_DIR ${MOZJS_ROOT}/mozjs-31.2.0)
 SET(MOZJS_BUILD_DIR ${MOZJS_ROOT}/mozjs-build)
 SET(MOZJS_INSTALL_DIR ${MOZJS_BUILD_DIR}/dist)
 
-SET(STATIC_LIBMAPLEIR ${CMAKE_SOURCE_DIR}/../mapleall/build/gnu/mapleir/libmpl.a) 
-SET(STATIC_LIBMEMPOOL ${CMAKE_SOURCE_DIR}/../mapleall/build/gnu/Mempool/libmempool.a)
+SET(STATIC_LIBMAPLEIR ${CMAKE_BINARY_DIR}/../mpl/lib/libmplir.a)
+SET(STATIC_LIBMEMPOOL ${CMAKE_BINARY_DIR}/../mpl/lib/libmempool.a)
 
 add_subdirectory(src)
