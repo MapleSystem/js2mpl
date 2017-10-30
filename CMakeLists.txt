@@ -5,7 +5,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 # Select flags.
-set(CMAKE_CXX_FLAGS " ${CMAKE_CXX_FLAGS} -std=c++11 ")
+set(CMAKE_CXX_FLAGS " ${CMAKE_CXX_FLAGS} -std=c++11 -w")
 
 if( ${uppercase_CMAKE_BUILD_TYPE} STREQUAL "DEBUG" )
   add_definitions(-DMIR_DEBUG=1)
