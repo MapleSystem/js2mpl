@@ -1,5 +1,5 @@
 include_directories(
-  ${CMAKE_SOURCE_DIR}/../mapleall
+  ${MAPLE_ROOT}
   ${MOZJS_INSTALL_DIR}/include
   ${MOZJS_INSTALL_DIR}/system_wrappers
   ${MOZJS_SOURCE_DIR}
@@ -37,8 +37,8 @@ SET(TEMP "${TEMP}-include ${MOZJS_SOURCE_DIR}/config/gcc_hidden.h -include ${MOZ
 set_target_properties(js2mpl PROPERTIES COMPILE_FLAGS ${TEMP} )
 
 target_link_libraries(js2mpl
-  general ${STATIC_LIBMEMPOOL}
-  general ${STATIC_LIBMAPLEIR}
+  libmplir
+  libmempool
   general js_static
   general z
   general pthread
