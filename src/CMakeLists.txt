@@ -38,6 +38,7 @@ set_target_properties(js2mpl PROPERTIES COMPILE_FLAGS ${TEMP} )
 
 target_link_libraries(js2mpl
   libmplir
+  libmplutil
   libmempool
   general js_static
   general z
