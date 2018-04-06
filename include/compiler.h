@@ -100,7 +100,7 @@ class JSCompiler{
            !closure_->IsFuncModified(name);
   }
 
-  char *GetFuncName(char *objname) {
+  char *GetFuncName(const char *objname) {
     std::vector<std::pair<char*, char*>>::iterator I;
     for (I = objFuncMap.begin(); I != objFuncMap.end(); I++) {
       if (!strcmp(objname, (*I).first)) {

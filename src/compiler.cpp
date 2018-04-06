@@ -58,11 +58,11 @@ void JSCompiler::SetupMainFuncRet(base_node_t *rval){
   jsbuilder_->CreateStmtReturn(rval, false, linenum_);
 }
 
-static bool IsCCall(char *name) {
+static bool IsCCall(const char *name) {
   return (strcmp(name, "ccall") == 0);
 }
 
-static bool IsXcCall(char *name) {
+static bool IsXcCall(const char *name) {
   return (strcmp(name, "xccall") == 0);
 }
 
@@ -500,10 +500,10 @@ base_node_t *JSCompiler::CompileOpCall(uint32_t argc) {
     MIRSymbol *funcobj = module_->CurFunction()->GetLocalOrGlobalSymbol(dread->stidx, true);
     // the function might not be a global one, embeded in obj
     if (funcobj) {
-      char *funcobjname = (char *)(funcobj->GetName().c_str());
+      std::string funcobjname = funcobj->GetName();
       DEBUGPRINT3(funcobjname);
 
-      funcname = GetFuncName(funcobjname);
+      funcname = GetFuncName(funcobjname.c_str());
       if (funcname) {
         DEBUGPRINT3(funcname);
         JSMIRFunction *func = closure_->GetJSMIRFunc(funcname);
@@ -511,8 +511,8 @@ base_node_t *JSCompiler::CompileOpCall(uint32_t argc) {
           puidx = func->puidx;
           useSimpleCall = UseSimpleCall(funcname);
         }
-      } else if(IsCCall(funcobjname) || IsXcCall(funcobjname)) {
-        funcname = funcobjname;
+      } else if(IsCCall(funcobjname.c_str()) || IsXcCall(funcobjname.c_str())) {
+        funcname = (char *)funcobjname.c_str();
       }
     }
   }
