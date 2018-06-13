@@ -8,6 +8,7 @@ include_directories(
   ${MOZJS_SOURCE_DIR}/intl/icu/source/common
   ${MOZJS_SOURCE_DIR}/intl/icu/source/i18n
   ${MOZJS_SOURCE_DIR}/js/public
+  ../../mapleall/mapleutil/include
 )
 
 link_directories(${MOZJS_INSTALL_DIR}/lib)
@@ -44,4 +45,5 @@ target_link_libraries(js2mpl
   general z
   general pthread
   general dl
+  libHWSecureC
 )
