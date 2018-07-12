@@ -1,5 +1,5 @@
 include_directories(
-  ${MAPLE_ROOT}
+  ${MAPLEALL_ROOT}
   ${MOZJS_INSTALL_DIR}/include
   ${MOZJS_INSTALL_DIR}/system_wrappers
   ${MOZJS_SOURCE_DIR}
@@ -8,7 +8,7 @@ include_directories(
   ${MOZJS_SOURCE_DIR}/intl/icu/source/common
   ${MOZJS_SOURCE_DIR}/intl/icu/source/i18n
   ${MOZJS_SOURCE_DIR}/js/public
-  ../../mapleall/mapleutil/include
+  ${MAPLEALL_ROOT}/mapleutil/include
 )
 
 link_directories(${MOZJS_INSTALL_DIR}/lib)
