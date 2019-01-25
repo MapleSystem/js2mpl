@@ -140,7 +140,7 @@ NaryStmtNode *JSMIRBuilder::CreateStmtReturn(base_node_t *rval, bool adj_type, u
     AddrofNode *dn = (AddrofNode *)rval;
     stidx_t stidx = dn->stidx;
     MIRSymbol *var = module_->CurFunction()->GetLocalOrGlobalSymbol(stidx);
-    MIRType *type = var->GetType(&globaltable);
+    MIRType *type = var->GetType();
     DEBUGPRINT3(type);
     int fid = dn->fieldid;
     if (fid) {
