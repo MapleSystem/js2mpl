@@ -141,7 +141,7 @@ MIRSymbol *JSCompiler::SymbolFromSavingInATemp(base_node_t *expr, bool jsvalue_p
 // of the new temporary
 AddrofNode *JSCompiler::NodeFromSavingInATemp(base_node_t *expr) {
   MIRSymbol *temp_var = SymbolFromSavingInATemp(expr, false);
-  return jsbuilder_->CreateExprDread(temp_var->GetType(&globaltable), temp_var);
+  return jsbuilder_->CreateExprDread(temp_var->GetType(), temp_var);
 }
 
 // JSOP_UNDEFINED 1
@@ -277,7 +277,7 @@ base_node_t *JSCompiler::CompileOpUnary(JSOp opcode, base_node_t *val) {
     if (val->op == OP_dread) {
       AddrofNode *node = static_cast<AddrofNode *>(val);
       MIRSymbol *st = module_->CurFunction()->GetLocalOrGlobalSymbol(node->stidx);
-      MIRType *type = st->GetType(&globaltable);
+      MIRType *type = st->GetType();
       pty = type->GetPrimType();
     }
 
@@ -392,7 +392,7 @@ base_node_t *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool nee
     tyidx_t tyidx = array_type->_ty_idx;
     arguments->SetTyIdx(tyidx);
     base_node_t *bn;
-    MIRType *pargtype = jsbuilder_->GetOrCreatePointerType(arguments->GetType(&globaltable));
+    MIRType *pargtype = jsbuilder_->GetOrCreatePointerType(arguments->GetType());
     base_node_t *addr_base = jsbuilder_->CreateExprAddrof(0, arguments);
 
     for (uint32_t i = 0; i < arg_num; i++) {
@@ -1760,7 +1760,7 @@ void JSCompiler::EnvInit(JSMIRFunction *func) {
       int i = (func->with_env_arg) ? 2 : 1;
       for (IN = (*I).second.begin(); IN != (*I).second.end(); IN++, i++) {
         MIRSymbol *arg = jsbuilder_->GetFunctionArgument(func, i);
-        bn = jsbuilder_->CreateExprDread(arg->GetType(&globaltable), 0, arg);
+        bn = jsbuilder_->CreateExprDread(arg->GetType(), 0, arg);
         uint32_t id = jsbuilder_->GetStructFieldIdFromFieldName(env_type, *IN);
         stmt = jsbuilder_->CreateStmtIassign(env_ptr, id, env, bn);
         stmt->srcpos.SetLinenum(linenum_);
@@ -1922,12 +1922,12 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
             base_node_t *top_value = Top();
             if (!(top_value->op == OP_dread && static_cast<AddrofNode *>(top_value)->stidx.Islocal() &&
                ((addrof_node_t*)top_value)->stidx == tempvar->GetStIdx())) {
-              Push(jsbuilder_->CreateExprDread(tempvar->GetType(&globaltable), tempvar));
+              Push(jsbuilder_->CreateExprDread(tempvar->GetType(), tempvar));
             } else {
               scope_->DecDepth();
             }
           } else {
-            Push(jsbuilder_->CreateExprDread(tempvar->GetType(&globaltable), tempvar));
+            Push(jsbuilder_->CreateExprDread(tempvar->GetType(), tempvar));
           }
         }
         label_tempvar_map_[labidx] = 0;  // re-initialize to 0
@@ -2141,7 +2141,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
           // TODO should not pop from opstack_
           base_node_t *expr = Pop();
           MIRSymbol *tempvar = SymbolFromSavingInATemp(expr, true);
-          Push(jsbuilder_->CreateExprDread(tempvar->GetType(&globaltable), tempvar));
+          Push(jsbuilder_->CreateExprDread(tempvar->GetType(), tempvar));
           CompileOpGoto(pc, pc + offset, tempvar);
         }
         else CompileOpGoto(pc, pc + offset, NULL);
@@ -2176,7 +2176,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         CompileScriptBytecodes(script, start, pc, NULL);
         base_node_t *opnd1 = CheckConvertToJSValueType(Pop());
         jsbuilder_->CreateStmtDassign(temp_var, 0, opnd1, linenum_);
-        opnd0 = jsbuilder_->CreateExprDread(temp_var->GetType(&globaltable), temp_var);
+        opnd0 = jsbuilder_->CreateExprDread(temp_var->GetType(), temp_var);
         Push(opnd0);
         continue;
       }
