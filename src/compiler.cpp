@@ -1875,7 +1875,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
     Util::SetIndent(2);
     //DEBUGPRINTnn(lineNo, Util::getOpcodeName[op]);
     if (js2mplDebug>0) printf("  %4d %-25s pc = 0x%x\n", lineNo, Util::getOpcodeName[op], pc);
-    if (lastLineNo != lineNo && module_->curfunction != NULL) {
+    if (lastLineNo != lineNo && module_->CurFunction() != NULL) {
       sprintf(linenoText, "LINE %d: ", lineNo);
 
       srcText[0] = 0;
