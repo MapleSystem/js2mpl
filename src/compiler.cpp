@@ -54,7 +54,7 @@ void JSCompiler::Finish() {
   assert(opstack_->CheckDepth(0) || opstack_->CheckDepth(expected));
 }
 
-void JSCompiler::SetupMainFuncRet(base_node_t *rval){
+void JSCompiler::SetupMainFuncRet(BaseNode *rval){
   jsbuilder_->CreateStmtReturn(rval, false, linenum_);
 }
 
@@ -96,7 +96,7 @@ uint32_t JSCompiler::GetFieldidFromTag(uint32_t tag) {
   return jsbuilder_->GetStructFieldIdFromFieldName(jsvalue_type_, tagname);
 }
 
-MIRType *JSCompiler::DetermineTypeFromNode(base_node_t *node) {
+MIRType *JSCompiler::DetermineTypeFromNode(BaseNode *node) {
   tyidx_t tyidx;
   if (opcodeinfo.IsCompare(node->op))
     return globaltable.GetTypeFromTyIdx((tyidx_t)PTY_u1);
@@ -123,7 +123,7 @@ MIRType *JSCompiler::DetermineTypeFromNode(base_node_t *node) {
 }
 
 // create a new temporary, store expr to the temporary and return the temporary
-MIRSymbol *JSCompiler::SymbolFromSavingInATemp(base_node_t *expr, bool jsvalue_p) {
+MIRSymbol *JSCompiler::SymbolFromSavingInATemp(BaseNode *expr, bool jsvalue_p) {
   MIRType *exprty;
   if (jsvalue_p) {
     exprty = jsvalue_type_;
@@ -139,7 +139,7 @@ MIRSymbol *JSCompiler::SymbolFromSavingInATemp(base_node_t *expr, bool jsvalue_p
 
 // create a new temporary, store expr to the temporary and return a dread node 
 // of the new temporary
-AddrofNode *JSCompiler::NodeFromSavingInATemp(base_node_t *expr) {
+AddrofNode *JSCompiler::NodeFromSavingInATemp(BaseNode *expr) {
   MIRSymbol *temp_var = SymbolFromSavingInATemp(expr, false);
   return jsbuilder_->CreateExprDread(temp_var->GetType(), temp_var);
 }
@@ -199,9 +199,9 @@ uint32_t JSCompiler::FindIntrinsicForOp(JSOp opcode) {
 // JSOP_MOD 15 ~ 31
 // JSOP_STRICTEQ 72
 // JSOP_STRICTNE 73
-base_node_t *JSCompiler::CompileOpBinary(JSOp opcode,
-                                         base_node_t *op0,
-                                         base_node_t *op1) {
+BaseNode *JSCompiler::CompileOpBinary(JSOp opcode,
+                                         BaseNode *op0,
+                                         BaseNode *op1) {
   Opcode mop = (Opcode)0;
   MIRType *restype = jsbuilder_->GetDynany();
   switch (opcode) {
@@ -258,7 +258,7 @@ base_node_t *JSCompiler::CompileOpBinary(JSOp opcode,
 }
 
 // JSOP_NOT JSOP_BITNOT JSOP_NEG JSOP_POS 32~35
-base_node_t *JSCompiler::CompileOpUnary(JSOp opcode, base_node_t *val) {
+BaseNode *JSCompiler::CompileOpUnary(JSOp opcode, BaseNode *val) {
   Opcode mop = (Opcode)0;
   MIRType *restype = jsbuilder_->GetDynany();
   switch (opcode) {
@@ -292,7 +292,7 @@ base_node_t *JSCompiler::CompileOpUnary(JSOp opcode, base_node_t *val) {
 }
 
 int32_t JSCompiler::GetBuiltinMethod(uint32_t argc, bool *need_this) {
-  base_node_t *bn = GetOpAt(argc + 1);
+  BaseNode *bn = GetOpAt(argc + 1);
   if (bn->op == OP_intrinsicop) {
     IntrinsicopNode *ion = static_cast<IntrinsicopNode *> (bn);
     if (ion->intrinsic == INTRN_JS_GET_BIOBJECT) {
@@ -354,9 +354,9 @@ int32_t JSCompiler::GetBuiltinMethod(uint32_t argc, bool *need_this) {
   return -1;
 }
 
-base_node_t *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool need_this) {
+BaseNode *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool need_this) {
   // Reverse the order of args.
-  std::stack<base_node_t *> tmp_stack;
+  std::stack<BaseNode *> tmp_stack;
   if (arg_num == 0 && (MIRIntrinsicId)idx == INTRN_JS_BOOLEAN) {
     Pop();
     Pop();
@@ -391,25 +391,25 @@ base_node_t *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool nee
     MIRType *array_ptr_type = jsbuilder_->GetOrCreatePointerType(array_type);
     tyidx_t tyidx = array_type->_ty_idx;
     arguments->SetTyIdx(tyidx);
-    base_node_t *bn;
+    BaseNode *bn;
     MIRType *pargtype = jsbuilder_->GetOrCreatePointerType(arguments->GetType());
-    base_node_t *addr_base = jsbuilder_->CreateExprAddrof(0, arguments);
+    BaseNode *addr_base = jsbuilder_->CreateExprAddrof(0, arguments);
 
     for (uint32_t i = 0; i < arg_num; i++) {
       bn = CheckConvertToJSValueType(tmp_stack.top());
       DEBUGPRINT3(bn->op);
       tmp_stack.pop();
       MapleVector<base_node_t *> opnds(module_->CurFuncCodeMpAllocator()->Adapter());
-      opnds.push_back(addr_base);
+      opnds.push_back(static_cast<base_node_t *>(addr_base));
       BaseNode *addr_offset = jsbuilder_->GetConstInt(i);
-      opnds.push_back(addr_offset);
+      opnds.push_back(static_cast<base_node_t *>(addr_offset));
       BaseNode *array_expr = jsbuilder_->CreateExprArray(array_type, opnds);
       StmtNode *stmt = jsbuilder_->CreateStmtIassign(array_ptr_type, 0, array_expr, bn);
       stmt->srcpos.SetLinenum(linenum_);
       jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
     }
 
-    base_node_t *addrof_arg;
+    BaseNode *addrof_arg;
     if (arguments) 
       addrof_arg = jsbuilder_->CreateExprAddrof(0, arguments);
     else addrof_arg = jsbuilder_->GetConstUInt32(0);
@@ -427,12 +427,12 @@ base_node_t *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool nee
   }
 
   if((MIRIntrinsicId)idx == INTRN_JS_NUMBER || (MIRIntrinsicId)idx == INTRN_JS_STRING) {
-    base_node_t * argument;
+    BaseNode * argument;
     if(arg_num == 0) {
       argument = CompileOpConstValue(JSTYPE_NONE, 0);
     }
     else {
-      base_node_t *bn = tmp_stack.top();
+      BaseNode *bn = tmp_stack.top();
       argument = CheckConvertToJSValueType(bn);
     }
     IntrinDesc *intrindesc = &IntrinDesc::intrintable[idx];
@@ -448,7 +448,7 @@ base_node_t *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool nee
    MapleVector<base_node_t *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
   // Push args into arguments.
   for (uint32_t i = 0; i < arg_num; i++) {
-    base_node_t *bn = tmp_stack.top();
+    BaseNode *bn = tmp_stack.top();
     tmp_stack.pop();
     arguments.push_back(CheckConvertToRespectiveType(bn, intrindesc->GetArgType(i)));
   }
@@ -462,7 +462,7 @@ base_node_t *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool nee
   return jsbuilder_->CreateExprDread(retty, temp);
 }
 
-base_node_t *JSCompiler::CompileOpCall(uint32_t argc) {
+BaseNode *JSCompiler::CompileOpCall(uint32_t argc) {
   DEBUGPRINT2(argc);
   // May be call the method of builtin-object, just emit the corresponding intrinsic call.
   bool need_this = false;
@@ -482,8 +482,8 @@ base_node_t *JSCompiler::CompileOpCall(uint32_t argc) {
 
   // impnode: implicitethis - first arg for closure node if needed
   // funcnode: it is intervened with arg setup
-  base_node_t *impnode = CheckConvertToJSValueType(Pop());
-  base_node_t *funcnode = CheckConvertToJSValueType(Pop());
+  BaseNode *impnode = CheckConvertToJSValueType(Pop());
+  BaseNode *funcnode = CheckConvertToJSValueType(Pop());
   StmtNode *stmt = NULL;
   MIRSymbol *symbol;
   char *name;
@@ -563,7 +563,7 @@ base_node_t *JSCompiler::CompileOpCall(uint32_t argc) {
   return jsbuilder_->CreateExprDread(jsvalue_type_, 0, returnVar);
 }
 
-base_node_t *JSCompiler::CompileOpNew(uint32_t argc) {
+BaseNode *JSCompiler::CompileOpNew(uint32_t argc) {
   // Reverse the order of args.
   std::vector<base_node_t *> argsvec;
   for (uint32_t i = 0; i < argc; i++) {
@@ -572,8 +572,8 @@ base_node_t *JSCompiler::CompileOpNew(uint32_t argc) {
 
   // impnode: implicitethis - first arg for closure node if needed
   // funcnode: it is intervened with arg setup
-  base_node_t *impnode = Pop();
-  base_node_t *funcnode = CheckConvertToJSValueType(Pop());
+  BaseNode *impnode = Pop();
+  BaseNode *funcnode = CheckConvertToJSValueType(Pop());
 
   MapleVector<base_node_t *> args(module_->CurFuncCodeMpAllocator()->Adapter());
   args.push_back(funcnode);
@@ -601,7 +601,7 @@ js_builtin_id JSCompiler::EcmaNameToId(char *name) {
   else return JS_BUILTIN_COUNT;
 }
 
-base_node_t *JSCompiler::CompileBuiltinObject(char *name) {
+BaseNode *JSCompiler::CompileBuiltinObject(char *name) {
   js_builtin_id id = EcmaNameToId(name);
   if (id == JS_BUILTIN_COUNT)
     return NULL;
@@ -610,7 +610,7 @@ base_node_t *JSCompiler::CompileBuiltinObject(char *name) {
 }
 
 // JSOP_NAME 59
-base_node_t *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc) {
+BaseNode *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc) {
   char *name = Util::GetString(atom, mp_, jscontext_);
   JS_ASSERT(!name && "empty name");
 
@@ -642,11 +642,11 @@ base_node_t *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc) {
   if (!strcmp(name, "undefined"))
     return CompileOpConstValue(JSTYPE_UNDEFINED, 0);
 
-  base_node_t *builtin_object = CompileBuiltinObject(name);
+  BaseNode *builtin_object = CompileBuiltinObject(name);
   if (builtin_object)
     return builtin_object;
 
-  base_node_t *bn = NULL;
+  BaseNode *bn = NULL;
   if (scope_->IsFunction(name)) {
     DEBUGPRINT2(name);
     char * objname = Util::GetNameWithSuffix(name, "_obj_", mp_);
@@ -722,14 +722,14 @@ bool IsAsciiChars(const jschar *chars, uint32_t length) {
 }
 
 // JSOP_STRING 61
-base_node_t *JSCompiler::CompileOpString(JSString *str) {
+BaseNode *JSCompiler::CompileOpString(JSString *str) {
   size_t length = 0;
   const jschar *chars = JS_GetInternedStringCharsAndLength(str, &length);
   int32_t id = GetBuiltinStringId(chars, length);
   if (jsstring_map_[chars])
     return jsstring_map_[chars];
   if (id != -1) {
-    base_node_t *expr = CompileGeneric1((MIRIntrinsicId)INTRN_JS_GET_BISTRING,
+    BaseNode *expr = CompileGeneric1((MIRIntrinsicId)INTRN_JS_GET_BISTRING,
                            jsbuilder_->GetConstUInt32(id), false);
     jsstring_map_[chars] = expr;
     return expr;
@@ -783,14 +783,14 @@ base_node_t *JSCompiler::CompileOpString(JSString *str) {
     init->const_vec.push_back(int_const);
   }
   var->value_.const_ = init;
-  base_node_t *expr = jsbuilder_->CreateExprAddrof(0, var);
+  BaseNode *expr = jsbuilder_->CreateExprAddrof(0, var);
   expr->ptyp = PTY_simplestr;
   jsstring_map_[chars] = expr;
   return expr;
 }
 
 //JSOP_ITER 75
-base_node_t *JSCompiler::CompileOpNewIterator(base_node_t *bn, uint8_t flags) 
+BaseNode *JSCompiler::CompileOpNewIterator(BaseNode *bn, uint8_t flags) 
 {
   MIRType *retty = jsbuilder_->GetOrCreatePointerType(jsbuilder_->GetVoid());
   MIRSymbol *retsy = CreateTempVar(retty);
@@ -803,7 +803,7 @@ base_node_t *JSCompiler::CompileOpNewIterator(base_node_t *bn, uint8_t flags)
   return jsbuilder_->CreateExprDread(retty, 0, retsy);  
 }
 
-base_node_t *JSCompiler::CompileOpMoreIterator(base_node_t *iterator) 
+BaseNode *JSCompiler::CompileOpMoreIterator(BaseNode *iterator) 
 {
   MIRSymbol *retsy = CreateTempVar(jsbuilder_->GetUInt32());
   StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned1(
@@ -816,7 +816,7 @@ base_node_t *JSCompiler::CompileOpMoreIterator(base_node_t *iterator)
 }
 
 // JSOP_ITERNEXT 77
-base_node_t *JSCompiler::CompileOpIterNext(base_node_t *iterator)
+BaseNode *JSCompiler::CompileOpIterNext(BaseNode *iterator)
 {
   MIRSymbol *var = CreateTempJSValueTypeVar();
   StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned1( 
@@ -830,30 +830,30 @@ base_node_t *JSCompiler::CompileOpIterNext(base_node_t *iterator)
 } 
 
 // JSOP_GETARG 84
-base_node_t *JSCompiler::CompileOpGetArg(uint32_t i) {
+BaseNode *JSCompiler::CompileOpGetArg(uint32_t i) {
   DEBUGPRINT2(i);
   JSMIRFunction *fun = jsbuilder_->GetCurrentFunction();
   int start = (fun->with_env_arg) ? 2 : 1;
   MIRSymbol *arg = jsbuilder_->GetFunctionArgument(fun, i+start); 
-  base_node_t *irn = jsbuilder_->CreateExprDread(jsbuilder_->GetDynany(), arg);
+  BaseNode *irn = jsbuilder_->CreateExprDread(jsbuilder_->GetDynany(), arg);
   return irn;
 }
 
 // JSOP_SETARG 85
-void JSCompiler::CompileOpSetArg(uint32_t i, base_node_t *val) {
+void JSCompiler::CompileOpSetArg(uint32_t i, BaseNode *val) {
   DEBUGPRINT2(i);
   JSMIRFunction *fun = jsbuilder_->GetCurrentFunction();
   int start = (fun->with_env_arg) ? 2 : 1;
   MIRSymbol *arg = jsbuilder_->GetFunctionArgument(fun, i+start);  // skip this and env parameters
   opstack_->ReplaceStackItemsWithTemps(this, arg);
   jsbuilder_->CreateStmtDassign(arg, 0, val, linenum_);
-  base_node_t *bn = jsbuilder_->CreateExprDread(jsvalue_type_, arg);
+  BaseNode *bn = jsbuilder_->CreateExprDread(jsvalue_type_, arg);
   Push(bn);
   return;
 }
 
 // JSOP_GETLOCAL 86
-base_node_t *JSCompiler::CompileOpGetLocal(uint32_t local_no) {
+BaseNode *JSCompiler::CompileOpGetLocal(uint32_t local_no) {
   JSMIRFunction *func = jsbuilder_->GetCurrentFunction();
   char *name = closure_->GetLocalVar(func, local_no);
   bool created;
@@ -879,7 +879,7 @@ base_node_t *JSCompiler::CompileOpGetLocal(uint32_t local_no) {
 }
 
 // JSOP_SETLOCAL 87
-StmtNode *JSCompiler::CompileOpSetLocal(uint32_t local_no, base_node_t *src) {
+StmtNode *JSCompiler::CompileOpSetLocal(uint32_t local_no, BaseNode *src) {
   JSMIRFunction *func = jsbuilder_->GetCurrentFunction();
   char *name = closure_->GetLocalVar(func, local_no);
   MIRSymbol *var;
@@ -899,12 +899,12 @@ StmtNode *JSCompiler::CompileOpSetLocal(uint32_t local_no, base_node_t *src) {
   // the stack items by the temp
   opstack_->ReplaceStackItemsWithTemps(this, var);
 
-  base_node_t *bn = CheckConvertToJSValueType(src);
+  BaseNode *bn = CheckConvertToJSValueType(src);
   return jsbuilder_->CreateStmtDassign(var, 0, bn, linenum_);
 }
 
 // JSOP_NEWINIT 89
-base_node_t *JSCompiler::CompileOpNewInit(uint32_t kind) {
+BaseNode *JSCompiler::CompileOpNewInit(uint32_t kind) {
   if (kind == JSProto_Array) {
     assert(false && "NIY");
   } else {
@@ -915,7 +915,7 @@ base_node_t *JSCompiler::CompileOpNewInit(uint32_t kind) {
 }
 
 
-base_node_t *JSCompiler::CompileGenericN(int32_t intrin_id,
+BaseNode *JSCompiler::CompileGenericN(int32_t intrin_id,
                                         MapleVector<base_node_t *> &arguments,
                                         bool is_call) {
   IntrinDesc *intrindesc = &IntrinDesc::intrintable[intrin_id];
@@ -934,28 +934,28 @@ base_node_t *JSCompiler::CompileGenericN(int32_t intrin_id,
   }
 }
 
-base_node_t *JSCompiler::CompileGeneric0(int32_t intrin_id, bool is_call) {
+BaseNode *JSCompiler::CompileGeneric0(int32_t intrin_id, bool is_call) {
   MapleVector<base_node_t *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
   return CompileGenericN(intrin_id, arguments, is_call);
 }
 
-base_node_t *JSCompiler::CompileGeneric1(int32_t intrin_id,
-                                      base_node_t *arg, bool is_call) {
+BaseNode *JSCompiler::CompileGeneric1(int32_t intrin_id,
+                                      BaseNode *arg, bool is_call) {
   MapleVector<base_node_t *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
   arguments.push_back(arg);
   return CompileGenericN(intrin_id, arguments, is_call);
 }
 
-base_node_t *JSCompiler::CompileGeneric2(int32_t intrin_id, base_node_t *arg1,
-                                      base_node_t *arg2, bool is_call) {
+BaseNode *JSCompiler::CompileGeneric2(int32_t intrin_id, BaseNode *arg1,
+                                      BaseNode *arg2, bool is_call) {
   MapleVector<base_node_t *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
   arguments.push_back(arg1);
   arguments.push_back(arg2);
   return CompileGenericN(intrin_id, arguments, is_call);
 }
 
-base_node_t *JSCompiler::CompileGeneric3(int32_t intrin_id, base_node_t *arg1,
-                                      base_node_t *arg2, base_node_t *arg3, bool is_call) {
+BaseNode *JSCompiler::CompileGeneric3(int32_t intrin_id, BaseNode *arg1,
+                                      BaseNode *arg2, BaseNode *arg3, bool is_call) {
   MapleVector<base_node_t *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
   arguments.push_back(arg1);
   arguments.push_back(arg2);
@@ -963,8 +963,8 @@ base_node_t *JSCompiler::CompileGeneric3(int32_t intrin_id, base_node_t *arg1,
   return CompileGenericN(intrin_id, arguments, is_call);
 }
 
-base_node_t *JSCompiler::CompileGeneric4(int32_t intrin_id, base_node_t *arg1,
-                                      base_node_t *arg2, base_node_t *arg3, base_node_t *arg4, bool is_call) {
+BaseNode *JSCompiler::CompileGeneric4(int32_t intrin_id, BaseNode *arg1,
+                                      BaseNode *arg2, BaseNode *arg3, BaseNode *arg4, bool is_call) {
   MapleVector<base_node_t *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
   arguments.push_back(arg1);
   arguments.push_back(arg2);
@@ -973,7 +973,7 @@ base_node_t *JSCompiler::CompileGeneric4(int32_t intrin_id, base_node_t *arg1,
   return CompileGenericN(intrin_id, arguments, is_call);
 }
 
-bool JSCompiler::CompileOpSetElem(base_node_t *obj, base_node_t *index, base_node_t *val) {
+bool JSCompiler::CompileOpSetElem(BaseNode *obj, BaseNode *index, BaseNode *val) {
   index = CheckConvertToJSValueType(index);
   StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(
                      INTRN_JSOP_SETPROP,
@@ -983,8 +983,8 @@ bool JSCompiler::CompileOpSetElem(base_node_t *obj, base_node_t *index, base_nod
   return true;
 }
 
-bool JSCompiler::CompileOpInitPropGetter(base_node_t *obj, JSString *str, base_node_t *val) {
-  base_node_t *name = CheckConvertToJSValueType(CompileOpString(str));
+bool JSCompiler::CompileOpInitPropGetter(BaseNode *obj, JSString *str, BaseNode *val) {
+  BaseNode *name = CheckConvertToJSValueType(CompileOpString(str));
   StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_INITPROP_GETTER,
                                                         obj, name, val, NULL);
   stmt->srcpos.SetLinenum(linenum_);
@@ -992,8 +992,8 @@ bool JSCompiler::CompileOpInitPropGetter(base_node_t *obj, JSString *str, base_n
   return true;
 }
 
-bool JSCompiler::CompileOpInitPropSetter(base_node_t *obj, JSString *str, base_node_t *val) {
-  base_node_t *name = CheckConvertToJSValueType(CompileOpString(str));
+bool JSCompiler::CompileOpInitPropSetter(BaseNode *obj, JSString *str, BaseNode *val) {
+  BaseNode *name = CheckConvertToJSValueType(CompileOpString(str));
   StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_INITPROP_SETTER,
                                                         obj, name, val, NULL);
   stmt->srcpos.SetLinenum(linenum_);
@@ -1001,7 +1001,7 @@ bool JSCompiler::CompileOpInitPropSetter(base_node_t *obj, JSString *str, base_n
   return true;
 }
 
-bool JSCompiler::CompileOpInitElemGetter(base_node_t *obj, base_node_t *index, base_node_t *val) {
+bool JSCompiler::CompileOpInitElemGetter(BaseNode *obj, BaseNode *index, BaseNode *val) {
   index = CheckConvertToJSValueType(index);
   StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_INITPROP_GETTER,
                                                         obj, index, val, NULL);
@@ -1010,7 +1010,7 @@ bool JSCompiler::CompileOpInitElemGetter(base_node_t *obj, base_node_t *index, b
   return true;
 }
 
-bool JSCompiler::CompileOpInitElemSetter(base_node_t *obj, base_node_t *index, base_node_t *val) {
+bool JSCompiler::CompileOpInitElemSetter(BaseNode *obj, BaseNode *index, BaseNode *val) {
   index = CheckConvertToJSValueType(index);
   StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_INITPROP_SETTER,
                                                         obj, index, val, NULL);
@@ -1020,9 +1020,9 @@ bool JSCompiler::CompileOpInitElemSetter(base_node_t *obj, base_node_t *index, b
 }
 
 // JSOP_SETPROP 54
-bool JSCompiler::CompileOpSetProp(base_node_t *obj, JSString *str,
-                                  base_node_t *val) {
-  base_node_t *name = CompileOpString(str);
+bool JSCompiler::CompileOpSetProp(BaseNode *obj, JSString *str,
+                                  BaseNode *val) {
+  BaseNode *name = CompileOpString(str);
   StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_SETPROP_BY_NAME, obj,
                                                         name,
                                                         CheckConvertToJSValueType(val), NULL);
@@ -1032,10 +1032,10 @@ bool JSCompiler::CompileOpSetProp(base_node_t *obj, JSString *str,
 }
 
 // JSOP_BINDNAME 110
-base_node_t *JSCompiler::CompileOpBindName(JSAtom *atom) {
+BaseNode *JSCompiler::CompileOpBindName(JSAtom *atom) {
   char *name = Util::GetString(atom, mp_, jscontext_);
   JS_ASSERT(!name && "empty name");
-  base_node_t *builtin_object = CompileBuiltinObject(name);
+  BaseNode *builtin_object = CompileBuiltinObject(name);
   if (builtin_object)
     return builtin_object;
 
@@ -1062,13 +1062,13 @@ base_node_t *JSCompiler::CompileOpBindName(JSAtom *atom) {
   }
 
   // ??? Generate a dread node to pass the name.
-  base_node_t *bn = jsbuilder_->CreateExprDread(jsvalue_type_, var);
+  BaseNode *bn = jsbuilder_->CreateExprDread(jsvalue_type_, var);
 
   return bn;
 }
 
 // JSOP_SETNAME 110
-bool JSCompiler::CompileOpSetName(JSAtom *atom, base_node_t *val) {
+bool JSCompiler::CompileOpSetName(JSAtom *atom, BaseNode *val) {
   char *name = Util::GetString(atom, mp_, jscontext_);
   JS_ASSERT(!name && "empty name");
   JSMIRFunction *func = funcstack_.top();
@@ -1082,7 +1082,7 @@ bool JSCompiler::CompileOpSetName(JSAtom *atom, base_node_t *val) {
   // the stack items by the temp
   opstack_->ReplaceStackItemsWithTemps(this, var);
   jsbuilder_->CreateStmtDassign(var, 0, CheckConvertToJSValueType(val), linenum_);
-  base_node_t *bn = jsbuilder_->CreateExprDread(jsvalue_type_, var);
+  BaseNode *bn = jsbuilder_->CreateExprDread(jsvalue_type_, var);
   Push(bn);
   return true;
 }
@@ -1100,7 +1100,7 @@ bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
   mfun->SetUserFunc();
 
   MIRSymbol *func_st = jsbuilder_->GetOrCreateGlobalDecl(funcname, jsvalue_type_);
-  base_node_t *ptr = jsbuilder_->CreateExprAddroffunc(func_st->value_.func_->puidx);
+  BaseNode *ptr = jsbuilder_->CreateExprAddroffunc(func_st->value_.func_->puidx);
   assert(jsfun && "not a jsfunction");
 
   char *name = Util::GetNameWithSuffix(funcname, "_obj_", mp_);
@@ -1111,7 +1111,7 @@ bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
     uint32_t length = nargs;
     uint32_t flag = jsfun->strict() ? JSFUNCPROP_STRICT | JSFUNCPROP_USERFUNC : JSFUNCPROP_USERFUNC;
     uint32_t attrs = varg_p << 24 | nargs << 16 | length << 8 | flag;
-    base_node_t *func_node = CompileGeneric3(INTRN_JS_NEW_FUNCTION, ptr, jsbuilder_->GetConstInt(0), jsbuilder_->GetConstUInt32(attrs), true);
+    BaseNode *func_node = CompileGeneric3(INTRN_JS_NEW_FUNCTION, ptr, jsbuilder_->GetConstInt(0), jsbuilder_->GetConstUInt32(attrs), true);
 
     MIRSymbol *func_obj;
     if (mfun->scope->IsWithEnv()) {
@@ -1151,7 +1151,7 @@ bool JSCompiler::CompileOpDefVar(JSAtom *atom) {
 }
 
 // JSOP_LAMBDA 131
-base_node_t *JSCompiler::CompileOpLambda(jsbytecode *pc, JSFunction *jsfun) {
+BaseNode *JSCompiler::CompileOpLambda(jsbytecode *pc, JSFunction *jsfun) {
   JSAtom *atom = jsfun->displayAtom();
 
   // isLambda() does not seem reliable
@@ -1175,9 +1175,9 @@ base_node_t *JSCompiler::CompileOpLambda(jsbytecode *pc, JSFunction *jsfun) {
   JSMIRFunction *parentFunc = funcstack_.top();
 
   MIRSymbol *funcsymbol = jsbuilder_->GetOrCreateGlobalDecl(funcname, jsvalue_type_);
-  base_node_t *ptr = jsbuilder_->CreateExprAddroffunc(funcsymbol->value_.func_->puidx);
+  BaseNode *ptr = jsbuilder_->CreateExprAddroffunc(funcsymbol->value_.func_->puidx);
   MIRSymbol * env_var = NULL;
-  base_node_t *node;
+  BaseNode *node;
   DEBUGPRINT2((lambda->scope->GetName()));
   DEBUGPRINT2((lambda->scope->IsTopLevel()));
   if (parentFunc->scope->IsWithEnv()) {
@@ -1194,7 +1194,7 @@ base_node_t *JSCompiler::CompileOpLambda(jsbytecode *pc, JSFunction *jsfun) {
   uint32_t length = nargs;
   uint32_t flag = jsfun->strict() ? JSFUNCPROP_STRICT | JSFUNCPROP_USERFUNC : JSFUNCPROP_USERFUNC;
   uint32_t attrs = varg_p << 24 | nargs << 16 | length << 8 | flag;
-  base_node_t *bn = CompileGeneric3(INTRN_JS_NEW_FUNCTION, ptr, node, jsbuilder_->GetConstUInt32(attrs), true);
+  BaseNode *bn = CompileGeneric3(INTRN_JS_NEW_FUNCTION, ptr, node, jsbuilder_->GetConstUInt32(attrs), true);
 
   if(has_name) {
     char *name = Util::GetNameWithSuffix(funcname, "_obj_", mp_);
@@ -1209,7 +1209,7 @@ base_node_t *JSCompiler::CompileOpLambda(jsbytecode *pc, JSFunction *jsfun) {
 }
 
 // JSOP_GETALIASEDVAR 136
-int JSCompiler::ProcessAliasedVar(JSAtom *atom, MIRType *&env_ptr, base_node_t *&env_node, int &depth) {
+int JSCompiler::ProcessAliasedVar(JSAtom *atom, MIRType *&env_ptr, BaseNode *&env_node, int &depth) {
   JSMIRFunction *func = funcstack_.top();
   DEBUGPRINT3(func);
   char *name = Util::GetString(atom, mp_, jscontext_);
@@ -1230,7 +1230,7 @@ int JSCompiler::ProcessAliasedVar(JSAtom *atom, MIRType *&env_ptr, base_node_t *
   depth = 0;
   MIRSymbol *env_var = NULL;
   const char *env_name;
-  base_node_t *bn = NULL;
+  BaseNode *bn = NULL;
   StmtNode *stmt = NULL;
 
   // search in current func's alias list
@@ -1299,14 +1299,14 @@ int JSCompiler::ProcessAliasedVar(JSAtom *atom, MIRType *&env_ptr, base_node_t *
 }
 
 
-base_node_t *JSCompiler::CompileOpGetAliasedVar(JSAtom *atom) {
+BaseNode *JSCompiler::CompileOpGetAliasedVar(JSAtom *atom) {
   MIRType *env_ptr;
-  base_node_t *env_node;
+  BaseNode *env_node;
   int depth = 0;
 
   int idx = ProcessAliasedVar(atom, env_ptr, env_node, depth);
 
-  base_node_t *bn = NULL;
+  BaseNode *bn = NULL;
   if (idx) {
     bn = jsbuilder_->CreateExprIread(jsvalue_type_, env_ptr, idx, env_node);
   } else {
@@ -1321,9 +1321,9 @@ base_node_t *JSCompiler::CompileOpGetAliasedVar(JSAtom *atom) {
 }
 
 // JSOP_SETALIASEDVAR 137
-base_node_t *JSCompiler::CompileOpSetAliasedVar(JSAtom *atom, base_node_t *val) {
+BaseNode *JSCompiler::CompileOpSetAliasedVar(JSAtom *atom, BaseNode *val) {
   MIRType *env_ptr;
-  base_node_t *env_node;
+  BaseNode *env_node;
   int depth = 0;
 
   int idx = ProcessAliasedVar(atom, env_ptr, env_node, depth);
@@ -1375,7 +1375,7 @@ void JSCompiler::CloseFuncBookKeeping() {
   }
 }
 
-StmtNode *JSCompiler::CompileOpIfJump(JSOp op, base_node_t *cond, jsbytecode *pcend) 
+StmtNode *JSCompiler::CompileOpIfJump(JSOp op, BaseNode *cond, jsbytecode *pcend) 
 {
   labidx_t labidx = GetorCreateLabelofPc(pcend);
   StmtNode* gotonode =  jsbuilder_->CreateStmtCondGoto(cond, (op == JSOP_IFEQ || op==JSOP_AND)?OP_brfalse:OP_brtrue, labidx);
@@ -1416,7 +1416,7 @@ int64_t JSCompiler::GetIntValue(jsbytecode *pc){
   }
 }
 
-SwitchNode *JSCompiler::CompileOpCondSwitch(base_node_t *opnd, JSScript *script,
+SwitchNode *JSCompiler::CompileOpCondSwitch(BaseNode *opnd, JSScript *script,
                                           jsbytecode *pcstart, jsbytecode *pcend) {
   int64_t const_val;
   int offset;
@@ -1458,7 +1458,7 @@ SwitchNode *JSCompiler::CompileOpCondSwitch(base_node_t *opnd, JSScript *script,
   return switchnode;
 }
 
-SwitchNode *JSCompiler::CompileOpTableSwitch(base_node_t *opnd, int32_t len,
+SwitchNode *JSCompiler::CompileOpTableSwitch(BaseNode *opnd, int32_t len,
                                            JSScript *script, jsbytecode *pc) {
   int offset,i;
   jsbytecode *pcjump,*pctemp1,*pctemp2;
@@ -1489,7 +1489,7 @@ SwitchNode *JSCompiler::CompileOpTableSwitch(base_node_t *opnd, int32_t len,
   pcjump = pc + len;
   mirlabel = GetorCreateLabelofPc(pcjump);
   defaultlabel = mirlabel;
-  base_node_t *cond = CheckConvertToInt32(opnd);
+  BaseNode *cond = CheckConvertToInt32(opnd);
    
   SwitchNode *stmt = jsbuilder_->CreateStmtSwitch(cond, defaultlabel, switchtable);
   stmt->srcpos.SetLinenum(linenum_);
@@ -1592,7 +1592,7 @@ BaseNode *JSCompiler::CompileOpLoopHead(jsbytecode *pc) {
   return stmt;
 }
 
-base_node_t *JSCompiler::CheckConvertToJSValueType(base_node_t *data)
+BaseNode *JSCompiler::CheckConvertToJSValueType(BaseNode *data)
 {
   MIRType *to_type = NULL;
   if (IsPrimitiveDynType(data->ptyp))
@@ -1634,13 +1634,13 @@ base_node_t *JSCompiler::CheckConvertToJSValueType(base_node_t *data)
 // Pops the top two values on the stack as rval and lval, compare them with ===,
 // if the result is true, jumps to a 32-bit offset from the current bytecode,
 // re-pushes lval onto the stack if false.
-void JSCompiler::CompileOpCase(jsbytecode *pc, int offset, base_node_t *rval, base_node_t *lval)
+void JSCompiler::CompileOpCase(jsbytecode *pc, int offset, BaseNode *rval, BaseNode *lval)
 {
   MIRIntrinsicId idx = (MIRIntrinsicId)FindIntrinsicForOp(JSOP_STRICTEQ);
   IntrinDesc *intrindesc = &IntrinDesc::intrintable[idx];
   MIRType *retty = intrindesc->GetReturnType();
-  base_node_t *expr = jsbuilder_->CreateExprIntrinsicop2(idx, retty, CheckConvertToJSValueType(rval), CheckConvertToJSValueType(lval));
-  base_node_t *cond = CheckConvertToBoolean(expr);
+  BaseNode *expr = jsbuilder_->CreateExprIntrinsicop2(idx, retty, CheckConvertToJSValueType(rval), CheckConvertToJSValueType(lval));
+  BaseNode *cond = CheckConvertToBoolean(expr);
 
   labidx_t mirlabel = GetorCreateLabelofPc(pc + offset);
   CondGotoNode *gotonode = jsbuilder_->CreateStmtCondGoto(cond, OP_brtrue, mirlabel);
@@ -1650,7 +1650,7 @@ void JSCompiler::CompileOpCase(jsbytecode *pc, int offset, base_node_t *rval, ba
   return;
 }
 
-base_node_t *JSCompiler::CheckConvertToBoolean(base_node_t *node)
+BaseNode *JSCompiler::CheckConvertToBoolean(BaseNode *node)
 {
   if (IsPrimitiveInteger(node->ptyp)) {
     if (node->ptyp == PTY_u1) return node;
@@ -1659,7 +1659,7 @@ base_node_t *JSCompiler::CheckConvertToBoolean(base_node_t *node)
   return jsbuilder_->CreateExprIntrinsicop1(INTRN_JS_BOOLEAN, jsbuilder_->GetUInt1(), node);
 }
 
-base_node_t *JSCompiler::CheckConvertToInt32(base_node_t *node)
+BaseNode *JSCompiler::CheckConvertToInt32(BaseNode *node)
 {
   if (IsPrimitiveInteger(node->ptyp))
     return node;
@@ -1672,7 +1672,7 @@ base_node_t *JSCompiler::CheckConvertToInt32(base_node_t *node)
 #endif
 }
 
-base_node_t *JSCompiler::CheckConvertToUInt32(base_node_t *node)
+BaseNode *JSCompiler::CheckConvertToUInt32(BaseNode *node)
 {
   if (IsPrimitiveInteger(node->ptyp))
     return node;
@@ -1685,7 +1685,7 @@ base_node_t *JSCompiler::CheckConvertToUInt32(base_node_t *node)
 #endif
 }
 
-base_node_t *JSCompiler::CheckConvertToRespectiveType(base_node_t *node, MIRType *ty)
+BaseNode *JSCompiler::CheckConvertToRespectiveType(BaseNode *node, MIRType *ty)
 {
   if (ty == NULL || ty == jsvalue_type_)
     return CheckConvertToJSValueType(node);
@@ -1718,7 +1718,7 @@ void JSCompiler::EnvInit(JSMIRFunction *func) {
   if (func->env_setup)
     return;
 
-  base_node_t *bn;
+  BaseNode *bn;
   StmtNode *stmt;
 
   MIRType * env_type = func->envtype;
@@ -1726,13 +1726,13 @@ void JSCompiler::EnvInit(JSMIRFunction *func) {
   MIRSymbol *env_var = jsbuilder_->GetOrCreateLocalDecl("environment", jsbuilder_->GetDynany());
   DEBUGPRINTsv3("environment", env_ptr);
 
-  base_node_t *size = jsbuilder_->CreateExprSizeoftype(env_type);
+  BaseNode *size = jsbuilder_->CreateExprSizeoftype(env_type);
   stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned1(INTRN_JS_NEW, size, env_var);
   stmt->srcpos.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   func->env_setup = true;
 
-  base_node_t *env = jsbuilder_->CreateExprDread(env_ptr, 0, env_var);
+  BaseNode *env = jsbuilder_->CreateExprDread(env_ptr, 0, env_var);
   MIRStructType *env_struct = static_cast<MIRStructType *>(env_type);
   bn = jsbuilder_->GetConstInt(env_struct->fields.size() - 2);
   int idx = jsbuilder_->GetStructFieldIdFromFieldName(env_type, "argnums");
@@ -1916,12 +1916,12 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         //assert(! opstack_->Empty());
         if (! opstack_->Empty()) {
           MIRSymbol *tempvar = label_tempvar_map_[labidx];
-          base_node_t *expr = CheckConvertToJSValueType(Pop());
+          BaseNode *expr = CheckConvertToJSValueType(Pop());
           jsbuilder_->CreateStmtDassign(tempvar, 0, expr, linenum_); 
           if (! opstack_->Empty()) {
-            base_node_t *top_value = Top();
+            BaseNode *top_value = Top();
             if (!(top_value->op == OP_dread && static_cast<AddrofNode *>(top_value)->stidx.Islocal() &&
-               ((addrof_node_t*)top_value)->stidx == tempvar->GetStIdx())) {
+               ((AddrofNode*)top_value)->stidx == tempvar->GetStIdx())) {
               Push(jsbuilder_->CreateExprDread(tempvar->GetType(), tempvar));
             } else {
               scope_->DecDepth();
@@ -2073,21 +2073,21 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       }
       case JSOP_DUPAT: /*44, 4, 0, 1*/  {
         uint32_t n = GET_UINT8(pc);
-        base_node_t *bn = GetOpAt(n);
+        BaseNode *bn = GetOpAt(n);
         Push(bn);
         break;
       }
       case JSOP_SETRVAL: /*152, 1, 1, 0*/  {
         opstack_->flag_has_rval = true;
-        base_node_t *rval = Pop();
+        BaseNode *rval = Pop();
         opstack_->rval = rval;
         break;
       }
       case JSOP_ENTERWITH: /*3, 5, 1, 0*/  { SIMULATESTACK(1, 0); break; }
       case JSOP_LEAVEWITH: /*4, 1, 0, 0*/  { NOTHANDLED; break; }
       case JSOP_RETURN: /*5, 1, 1, 0*/  {
-        base_node_t *rval = Pop();
-        base_node_t *bn = CheckConvertToJSValueType(rval);
+        BaseNode *rval = static_cast<BaseNode *>(Pop());
+        BaseNode *bn = CheckConvertToJSValueType(rval);
         jsbuilder_->CreateStmtReturn(bn, true, linenum_);
         break;
       }
@@ -2097,11 +2097,11 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
           if (jsbuilder_->IsPluginFunc(func)) {
             // set to return exports anyway
             // BaseNode *id_node = jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE);
-            base_node_t *node1 = CheckConvertToJSValueType(CompileGeneric1(INTRN_JS_GET_BIOBJECT,
+            BaseNode *node1 = CheckConvertToJSValueType(CompileGeneric1(INTRN_JS_GET_BIOBJECT,
                   jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE), false));
-            base_node_t *node2 = CheckConvertToJSValueType(CompileGeneric1(INTRN_JS_GET_BISTRING,
+            BaseNode *node2 = CheckConvertToJSValueType(CompileGeneric1(INTRN_JS_GET_BISTRING,
                   jsbuilder_->GetConstUInt32((uint32_t)JSBUILTIN_STRING_EXPORTS), false));
-            base_node_t *ret_expr = CompileGeneric2(INTRN_JSOP_GETPROP, node1, node2, true);
+            BaseNode *ret_expr = CompileGeneric2(INTRN_JSOP_GETPROP, node1, node2, true);
             SetupMainFuncRet(ret_expr);
           } else if (func == jsmain_) {
             SetupMainFuncRet(jsbuilder_->GetConstInt(0));  // main function always returns 0
@@ -2114,11 +2114,11 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
           JSMIRFunction *func = jsbuilder_->GetCurrentFunction();
           if (jsbuilder_->IsPluginFunc(func)) {
             // BaseNode *id_node = jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE);
-            base_node_t *node1 = CheckConvertToJSValueType(CompileGeneric1(INTRN_JS_GET_BIOBJECT,
+            BaseNode *node1 = CheckConvertToJSValueType(CompileGeneric1(INTRN_JS_GET_BIOBJECT,
                   jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE), false));
-            base_node_t *node2 = CheckConvertToJSValueType(CompileGeneric1(INTRN_JS_GET_BISTRING,
+            BaseNode *node2 = CheckConvertToJSValueType(CompileGeneric1(INTRN_JS_GET_BISTRING,
                   jsbuilder_->GetConstUInt32((uint32_t)JSBUILTIN_STRING_EXPORTS), false));
-            base_node_t *ret_expr = CompileGeneric2(INTRN_JSOP_GETPROP, node1, node2, true);
+            BaseNode *ret_expr = CompileGeneric2(INTRN_JSOP_GETPROP, node1, node2, true);
             jsbuilder_->CreateStmtReturn(ret_expr, false, linenum_);
           } else if (func == jsmain_) {
             BaseNode *undefined = CompileOpConstValue(JSTYPE_UNDEFINED, 0);
@@ -2139,7 +2139,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
           // in middle of conditional expression; save in a temp and associate
           // the temp with the goto label
           // TODO should not pop from opstack_
-          base_node_t *expr = Pop();
+          BaseNode *expr = Pop();
           MIRSymbol *tempvar = SymbolFromSavingInATemp(expr, true);
           Push(jsbuilder_->CreateExprDread(tempvar->GetType(), tempvar));
           CompileOpGoto(pc, pc + offset, tempvar);
@@ -2151,8 +2151,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_IFEQ: /*7, 5, 1, 0*/
       case JSOP_IFNE: /*8, 5, 1, 0*/  {
         int offset = GET_JUMP_OFFSET(pc);
-        base_node_t *opnd = Pop();
-        base_node_t *cond = CheckConvertToBoolean(opnd);
+        BaseNode *opnd = Pop();
+        BaseNode *cond = CheckConvertToBoolean(opnd);
         CompileOpIfJump(op, cond, pc+offset);
         break;
       }
@@ -2160,8 +2160,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_OR: /*68, 5, 1, 1*/
       case JSOP_AND: /*69, 5, 1, 1*/  {
         int offset = GET_JUMP_OFFSET(pc);
-        base_node_t *opnd0 = CheckConvertToJSValueType(Pop());  //Pop IFEQ stmt
-        base_node_t *cond0 = CheckConvertToBoolean(opnd0);
+        BaseNode *opnd0 = CheckConvertToJSValueType(Pop());  //Pop IFEQ stmt
+        BaseNode *cond0 = CheckConvertToBoolean(opnd0);
         MIRSymbol *temp_var = SymbolFromSavingInATemp(opnd0, true);
         opnd0 = jsbuilder_->CreateExprDread(jsbuilder_->GetUInt1(), temp_var);
         Push(opnd0);
@@ -2174,7 +2174,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         pc = pc + offset;
         //Pop(); comment out because CompileScriptBytecodes() has a Pop() which is not listed on command list
         CompileScriptBytecodes(script, start, pc, NULL);
-        base_node_t *opnd1 = CheckConvertToJSValueType(Pop());
+        BaseNode *opnd1 = CheckConvertToJSValueType(Pop());
         jsbuilder_->CreateStmtDassign(temp_var, 0, opnd1, linenum_);
         opnd0 = jsbuilder_->CreateExprDread(temp_var->GetType(), temp_var);
         Push(opnd0);
@@ -2182,21 +2182,21 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       }
       case JSOP_ITER: /*75, 2, 1, 1*/  { 
         uint8_t flags = GET_UINT8(pc);
-        base_node_t *bn = CheckConvertToJSValueType(Pop());
-        base_node_t *itr = CompileOpNewIterator(bn, flags);
+        BaseNode *bn = CheckConvertToJSValueType(Pop());
+        BaseNode *itr = CompileOpNewIterator(bn, flags);
         Push(itr);
         opstack_->flag_has_iter = true;
         break;
       }
       case JSOP_MOREITER: /*76, 1, 1, 2*/  { 
-        base_node_t *iterator = Top();
-        base_node_t *is_iterator = CompileOpMoreIterator(iterator);
+        BaseNode *iterator = Top();
+        BaseNode *is_iterator = CompileOpMoreIterator(iterator);
         Push(is_iterator);
         break;
       }
       case JSOP_ITERNEXT: /*77, 1, 0, 1*/  { 
-        base_node_t *iterator= Top();
-        base_node_t *bn = CompileOpIterNext(iterator);
+        BaseNode *iterator= Top();
+        BaseNode *bn = CompileOpIterNext(iterator);
         Push(bn);
         break;
       }
@@ -2206,34 +2206,34 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         break;
       }
       case JSOP_DUP: /*12, 1, 1, 2*/  {
-        base_node_t *bn = Pop();
+        BaseNode *bn = Pop();
         Push(bn);
-        Push(GenericCloneTree(module_, bn));
+        Push(static_cast<BaseNode *>(GenericCloneTree(module_, static_cast<base_node_t *>(bn))));
         break;
       }
       case JSOP_DUP2: /*13, 1, 2, 4*/  {
-        base_node_t *bn1 = Pop();
-        base_node_t *bn2 = Pop();
+        BaseNode *bn1 = Pop();
+        BaseNode *bn2 = Pop();
         Push(bn2);
         Push(bn1);
-        Push(GenericCloneTree(module_, bn2));
-        Push(GenericCloneTree(module_, bn1));
+        Push(static_cast<BaseNode *>(GenericCloneTree(module_, static_cast<base_node_t *>(bn2))));
+        Push(static_cast<BaseNode *>(GenericCloneTree(module_, static_cast<base_node_t *>(bn1))));
         break;
       }
       case JSOP_SWAP: /*10, 1, 2, 2*/  {
-        base_node_t *bn1 = Pop();
-        base_node_t *bn2 = Pop();
+        BaseNode *bn1 = Pop();
+        BaseNode *bn2 = Pop();
         Push(bn1);
         Push(bn2);
         break;
       }
       case JSOP_PICK: /*133, 2, 0, 0*/  {
         uint32_t n = GET_UINT8(pc);
-        std::vector <base_node_t *> temp_stack;
+        std::vector <BaseNode *> temp_stack;
         for (uint32_t i = 0; i < n; i++) {
           temp_stack.push_back(Pop());
         }
-        base_node_t *bn = Pop();
+        BaseNode *bn = Pop();
         for (uint32_t i = 0; i < n; i++) {
           Push(temp_stack[temp_stack.size() - 1]);
           temp_stack.pop_back();
@@ -2246,13 +2246,13 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_BINDGNAME: /*214, 5, 0, 1*/  {
       case JSOP_BINDNAME: /*110, 5, 0, 1*/
         JSAtom *atom = script->getName(pc);
-        base_node_t *node = CompileOpBindName(atom);
+        BaseNode *node = CompileOpBindName(atom);
         Push(node);
         break;
       }
     case JSOP_CASE: /*121, 5, 2, 1*/  { 
-      base_node_t *rval = Pop();
-      base_node_t *lval = Pop();
+      BaseNode *rval = Pop();
+      BaseNode *lval = Pop();
       int offset = GET_JUMP_OFFSET(pc);
       CompileOpCase(pc, offset, rval, lval);
       break;
@@ -2279,9 +2279,9 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_STRICTNE: /*73, 1, 2, 1*/
       case JSOP_INSTANCEOF: /*114, 1, 2, 1*/
       case JSOP_IN: /*113, 1, 2, 1*/  {
-        base_node_t *opnd1 = Pop();
-        base_node_t *opnd0 = Pop();
-        base_node_t *result = CompileOpBinary(op, opnd0, opnd1);
+        BaseNode *opnd1 = Pop();
+        BaseNode *opnd0 = Pop();
+        BaseNode *result = CompileOpBinary(op, opnd0, opnd1);
         Push(result);
         break;
       }
@@ -2289,33 +2289,33 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_BITNOT: /*33, 1, 1, 1*/
       case JSOP_NEG: /*34, 1, 1, 1*/
       case JSOP_POS: /*35, 1, 1, 1*/  {
-        base_node_t *opnd = Pop();
-        base_node_t *result = CompileOpUnary(op, opnd);
+        BaseNode *opnd = Pop();
+        BaseNode *result = CompileOpUnary(op, opnd);
         Push(result);
         break;
       }
       case JSOP_DELNAME: /*36, 5, 0, 1*/  { SIMULATESTACK(0, 1); break; }
       case JSOP_DELPROP: /*37, 5, 1, 1*/  {
         JSString *str = script->getAtom(pc);
-        base_node_t *nameIndex = CheckConvertToJSValueType(CompileOpString(str));
-        base_node_t *obj = CheckConvertToJSValueType(Pop());
-        base_node_t *res = CompileGeneric2(INTRN_JSOP_DELPROP, obj, nameIndex, true);
+        BaseNode *nameIndex = CheckConvertToJSValueType(CompileOpString(str));
+        BaseNode *obj = CheckConvertToJSValueType(Pop());
+        BaseNode *res = CompileGeneric2(INTRN_JSOP_DELPROP, obj, nameIndex, true);
         Push(res);
         break;
       }
       case JSOP_DELELEM: /*38, 1, 2, 1*/  {
-        base_node_t *index = Pop();
-        base_node_t *obj = CheckConvertToJSValueType(Pop());
+        BaseNode *index = Pop();
+        BaseNode *obj = CheckConvertToJSValueType(Pop());
         index = CheckConvertToJSValueType(index);
-        base_node_t *bn = CompileGeneric2(INTRN_JSOP_DELPROP, obj, index,  true);
+        BaseNode *bn = CompileGeneric2(INTRN_JSOP_DELPROP, obj, index,  true);
         Push(bn);
         break;
       }
       case JSOP_TOID: /*225, 1, 1, 1*/  { SIMULATESTACK(1, 1); break; }
       case JSOP_TYPEOFEXPR: /*197, 1, 1, 1*/
       case JSOP_TYPEOF: /*39, 1, 1, 1*/  {
-        base_node_t *opnd = Pop();
-        base_node_t *result = CompileOpUnary(JSOP_TYPEOF, opnd);
+        BaseNode *opnd = Pop();
+        BaseNode *result = CompileOpUnary(JSOP_TYPEOF, opnd);
         Push(result);
         break;
       }
@@ -2325,16 +2325,16 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         break;
       }
       case JSOP_THIS: /*65, 1, 0, 1*/  {
-        base_node_t *bn = CompileGeneric0(INTRN_JSOP_THIS, false);
+        BaseNode *bn = CompileGeneric0(INTRN_JSOP_THIS, false);
         Push(bn);
         break;
       }
       case JSOP_GETPROP: /*53, 5, 1, 1*/
       case JSOP_CALLPROP: /*184, 5, 1, 1*/  {
         JSString *str = script->getAtom(pc);
-        base_node_t *obj = CheckConvertToJSValueType(Pop());
-        base_node_t *name = CompileOpString(str);
-        base_node_t *val = CompileGeneric2(INTRN_JSOP_GETPROP_BY_NAME, obj, name, true);
+        BaseNode *obj = CheckConvertToJSValueType(Pop());
+        BaseNode *name = CompileOpString(str);
+        BaseNode *val = CompileGeneric2(INTRN_JSOP_GETPROP_BY_NAME, obj, name, true);
         Push(val);
         break;
       }
@@ -2343,13 +2343,13 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         // Actually I think it is a bug in SpiderMonkey.
         Pop();
         JSAtom *atom = script->getAtom(GET_UINT32_INDEX(pc));
-        base_node_t *bn = CompileOpName(atom, pc);
+        BaseNode *bn = CompileOpName(atom, pc);
         Push(bn);
         break;
       }
       case JSOP_LENGTH: /*217, 5, 1, 1*/  {
-        base_node_t *array = CheckConvertToJSValueType(Pop());
-        base_node_t *length = CompileGeneric1(INTRN_JSOP_LENGTH, array, false);
+        BaseNode *array = CheckConvertToJSValueType(Pop());
+        BaseNode *length = CompileGeneric1(INTRN_JSOP_LENGTH, array, false);
         Push(length);
         break;
       }
@@ -2357,26 +2357,26 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_SETGNAME: /*155, 5, 2, 1*/  {
       case JSOP_SETNAME: /*111, 5, 2, 1*/
         JSAtom *atom = script->getName(pc);
-        base_node_t *val = Pop();
+        BaseNode *val = Pop();
         Pop(); // pop the scope
         if (!CompileOpSetName(atom, val))
           return false;
         break;
       }
       case JSOP_GETELEM: /*55, 1, 2, 1*/  {
-        base_node_t *index = Pop();
-        base_node_t *obj = CheckConvertToJSValueType(Pop());
+        BaseNode *index = Pop();
+        BaseNode *obj = CheckConvertToJSValueType(Pop());
         index = CheckConvertToJSValueType(index);
-        base_node_t *elem = CompileGeneric2(INTRN_JSOP_GETPROP, obj, index, true);
+        BaseNode *elem = CompileGeneric2(INTRN_JSOP_GETPROP, obj, index, true);
         Push(elem);
         break;
       }
       case JSOP_CALLELEM: /*193, 1, 2, 1*/  { SIMULATESTACK(2, 1); break; }
       case JSOP_INITELEM: /*94, 1, 3, 1*/
       case JSOP_SETELEM: /*56, 1, 3, 1*/  {
-        base_node_t *val = Pop();
-        base_node_t *index = Pop();
-        base_node_t *obj = CheckConvertToJSValueType(Pop());
+        BaseNode *val = Pop();
+        BaseNode *index = Pop();
+        BaseNode *obj = CheckConvertToJSValueType(Pop());
         index = CheckConvertToJSValueType(index);
         StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_SETPROP, obj,
                                                               index,
@@ -2392,7 +2392,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_SPREADEVAL: /*43, 1, 3, 1*/  { SIMULATESTACK(3, 1); break; }
       case JSOP_NEW: /*82, 3, -1, 1*/ {
         uint32_t argc = GET_ARGC(pc);
-        base_node_t *bn = CompileOpNew(argc);
+        BaseNode *bn = CompileOpNew(argc);
         Push(bn);
         break;
       }
@@ -2400,20 +2400,20 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_FUNCALL: /*108, 3, -1, 1*/
       case JSOP_CALL: /*58, 3, -1, 1*/  {
         uint32_t argc = GET_ARGC(pc);
-        base_node_t *bn = CompileOpCall(argc);
+        BaseNode *bn = CompileOpCall(argc);
         Push(bn);
         break;
       }
       case JSOP_SETCALL: /*74, 1, 0, 0*/  { NOTHANDLED; break; }
       case JSOP_IMPLICITTHIS: /*226, 5, 0, 1*/  {
-        base_node_t *bn = CompileOpConstValue(JSTYPE_UNDEFINED, 0);
+        BaseNode *bn = CompileOpConstValue(JSTYPE_UNDEFINED, 0);
         Push(bn);
         break;
       }
       case JSOP_GETGNAME: /*154, 5, 0, 1*/
       case JSOP_NAME: /*59, 5, 0, 1*/  {
         JSAtom *atom = script->getAtom(GET_UINT32_INDEX(pc));
-        base_node_t *bn = CompileOpName(atom, pc);
+        BaseNode *bn = CompileOpName(atom, pc);
         Push(bn);
         break;
       }
@@ -2454,7 +2454,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       }
       case JSOP_STRING: /*61, 5, 0, 1*/  {
         JSString *str = script->getAtom(pc);
-        base_node_t *bn = CompileOpString(str);
+        BaseNode *bn = CompileOpString(str);
         Push(bn);
         break;
       }
@@ -2487,7 +2487,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       }
       case JSOP_TABLESWITCH: /*70, -1, 1, 0*/  {
         int32_t len = GET_JUMP_OFFSET(pc);
-        base_node_t *opnd = Pop();
+        BaseNode *opnd = Pop();
         CompileOpTableSwitch(opnd, len, script, pc);
         break;
       }
@@ -2498,47 +2498,47 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         JSAtom * atom = ScopeCoordinateName(
             jscontext_->runtime()->scopeCoordinateNameCache, script, pc);
         DEBUGPRINT2(atom);
-        base_node_t *bn = CompileOpGetAliasedVar(atom);
+        BaseNode *bn = CompileOpGetAliasedVar(atom);
         Push(bn);
         break;
       }
       case JSOP_SETALIASEDVAR: /*137, 5, 1, 1*/  {
-        base_node_t *val = CheckConvertToJSValueType(Pop());
+        BaseNode *val = CheckConvertToJSValueType(Pop());
         JSAtom * atom = ScopeCoordinateName(
             jscontext_->runtime()->scopeCoordinateNameCache, script, pc);
-        base_node_t *bn = CompileOpSetAliasedVar(atom, val);
+        BaseNode *bn = CompileOpSetAliasedVar(atom, val);
         Push(val);
         break;
       }
       case JSOP_GETARG: /*84, 3, 0, 1*/  {
         uint32_t i = GET_ARGNO(pc);
-        base_node_t *bn = CompileOpGetArg(i);
+        BaseNode *bn = CompileOpGetArg(i);
         Push(bn);
         break;
       }
       case JSOP_SETARG: /*85, 3, 1, 1*/  {
         uint32_t i = GET_ARGNO(pc);
-        base_node_t *bn = CheckConvertToJSValueType(Pop());
+        BaseNode *bn = CheckConvertToJSValueType(Pop());
         CompileOpSetArg(i, bn);
         break;
       }
       case JSOP_GETLOCAL: /*86, 4, 0, 1*/  {
         uint32_t i = GET_LOCALNO(pc);
-        base_node_t *bn = CompileOpGetLocal(i);
+        BaseNode *bn = CompileOpGetLocal(i);
         Push(bn);
         break;
       }
       case JSOP_SETLOCAL: /*87, 4, 1, 1*/  {
         uint32_t i = GET_LOCALNO(pc);
-        base_node_t *src = CheckConvertToJSValueType(Pop());
-        base_node_t *bn = CompileOpSetLocal(i, src);
+        BaseNode *src = CheckConvertToJSValueType(Pop());
+        BaseNode *bn = CompileOpSetLocal(i, src);
         Push(src);
         break;
       }
       case JSOP_NEWINIT: /*89, 5, 0, 1*/  {
         // Array or Object.
         uint8_t i = GET_UINT8(pc);
-        base_node_t *obj = CompileOpNewInit(i);
+        BaseNode *obj = CompileOpNewInit(i);
         Push(obj);
         break;
       }
@@ -2546,11 +2546,11 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         uint32_t length = GET_UINT24(pc);
         BaseNode *len = jsbuilder_->GetConstUInt32(length);
 #if 1
-        base_node_t *arr = CompileGeneric1(INTRN_JS_NEW_ARR_LENGTH, CheckConvertToJSValueType(len), true);
+        BaseNode *arr = CompileGeneric1(INTRN_JS_NEW_ARR_LENGTH, CheckConvertToJSValueType(len), true);
         Push(arr);
         break;
 #else
-        std::stack<base_node_t *> tmp_stack;
+        std::stack<BaseNode *> tmp_stack;
         pc = js::GetNextPc(pc);
         op = JSOp(*pc);
         jsbytecode *new_pc;
@@ -2563,7 +2563,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
                 CompileScriptBytecodes (script, pc, js::GetNextPc(pc), NULL);
             }
           } else {
-              base_node_t *init = Pop();
+              BaseNode *init = Pop();
               tmp_stack.push (init);
           }
           pc = js::GetNextPc(pc);
@@ -2573,7 +2573,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
           *newpc = pc;
 
         if (length == 0) {
-          base_node_t *arr = CompileGeneric1(INTRN_JS_NEW_ARR_LENGTH, CheckConvertToJSValueType(CompileOpConstValue(JSTYPE_NUMBER, 0)), true);
+          BaseNode *arr = CompileGeneric1(INTRN_JS_NEW_ARR_LENGTH, CheckConvertToJSValueType(CompileOpConstValue(JSTYPE_NUMBER, 0)), true);
           Push(arr);
           break;
         }
@@ -2592,9 +2592,9 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         MIRType *array_ptr_type = jsbuilder_->GetOrCreatePointerType(array_type);
         tyidx_t tyidx = array_type->_ty_idx;
         arguments->SetTyIdx(tyidx);
-        base_node_t *bn;
+        BaseNode *bn;
         MIRType *pargtype = jsbuilder_->GetOrCreatePointerType(arguments->GetType());
-        base_node_t *addr_base = jsbuilder_->CreateExprAddrof(0, arguments);
+        BaseNode *addr_base = jsbuilder_->CreateExprAddrof(0, arguments);
 
         for (uint32_t i = 0; i < length; i++) {
           bn = CheckConvertToJSValueType(tmp_stack.top());
@@ -2609,7 +2609,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
           jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
         }
 
-        base_node_t *arr = CompileGeneric2(INTRN_JS_NEW_ARR_ELEMS, addr_base, len, true);
+        BaseNode *arr = CompileGeneric2(INTRN_JS_NEW_ARR_ELEMS, addr_base, len, true);
         Push(arr);
         break;
 #endif
@@ -2639,7 +2639,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       }
       case JSOP_LAMBDA: /*130, 5, 0, 1*/  {
         JSFunction *jsfun = script->getFunction(GET_UINT32_INDEX(pc));
-        base_node_t * bn = CompileOpLambda(pc, jsfun);
+        BaseNode * bn = CompileOpLambda(pc, jsfun);
         Push(bn);
         break;
       }
@@ -2648,15 +2648,15 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         char *name = funcstack_.top()->scope->GetName();
         char * objname = Util::GetNameWithSuffix(name, "_obj_", mp_);
         MIRSymbol *var = jsbuilder_->GetOrCreateGlobalDecl(objname, jsvalue_type_);
-        base_node_t *bn = jsbuilder_->CreateExprDread(var);
+        BaseNode *bn = jsbuilder_->CreateExprDread(var);
         Push(bn);
         break;
       }
       case JSOP_INITPROP_GETTER: /*97, 5, 2, 1*/  {
         JSString *str = script->getAtom(pc);
         DEBUGPRINT2(str);
-        base_node_t *val = CheckConvertToJSValueType(Pop());
-        base_node_t *obj = CheckConvertToJSValueType(Pop());
+        BaseNode *val = CheckConvertToJSValueType(Pop());
+        BaseNode *obj = CheckConvertToJSValueType(Pop());
         if (!CompileOpInitPropGetter(obj, str, val))
           return false;
         Push(obj);
@@ -2665,26 +2665,26 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_INITPROP_SETTER: /*98, 5, 2, 1*/  { 
         JSString *str = script->getAtom(pc);
         DEBUGPRINT2(str);
-        base_node_t *val = CheckConvertToJSValueType(Pop());
-        base_node_t *obj = CheckConvertToJSValueType(Pop());
+        BaseNode *val = CheckConvertToJSValueType(Pop());
+        BaseNode *obj = CheckConvertToJSValueType(Pop());
         if (!CompileOpInitPropSetter(obj, str, val))
           return false;
         Push(obj);
         break;
       }
       case JSOP_INITELEM_GETTER: /*99, 1, 3, 1*/  {
-        base_node_t *val = CheckConvertToJSValueType(Pop());
-        base_node_t *id = Pop();
-        base_node_t *obj = CheckConvertToJSValueType(Pop());
+        BaseNode *val = CheckConvertToJSValueType(Pop());
+        BaseNode *id = Pop();
+        BaseNode *obj = CheckConvertToJSValueType(Pop());
         if (!CompileOpInitElemGetter(obj, id, val))
           return false;
         Push(obj);
         break;
       }
       case JSOP_INITELEM_SETTER: /*100, 1, 3, 1*/  {
-        base_node_t *val = CheckConvertToJSValueType(Pop());
-        base_node_t *id = Pop();
-        base_node_t *obj = CheckConvertToJSValueType(Pop());
+        BaseNode *val = CheckConvertToJSValueType(Pop());
+        BaseNode *id = Pop();
+        BaseNode *obj = CheckConvertToJSValueType(Pop());
         if (!CompileOpInitElemSetter(obj, id, val))
           return false;
         Push(obj);
@@ -2699,8 +2699,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_SETPROP: /*54, 5, 2, 1*/ {
         JSString *str = script->getAtom(pc);
         DEBUGPRINT2(str);
-        base_node_t *val = Pop();
-        base_node_t *obj = CheckConvertToJSValueType(Pop());
+        BaseNode *val = Pop();
+        BaseNode *obj = CheckConvertToJSValueType(Pop());
         if (!CompileOpSetProp(obj, str, val))
           return false;
         Push(val);
@@ -2709,9 +2709,9 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_INITPROP: /*93, 5, 2, 1*/  {
         JSString *str = script->getAtom(pc);
         DEBUGPRINT2(str);
-        base_node_t *val = Pop();
-        base_node_t *obj = CheckConvertToJSValueType(Pop());
-        base_node_t *name = CompileOpString(str);
+        BaseNode *val = Pop();
+        BaseNode *obj = CheckConvertToJSValueType(Pop());
+        BaseNode *name = CompileOpString(str);
         StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_INITPROP_BY_NAME, obj,
                                                                  name,
                                                                  CheckConvertToJSValueType(val), NULL);
@@ -2721,8 +2721,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         break;
       }
       case JSOP_INITELEM_ARRAY: /*96, 4, 2, 1*/  {
-        base_node_t *init = Pop();
-        base_node_t *arr = CheckConvertToJSValueType(Pop());
+        BaseNode *init = Pop();
+        BaseNode *arr = CheckConvertToJSValueType(Pop());
         BaseNode *index = CompileOpConstValue(JSTYPE_NUMBER, (int32_t)GET_UINT24(pc));
         if (!CompileOpSetElem(arr, index, init))
           return false;
@@ -2737,15 +2737,15 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         break;
       }
       case JSOP_RETSUB: /*117, 1, 2, 0*/  { 
-        base_node_t *lval = Pop();
-        base_node_t *rval = Pop();
+        BaseNode *lval = Pop();
+        BaseNode *rval = Pop();
         StmtNode* retsub = module_->CurFuncCodeMp()->New<StmtNode>(OP_retsub);
         retsub->srcpos.SetLinenum(lineNo);
         jsbuilder_->AddStmtInCurrentFunctionBody(retsub);
         break;
         }
       case JSOP_EXCEPTION: /*118, 1, 0, 1*/  {
-        base_node_t *rr = jsbuilder_->CreateExprRegread(PTY_dynany, -SREG_thrownval);
+        BaseNode *rr = jsbuilder_->CreateExprRegread(PTY_dynany, -SREG_thrownval);
         Push(rr);
         break; 
         }
@@ -2754,8 +2754,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         finally->srcpos.SetLinenum(lineNo);
         jsbuilder_->AddStmtInCurrentFunctionBody(finally);
         // TODO: need to Push two entries onto stack.  false, (next bytecode's PC)
-        base_node_t *bval = CompileOpConstValue(JSTYPE_BOOLEAN, 0);
-        base_node_t *tval = CompileOpConstValue(JSTYPE_NUMBER, GET_UINT32_INDEX(js::GetNextPc(pc)));
+        BaseNode *bval = CompileOpConstValue(JSTYPE_BOOLEAN, 0);
+        BaseNode *tval = CompileOpConstValue(JSTYPE_NUMBER, GET_UINT32_INDEX(js::GetNextPc(pc)));
         Push(tval);
         Push(bval);
         break;
@@ -2765,7 +2765,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         SIMULATESTACK(1, 0);
         break;
       case JSOP_THROW: /*112, 1, 1, 0*/  { 
-        base_node_t *rval = Pop();
+        BaseNode *rval = Pop();
         StmtNode *throwstmt = jsbuilder_->CreateStmtThrow(CheckConvertToJSValueType(rval));
         throwstmt->srcpos.SetLinenum(lineNo);
         jsbuilder_->AddStmtInCurrentFunctionBody(throwstmt);
