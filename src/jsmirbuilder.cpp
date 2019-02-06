@@ -129,7 +129,7 @@ void JSMIRBuilder::AddStmtInCurrentFunctionBody(StmtNode *n) {
   DEBUGPRINTnode(n);
 }
 
-NaryStmtNode *JSMIRBuilder::CreateStmtReturn(base_node_t *rval, bool adj_type, unsigned linenum) {
+NaryStmtNode *JSMIRBuilder::CreateStmtReturn(BaseNode *rval, bool adj_type, unsigned linenum) {
   NaryStmtNode *stmt = MIRBuilder::CreateStmtReturn(rval);
   stmt->srcpos.SetLinenum(linenum);
   AddStmtInCurrentFunctionBody(stmt);
@@ -176,7 +176,7 @@ void JSMIRBuilder::UpdateFunction(JSMIRFunction *func,
 void JSMIRBuilder::SaveReturnValue(MIRSymbol *var) {
   DEBUGPRINT4("in SaveReturnValue")
 
-  base_node_t *bn = CreateExprRegread(globaltable.type_table_[var->GetTyIdx().idx]->GetPrimType(), -SREG_retval0);
+  BaseNode *bn = CreateExprRegread(globaltable.type_table_[var->GetTyIdx().idx]->GetPrimType(), -SREG_retval0);
   StmtNode *stmt = CreateStmtDassign(var, 0, bn);
   stmt->srcpos.SetLinenum(lineNo);
   MIRBuilder::AddStmtInCurrentFunctionBody(stmt);
@@ -185,7 +185,7 @@ void JSMIRBuilder::SaveReturnValue(MIRSymbol *var) {
 
 StmtNode *JSMIRBuilder::CreateStmtDassign(MIRSymbol *symbol,
                                           fldid_t field_id,
-                                          base_node_t *src,
+                                          BaseNode *src,
                                           unsigned linenum) {
   DEBUGPRINT4("in CreateStmtDassign")
 
@@ -196,9 +196,9 @@ StmtNode *JSMIRBuilder::CreateStmtDassign(MIRSymbol *symbol,
 }
 
 IntrinsiccallNode *JSMIRBuilder::CreateStmtIntrinsicCall1N(
-      MIRIntrinsicId idx, base_node_t *arg0, MapleVector<base_node_t *> &args) {
+      MIRIntrinsicId idx, BaseNode *arg0, MapleVector<BaseNode *> &args) {
   IntrinsiccallNode *stmt = module_->CurFuncCodeMp()->New<IntrinsiccallNode>(module_, OP_intrinsiccall);
-  MapleVector<base_node_t *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
+  MapleVector<BaseNode *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
   arguments.push_back(arg0);
   for (int i=0; i<args.size(); i++)
     arguments.push_back(args[i]);

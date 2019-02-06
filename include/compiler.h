@@ -132,7 +132,7 @@ class JSCompiler{
   BaseNode *CompileOpBinary(JSOp op, BaseNode *opnd0, BaseNode *opnd1);
   BaseNode *CompileOpUnary(JSOp op, BaseNode *opnd);
   BaseNode *CompileGenericN(int32_t intrin_id,
-                               MapleVector<base_node_t *> &arguments,
+                               MapleVector<BaseNode *> &arguments,
                                bool is_call);
   BaseNode *CompileGeneric0(int32_t intrin_id,
                                bool is_call);

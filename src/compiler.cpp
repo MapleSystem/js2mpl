@@ -375,7 +375,7 @@ BaseNode *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool need_t
   Pop();
 
   if((MIRIntrinsicId)idx == INTRN_JS_NEW_ARR_ELEMS) {
-    MapleVector<base_node_t *> args(module_->CurFuncCodeMpAllocator()->Adapter());
+    MapleVector<BaseNode *> args(module_->CurFuncCodeMpAllocator()->Adapter());
     MIRSymbol *arguments = NULL;
     arguments = jsbuilder_->GetCurrentFunction()->symtab->CreateSymbol(SCOPE_LOCAL);
     const char *temp_name = Util::GetSequentialName("js_arguments_", temp_var_no_, mp_);
@@ -399,10 +399,10 @@ BaseNode *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool need_t
       bn = CheckConvertToJSValueType(tmp_stack.top());
       DEBUGPRINT3(bn->op);
       tmp_stack.pop();
-      MapleVector<base_node_t *> opnds(module_->CurFuncCodeMpAllocator()->Adapter());
-      opnds.push_back(static_cast<base_node_t *>(addr_base));
+      MapleVector<BaseNode *> opnds(module_->CurFuncCodeMpAllocator()->Adapter());
+      opnds.push_back(static_cast<BaseNode *>(addr_base));
       BaseNode *addr_offset = jsbuilder_->GetConstInt(i);
-      opnds.push_back(static_cast<base_node_t *>(addr_offset));
+      opnds.push_back(static_cast<BaseNode *>(addr_offset));
       BaseNode *array_expr = jsbuilder_->CreateExprArray(array_type, opnds);
       StmtNode *stmt = jsbuilder_->CreateStmtIassign(array_ptr_type, 0, array_expr, bn);
       stmt->srcpos.SetLinenum(linenum_);
@@ -445,7 +445,7 @@ BaseNode *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool need_t
   }
 
    IntrinDesc *intrindesc = &IntrinDesc::intrintable[idx];
-   MapleVector<base_node_t *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
+   MapleVector<BaseNode *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
   // Push args into arguments.
   for (uint32_t i = 0; i < arg_num; i++) {
     BaseNode *bn = tmp_stack.top();
@@ -472,7 +472,7 @@ BaseNode *JSCompiler::CompileOpCall(uint32_t argc) {
   }
 
   // to reverse the order of args
-  std::vector<base_node_t *> argsvec;
+  std::vector<BaseNode *> argsvec;
   for (uint32_t i = 0; i < argc; i++) {
     // argsvec.insert(argsvec.begin(), Pop());
     argsvec.push_back(CheckConvertToJSValueType(Pop()));
@@ -489,7 +489,7 @@ BaseNode *JSCompiler::CompileOpCall(uint32_t argc) {
   char *name;
   if (js2mplDebug > 2) static_cast<BaseNode *>(funcnode)->Dump(module_);
 
-  MapleVector<base_node_t *> args(module_->CurFuncCodeMpAllocator()->Adapter());
+  MapleVector<BaseNode *> args(module_->CurFuncCodeMpAllocator()->Adapter());
   bool useSimpleCall = false;
   char *funcname = NULL;
   puidx_t puidx;
@@ -565,7 +565,7 @@ BaseNode *JSCompiler::CompileOpCall(uint32_t argc) {
 
 BaseNode *JSCompiler::CompileOpNew(uint32_t argc) {
   // Reverse the order of args.
-  std::vector<base_node_t *> argsvec;
+  std::vector<BaseNode *> argsvec;
   for (uint32_t i = 0; i < argc; i++) {
     argsvec.push_back(CheckConvertToJSValueType(Pop()));
   }
@@ -575,7 +575,7 @@ BaseNode *JSCompiler::CompileOpNew(uint32_t argc) {
   BaseNode *impnode = Pop();
   BaseNode *funcnode = CheckConvertToJSValueType(Pop());
 
-  MapleVector<base_node_t *> args(module_->CurFuncCodeMpAllocator()->Adapter());
+  MapleVector<BaseNode *> args(module_->CurFuncCodeMpAllocator()->Adapter());
   args.push_back(funcnode);
   args.push_back(impnode);
   for (int32_t i = argc - 1; i >=0; i--)
@@ -916,7 +916,7 @@ BaseNode *JSCompiler::CompileOpNewInit(uint32_t kind) {
 
 
 BaseNode *JSCompiler::CompileGenericN(int32_t intrin_id,
-                                        MapleVector<base_node_t *> &arguments,
+                                        MapleVector<BaseNode *> &arguments,
                                         bool is_call) {
   IntrinDesc *intrindesc = &IntrinDesc::intrintable[intrin_id];
   MIRType *retty = intrindesc->GetReturnType();
@@ -935,20 +935,20 @@ BaseNode *JSCompiler::CompileGenericN(int32_t intrin_id,
 }
 
 BaseNode *JSCompiler::CompileGeneric0(int32_t intrin_id, bool is_call) {
-  MapleVector<base_node_t *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
+  MapleVector<BaseNode *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
   return CompileGenericN(intrin_id, arguments, is_call);
 }
 
 BaseNode *JSCompiler::CompileGeneric1(int32_t intrin_id,
                                       BaseNode *arg, bool is_call) {
-  MapleVector<base_node_t *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
+  MapleVector<BaseNode *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
   arguments.push_back(arg);
   return CompileGenericN(intrin_id, arguments, is_call);
 }
 
 BaseNode *JSCompiler::CompileGeneric2(int32_t intrin_id, BaseNode *arg1,
                                       BaseNode *arg2, bool is_call) {
-  MapleVector<base_node_t *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
+  MapleVector<BaseNode *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
   arguments.push_back(arg1);
   arguments.push_back(arg2);
   return CompileGenericN(intrin_id, arguments, is_call);
@@ -956,7 +956,7 @@ BaseNode *JSCompiler::CompileGeneric2(int32_t intrin_id, BaseNode *arg1,
 
 BaseNode *JSCompiler::CompileGeneric3(int32_t intrin_id, BaseNode *arg1,
                                       BaseNode *arg2, BaseNode *arg3, bool is_call) {
-  MapleVector<base_node_t *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
+  MapleVector<BaseNode *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
   arguments.push_back(arg1);
   arguments.push_back(arg2);
   arguments.push_back(arg3);
@@ -965,7 +965,7 @@ BaseNode *JSCompiler::CompileGeneric3(int32_t intrin_id, BaseNode *arg1,
 
 BaseNode *JSCompiler::CompileGeneric4(int32_t intrin_id, BaseNode *arg1,
                                       BaseNode *arg2, BaseNode *arg3, BaseNode *arg4, bool is_call) {
-  MapleVector<base_node_t *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
+  MapleVector<BaseNode *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
   arguments.push_back(arg1);
   arguments.push_back(arg2);
   arguments.push_back(arg3);
@@ -2208,7 +2208,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
       case JSOP_DUP: /*12, 1, 1, 2*/  {
         BaseNode *bn = Pop();
         Push(bn);
-        Push(static_cast<BaseNode *>(GenericCloneTree(module_, static_cast<base_node_t *>(bn))));
+        Push(static_cast<BaseNode *>(bn->CloneTree(module_)));
         break;
       }
       case JSOP_DUP2: /*13, 1, 2, 4*/  {
@@ -2216,8 +2216,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
         BaseNode *bn2 = Pop();
         Push(bn2);
         Push(bn1);
-        Push(static_cast<BaseNode *>(GenericCloneTree(module_, static_cast<base_node_t *>(bn2))));
-        Push(static_cast<BaseNode *>(GenericCloneTree(module_, static_cast<base_node_t *>(bn1))));
+        Push(static_cast<BaseNode *>(bn2->CloneTree(module_)));
+        Push(static_cast<BaseNode *>(bn1->CloneTree(module_)));
         break;
       }
       case JSOP_SWAP: /*10, 1, 2, 2*/  {
@@ -2600,7 +2600,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script,
           bn = CheckConvertToJSValueType(tmp_stack.top());
           DEBUGPRINT3(bn->op);
           tmp_stack.pop();
-          MapleVector<base_node_t *> opnds(module_.CurFuncCodeMpAllocator()->Adapter());
+          MapleVector<BaseNode *> opnds(module_.CurFuncCodeMpAllocator()->Adapter());
           opnds.push_back(addr_base);
           BaseNode *addr_offset = jsbuilder_->GetConstInt(length - i - 1);
           opnds.push_back(addr_offset);
