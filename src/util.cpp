@@ -15,83 +15,87 @@ int js2mplDebugIndent = 0;
 
 namespace mapleir {
 
-void Util::AdjIndent(int n) {
-  js2mplDebugIndent += n;
-}
-
-void Util::SetIndent(int n) {
-  js2mplDebugIndent = n;
-}
-
-const char * Util::getOpcodeName[228] = {
-#include "opcname.def"
-};
-
-static bool ValidInName(char c) {
-  if (c >= 'a' && c <= 'z') return true;
-  if (c >= 'A' && c <= 'Z') return true;
-  if (c >= '0' && c <= '9') return true;
-  if (c == '_' || c == '$') return true;
-  return false;
-}
-
-char * Util::GetString(JSAtom *atom, MemPool *mp, JSContext *ctx) {
-  if (!atom)
-    return NULL;
-
-  js::ExclusiveContext *ect = (js::ExclusiveContext *)ctx;
-  int len = atom->length();
-  const jschar * js = atom->getCharsZ(ect);
-  char * name = static_cast<char *>(mp->Malloc(len+1));
-  char c;
-
-  bool isGood = true;
-  for (int i = 0; i < len; i++) {
-    c = js[i];
-    if (ValidInName(c))
-      name[i] = c;
-    else {
-      isGood = false;
-      DEBUGPRINT2(c);
+    void Util::AdjIndent(int n) {
+        js2mplDebugIndent += n;
     }
-  }
-  name[len] = '\0';
 
-  DEBUGPRINT2(name);
+    void Util::SetIndent(int n) {
+        js2mplDebugIndent = n;
+    }
 
-  if (!isGood)
-    return NULL;
+    const char *Util::getOpcodeName[228] = {
+#include "opcname.def"
+    };
 
-  return name;
-}
+    static bool ValidInName(char c) {
+        if (c >= 'a' && c <= 'z')
+            return true;
+        if (c >= 'A' && c <= 'Z')
+            return true;
+        if (c >= '0' && c <= '9')
+            return true;
+        if (c == '_' || c == '$')
+            return true;
+        return false;
+    }
 
-char *Util::GetSequentialName0(const char *prefix, uint32_t num, MemPool *mp) {
-  std::stringstream ss;
-  ss << num;
+    char *Util::GetString(JSAtom *atom, MemPool *mp, JSContext *ctx) {
+        if (!atom)
+            return NULL;
 
-  MapleString name(prefix+ss.str(), mp);
-  DEBUGPRINT2(name.c_str());
-  return name.c_str();
-}
+        js::ExclusiveContext *ect = (js::ExclusiveContext *) ctx;
+        int len = atom->length();
+        const jschar *js = atom->getCharsZ(ect);
+        char *name = static_cast<char *>(mp->Malloc(len + 1));
+        char c;
 
-char *Util::GetSequentialName(const char *prefix, uint32_t &num, MemPool *mp) {
-  char * name = GetSequentialName0(prefix, num, mp);
-  num++;
-  return name;
-}
+        bool isGood = true;
+        for (int i = 0; i < len; i++) {
+            c = js[i];
+            if (ValidInName(c))
+                name[i] = c;
+            else {
+                isGood = false;
+                DEBUGPRINT2(c);
+            }
+        }
+        name[len] = '\0';
 
-char *Util::GetNameWithPrefix(const char *orig_name, const char *prefix, MemPool *mp) {
-  std::stringstream ss;
-  ss << prefix;
-  MapleString name(ss.str() + orig_name, mp);
-  return name.c_str();
-}
+        DEBUGPRINT2(name);
 
-char *Util::GetNameWithSuffix(const char *orig_name, const char *suffix, MemPool *mp) {
-  std::stringstream ss;
-  ss << suffix;
-  MapleString name(orig_name + ss.str(), mp);
-  return name.c_str();
-}
+        if (!isGood)
+            return NULL;
 
-}  // namespace mapleir
+        return name;
+    }
+
+    char *Util::GetSequentialName0(const char *prefix, uint32_t num, MemPool *mp) {
+        std::stringstream ss;
+        ss << num;
+
+        MapleString name(prefix + ss.str(), mp);
+        DEBUGPRINT2(name.c_str());
+        return name.c_str();
+    }
+
+    char *Util::GetSequentialName(const char *prefix, uint32_t &num, MemPool *mp) {
+        char *name = GetSequentialName0(prefix, num, mp);
+        num++;
+        return name;
+    }
+
+    char *Util::GetNameWithPrefix(const char *orig_name, const char *prefix, MemPool *mp) {
+        std::stringstream ss;
+        ss << prefix;
+        MapleString name(ss.str() + orig_name, mp);
+        return name.c_str();
+    }
+
+    char *Util::GetNameWithSuffix(const char *orig_name, const char *suffix, MemPool *mp) {
+        std::stringstream ss;
+        ss << suffix;
+        MapleString name(orig_name + ss.str(), mp);
+        return name.c_str();
+    }
+
+} // namespace mapleir
