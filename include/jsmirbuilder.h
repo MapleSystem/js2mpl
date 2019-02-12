@@ -25,11 +25,11 @@ class JSMIRBuilder : public MIRBuilder {
                                      MIRType *return_type,
                                      ArgVector arguments,
                                      bool isvarg);
-  NaryStmtNode *CreateStmtReturn(base_node_t *rval, bool adj_type, unsigned linenum);
-  StmtNode *CreateStmtDassign(MIRSymbol *symbol, fldid_t field_id, base_node_t *src, unsigned linenum);
+  NaryStmtNode *CreateStmtReturn(BaseNode *rval, bool adj_type, unsigned linenum);
+  StmtNode *CreateStmtDassign(MIRSymbol *symbol, fldid_t field_id, BaseNode *src, unsigned linenum);
   IntrinsiccallNode *CreateStmtIntrinsicCall1N( MIRIntrinsicId idx,
-                                       base_node_t *arg0,
-                                       MapleVector<base_node_t *> &args);
+                                       BaseNode *arg0,
+                                       MapleVector<BaseNode *> &args);
 
   void UpdateFunction(JSMIRFunction *fn, MIRType *return_type, ArgVector arguments);
 //void SaveReturnValue(MIRSymbol *var);
