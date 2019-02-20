@@ -3,7 +3,7 @@
 #include "js/src/vm/ScopeObject.h"
 #include "../include/closure.h"
 
-namespace mapleir {
+namespace maple {
 
     bool JSClosure::IsFuncModified(char *name) {
         std::vector<char *>::iterator I;
@@ -498,4 +498,4 @@ namespace mapleir {
         nameJSMIRfunc_.push_back(P);
     }
 
-} // namespace mapleir
+} // namespace maple

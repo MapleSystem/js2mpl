@@ -13,7 +13,7 @@
 #include "../include/scope.h"
 #include "../include/util.h"
 
-namespace mapleir {
+namespace maple {
 using namespace std;
 
 struct EHstruct {
@@ -40,7 +40,7 @@ class EH {
     Scope *scope_;
 
   public:
-    EH(JSContext *context, JSScript *script, mapleir::MIRModule *module, JSMIRBuilder *jsbuilder, Scope *scope) : 
+    EH(JSContext *context, JSScript *script, maple::MIRModule *module, JSMIRBuilder *jsbuilder, Scope *scope) : 
       mp_(module->mp_),
       ctx_(context),
       jsbuilder_(jsbuilder),
@@ -63,7 +63,7 @@ class EH {
     bool IsInEHrange(jsbytecode *pc) { return GetEHstruct(pc) != NULL; }
 };
 
-}  // namespace mapleir
+}  // namespace maple
 #endif  // JS2MPL_INCLUDE_EH_H
 
 

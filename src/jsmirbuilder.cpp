@@ -2,7 +2,7 @@
 #include <string>
 #include "../include/jsmirbuilder.h"
 
-namespace mapleir {
+namespace maple {
     // Create jsvalue_type as the JS::Value from mozjs-31.2.0/js/public/Value.h.
     // We only consider littel_endian and 32-bit architectures here.
     MIRType *JSMIRBuilder::CreateJSValueType() {
@@ -200,4 +200,4 @@ void JSMIRBuilder::SaveReturnValue(MIRSymbol *var) {
         return stmt;
     }
 
-} // namespace mapleir
+} // namespace maple

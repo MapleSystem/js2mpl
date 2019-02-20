@@ -11,10 +11,10 @@
 #include "../include/js2mpl.h"
 #include "../include/compiler.h"
 
-using namespace mapleir;
+using namespace maple;
 using namespace std;
 
-GlobalTables mapleir::globaltable;
+GlobalTables maple::globaltable;
 
 // extract base name and plugin name from input js file name with path
 static void ProcessSrcInfo(string infile, string &basename, string &pluginname) {
@@ -141,8 +141,8 @@ int main(int argc, const char *argv[]) {
     JSMIRContext jsmirctx(isplugin, name, with_main, jsop_only, simp_call);
 
     MIRModule themodule(fn);
-    themodule.srclang_ = mapleir::SrcLangJS;
-    if (!mapleir::js2mpldriver(fn, &themodule, jsmirctx)) {
+    themodule.srclang_ = maple::SrcLangJS;
+    if (!maple::js2mpldriver(fn, &themodule, jsmirctx)) {
         exit(1);
     }
 
@@ -159,12 +159,12 @@ int main(int argc, const char *argv[]) {
     if (js2mplDebug > 0)
         themodule.Dump();
 
-    themodule.flavor_ = mapleir::FEproduced;
+    themodule.flavor_ = maple::FEproduced;
     themodule.OutputAsciiMpl("");
     return 0;
 }
 
-namespace mapleir {
+namespace maple {
     // The class of the global object.
     static JSClass global_class = { "global",        JSCLASS_GLOBAL_FLAGS,  JS_PropertyStub,  JS_DeletePropertyStub,
                                     JS_PropertyStub, JS_StrictPropertyStub, JS_EnumerateStub, JS_ResolveStub,
@@ -204,7 +204,7 @@ namespace mapleir {
         }
     }
 
-    bool js2mpldriver(const char *fn, mapleir::MIRModule *module, JSMIRContext &jsmirctx) {
+    bool js2mpldriver(const char *fn, maple::MIRModule *module, JSMIRContext &jsmirctx) {
         FILE *file = fopen(fn, "r");
         if (!file) {
             fprintf(stderr, "error input file.");
@@ -247,16 +247,16 @@ namespace mapleir {
             // Set Up JSMIRBuilder
             ///////////////////////////////////////////////
             DEBUGPRINTs("\n\n =====> Pass To Set Up JSMIRBuilder <===\n");
-            mapleir::JSMIRBuilder jsbuilder(module, jsmirctx);
+            maple::JSMIRBuilder jsbuilder(module, jsmirctx);
             jsbuilder.Init();
 
-            mapleir::OperandStack *opstack = module->mp_->New<mapleir::OperandStack>(50);
+            maple::OperandStack *opstack = module->mp_->New<maple::OperandStack>(50);
 
             ///////////////////////////////////////////////
             // Pass To Set Up Scope Chain
             ///////////////////////////////////////////////
             DEBUGPRINTs("\n\n =====> Pass To Set Up Scope Chain <====\n");
-            mapleir::Scope scope(cx, script, module, &jsbuilder);
+            maple::Scope scope(cx, script, module, &jsbuilder);
             scope.Init();
             scope.Build(script);
 
@@ -273,14 +273,14 @@ namespace mapleir {
             // Pass To Set Up Exception Handling
             ///////////////////////////////////////////////
             DEBUGPRINTs("\n\n =====> Pass To Set Up Exception Handling <====\n");
-            mapleir::EH eh(cx, script, module, &jsbuilder, &scope);
+            maple::EH eh(cx, script, module, &jsbuilder, &scope);
             eh.Build(script);
 
             ///////////////////////////////////////////////
             // Pass To Set Up Closure Environment
             ///////////////////////////////////////////////
             DEBUGPRINTs("\n\n =====> Pass To Set Up Closure Env <====\n");
-            mapleir::JSClosure closure(fn, cx, script, module, &scope, &jsbuilder, opstack);
+            maple::JSClosure closure(fn, cx, script, module, &scope, &jsbuilder, opstack);
             closure.Init();
             closure.Build(script);
 
@@ -294,7 +294,7 @@ namespace mapleir {
             // Pass To Build MapleIR.
             ///////////////////////////////////////////////
             DEBUGPRINTs("\n\n =====> Pass To Build MapleIR <=========\n");
-            mapleir::JSCompiler compiler(fn, cx, script, module, &jsbuilder, &scope, &eh, &closure, opstack);
+            maple::JSCompiler compiler(fn, cx, script, module, &jsbuilder, &scope, &eh, &closure, opstack);
 
             compiler.Init();
 
@@ -323,4 +323,4 @@ namespace mapleir {
         return true;
     }
 
-} // namespace mapleir
+} // namespace maple

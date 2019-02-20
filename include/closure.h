@@ -19,7 +19,7 @@
 #include "../include/jsmirbuilder.h"
 #include "../include/scope.h"
 #include "../include/operandstack.h"
-namespace mapleir {
+namespace maple {
 
 class JSClosure {
   typedef std::pair<JSMIRFunction *, std::vector<char *>> funcArgPair;
@@ -40,7 +40,7 @@ class JSClosure {
     explicit JSClosure(const char *filename,
                        JSContext *context,
                        JSScript *script,
-                       mapleir::MIRModule *module,
+                       maple::MIRModule *module,
                        Scope *scope,
                        JSMIRBuilder *jsbuilder,
                        OperandStack *opstack):
@@ -91,5 +91,5 @@ class JSClosure {
     JSMIRFunction *GetJSMIRFunc(char *name);
     void SetJSMIRFunc(char *name, JSMIRFunction *);
 };
-}   // namespace mapleir
+}   // namespace maple
 #endif  // JS2MPL_INCLUDE_JSCLOSURE_H_

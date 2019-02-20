@@ -2,7 +2,7 @@
 #include "../include/operandstack.h"
 #include "../include/compiler.h"
 
-namespace mapleir {
+namespace maple {
 
     // for each stack item that may contain the variable var, evaluate and store
     // the result in a new temp and replace the stack items by that temp
@@ -16,4 +16,4 @@ namespace mapleir {
         }
     }
 
-} // namespace mapleir
+} // namespace maple
