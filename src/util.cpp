@@ -13,7 +13,7 @@
 int js2mplDebug = 0;
 int js2mplDebugIndent = 0;
 
-namespace mapleir {
+namespace maple {
 
     void Util::AdjIndent(int n) {
         js2mplDebugIndent += n;
@@ -98,4 +98,4 @@ namespace mapleir {
         return name.c_str();
     }
 
-} // namespace mapleir
+} // namespace maple

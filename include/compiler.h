@@ -12,7 +12,7 @@
 #include "../include/eh.h"
 #include "../include/util.h"
 
-namespace mapleir {
+namespace maple {
 class JSCompiler{
  private:
   const char *filename_;
@@ -37,7 +37,7 @@ class JSCompiler{
 
   MemPool *mp_;
  public:
-  mapleir::MIRModule *module_;
+  maple::MIRModule *module_;
  private:
   BaseNode *dummyNode;
 
@@ -56,7 +56,7 @@ class JSCompiler{
   explicit JSCompiler(const char *filename, 
                       JSContext *context,
                       JSScript *script, 
-                      mapleir::MIRModule *module, 
+                      maple::MIRModule *module, 
                       JSMIRBuilder *jsbuilder,
                       Scope *scope,
                       EH *eh,
@@ -203,5 +203,5 @@ class JSCompiler{
   // Finish job.
   void Finish();
 };  // class JSCompiler
-}  // namespace mapleir
+}  // namespace maple
 #endif  // JS2MPL_INCLUDE_COMPILER_H_

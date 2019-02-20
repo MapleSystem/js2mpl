@@ -5,7 +5,7 @@
 #include "jsfunction.h"
 #include "js2mpl.h"
 #include "util.h"
-namespace mapleir {
+namespace maple {
 
 class JSMIRBuilder : public MIRBuilder {
  private:
@@ -106,5 +106,5 @@ class JSMIRBuilder : public MIRBuilder {
   bool UseSimpCall() { return jsmir_context_.simp_call_; }
   bool JSOPOnly() { return jsmir_context_.jsop_only_; }
 };
-}   // namespace mapleir
+}   // namespace maple
 #endif  // JS2MPL_INCLUDE_JSMIRBUILDER_H_

@@ -8,7 +8,7 @@
 
 #include "jsvalue.h"
 
-namespace mapleir {
+namespace maple {
 class OpInfo {
   BaseNode *bn_;
   uint32_t tag_;
@@ -83,7 +83,7 @@ class OpStack {
 
 
 };
-}  // namespace mapleir
+}  // namespace maple
 #endif  // JS2MPL_INCLUDE_OPERANDSTACK_H_
 
 

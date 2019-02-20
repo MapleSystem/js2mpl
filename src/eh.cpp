@@ -1,7 +1,7 @@
 /// Copyright [year] <Copyright Owner>
 #include "../include/eh.h"
 
-namespace mapleir {
+namespace maple {
 
     // return the innermost EHstruct containing the pc if any
     // note: we use interval (trypc, endtrypc], that is trypc2 could be endtrypc1
@@ -168,4 +168,4 @@ namespace mapleir {
         return true;
     }
 
-} // namespace mapleir
+} // namespace maple

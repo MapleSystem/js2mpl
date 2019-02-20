@@ -2,7 +2,7 @@
 #include <string>
 #include "../include/jsfunction.h"
 
-namespace mapleir {
+namespace maple {
 
     void JSMIRFunction::AddToAliasList(gstridx_t elem) {
         std::list<gstridx_t>::iterator I;
@@ -29,4 +29,4 @@ namespace mapleir {
         return -1;
     }
 
-} // namespace mapleir
+} // namespace maple
