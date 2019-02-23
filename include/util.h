@@ -17,7 +17,7 @@ extern int js2mplDebugIndent;
 #define FORMAL_POSITION_IN_ARGS 2
 //#define LENGTH_POSITION_IN_ARGS 3
 
-namespace mapleir {
+namespace maple {
 
   extern void PrintIndentation(int indent);
 
@@ -32,7 +32,7 @@ class Util {
     static char *GetNameWithPrefix(const char *orig_name, const char *prefix, MemPool *mp);
     static char *GetNameWithSuffix(const char *orig_name, const char *suffix, MemPool *mp);
 };
-}  // namespace mapleir
+}  // namespace maple
 
 #include "macros.h"
 

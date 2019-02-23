@@ -2,7 +2,7 @@
 #ifndef JS2MPL_INCLUDE_JSFUNCTION_H_
 #define JS2MPL_INCLUDE_JSFUNCTION_H_
 #include "mapleir/include/mirfunction.h"
-namespace mapleir {
+namespace maple {
 
 class ScopeNode;
 class JSClosure;
@@ -45,5 +45,5 @@ class JSMIRFunction : public MIRFunction {
     void AddToAliasList(gstridx_t);
     int GetAliasPosition(gstridx_t);
 };
-}   // namespace mapleir
+}   // namespace maple
 #endif  // JS2MPL_INCLUDE_JSFUNCTION_H_

@@ -12,7 +12,7 @@
 #include "../include/jsmirbuilder.h"
 #include "../include/util.h"
 
-namespace mapleir {
+namespace maple {
 using namespace std;
 
 class ScopeNode {
@@ -81,7 +81,7 @@ class Scope {
     vector<pair<char *, JSFunction *>> nameJSfunc_;
 
   public:
-    Scope(JSContext *context, JSScript *script, mapleir::MIRModule *module, JSMIRBuilder *jsbuilder) : 
+    Scope(JSContext *context, JSScript *script, maple::MIRModule *module, JSMIRBuilder *jsbuilder) : 
       mp_(module->mp_),
       anon_func_no_(0),
       stackDepth(0),
@@ -120,7 +120,7 @@ class Scope {
     void DecDepth() { stackDepth--; }
 };
 
-}  // namespace mapleir
+}  // namespace maple
 #endif  // JS2MPL_INCLUDE_SCOPE_H_
 
 

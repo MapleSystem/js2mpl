@@ -6,7 +6,7 @@
 #include "mapleir/include/mirbuilder.h"
 #include "util.h"
 
-namespace mapleir {
+namespace maple {
 class JSCompiler;
 
 class OperandStack {
@@ -77,7 +77,7 @@ class OperandStack {
 
   void ReplaceStackItemsWithTemps(JSCompiler *compiler, MIRSymbol *var);
 };
-}  // namespace mapleir
+}  // namespace maple
 #endif  // JS2MPL_INCLUDE_OPERANDSTACK_H_
 
 

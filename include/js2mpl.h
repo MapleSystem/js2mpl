@@ -3,7 +3,7 @@
 #define JS2MPL_INCLUDE_JS2MPL_H_
 #include <string.h>
 using namespace std;
-namespace mapleir {
+namespace maple {
   class MIRModule;
   struct JSMIRContext {
     bool isplugin_;

@@ -1,7 +1,7 @@
 /// Copyright [year] <Copyright Owner>
 #include "../include/scope.h"
 
-namespace mapleir {
+namespace maple {
 
     void ScopeNode::clear() {
         node_ = NULL;
@@ -398,4 +398,4 @@ namespace mapleir {
         nameJSfunc_.push_back(P);
     }
 
-} // namespace mapleir
+} // namespace maple

@@ -13,9 +13,9 @@
 #include "js/src/vm/ScopeObject.h"
 #include "../include/compiler.h"
 
-const mapleir::OpcodeTable mapleir::opcodeinfo;
+const maple::OpcodeTable maple::opcodeinfo;
 
-namespace mapleir {
+namespace maple {
 
     enum js_builtin_string_id {
 #define JSBUILTIN_STRING_DEF(id, length, str) id,
@@ -3188,4 +3188,4 @@ namespace mapleir {
         return true;
     } // End JSCompiler::CompileScript(JSScript *script)
 
-} // namespace mapleir
+} // namespace maple
