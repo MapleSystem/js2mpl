@@ -1839,9 +1839,9 @@ namespace maple {
                 std::vector<char *>::iterator IN;
                 for (IN = (*I).second.begin(); IN != (*I).second.end(); IN++, i++) {
                     if (i) {
-                        offset = jsbuilder_->CreateExprBinary(OP_mul, jsbuilder_->GetOrCreateVoidPtr(),
+                        offset = jsbuilder_->CreateExprBinary(OP_mul, jsbuilder_->GetVoidPtr(),
                                                               jsbuilder_->GetConstInt(i), size);
-                        addr = jsbuilder_->CreateExprBinary(OP_add, jsbuilder_->GetOrCreateVoidPtr(), base, offset);
+                        addr = jsbuilder_->CreateExprBinary(OP_add, jsbuilder_->GetVoidPtr(), base, offset);
                     }
                     bn = jsbuilder_->CreateExprIread(jsvalue_type_, jsvalue_ptr_, 0, addr);
                     uint32_t id = jsbuilder_->GetStructFieldIdFromFieldName(env_type, *IN);

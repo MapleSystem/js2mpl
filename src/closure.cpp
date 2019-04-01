@@ -68,7 +68,7 @@ namespace maple {
         gstridx_t parentenv = jsbuilder_->GetOrCreateStringIndex("parentenv");
         if (func->scope->IsTopLevel()) {
             env_fields.push_back(
-                FieldPair(parentenv, TyidxFldAttrPair(jsbuilder_->GetOrCreateVoidPtr()->_ty_idx, FieldAttrs())));
+                FieldPair(parentenv, TyidxFldAttrPair(jsbuilder_->GetVoidPtr()->_ty_idx, FieldAttrs())));
         } else {
             ScopeNode *sn = func->scope;
             JSMIRFunction *parent = sn->GetParentFunc();
