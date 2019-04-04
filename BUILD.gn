@@ -31,7 +31,7 @@ executable("js2mpl1"){
     ]
 
     deps = [
-        "//mapleall/mapleir:libmapleir",
+        "//mapleall/mapleir:libmplir",
         "//mapleall/mapleutil:libmplutil",
         "//mapleall/Mempool:libmempool",
         "//mapleall/HuaweiSecureC:libHWSecureC",
