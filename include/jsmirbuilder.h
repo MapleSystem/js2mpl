@@ -14,7 +14,7 @@ class JSMIRBuilder : public MIRBuilder {
 
  public:
   JSMIRFunction *jsmain_;
-  MIRType *jsvalue_type_;
+  MIRType *jsvalueType;
   MIRType *jsvalue_ptr_;
 
  public:

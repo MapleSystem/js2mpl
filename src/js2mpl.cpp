@@ -34,7 +34,7 @@ static void ProcessSrcInfo(string infile, string &basename, string &pluginname) 
 }
 
 // create a new src file with a plugin wrapper
-static void GenJSFile(string infile, bool with_main, string &outfile) {
+static void GenJSFile(string infile, bool withMain, string &outfile) {
     string basename;
     string pluginname;
     ProcessSrcInfo(infile, basename, pluginname);
@@ -58,7 +58,7 @@ static void GenJSFile(string infile, bool with_main, string &outfile) {
         des << "}\n";
 
         // for testing purpose
-        if (with_main)
+        if (withMain)
             des << pluginname.c_str() << "();\n";
 
         src.close();
@@ -94,9 +94,9 @@ int main(int argc, const char *argv[]) {
         exit(1);
     }
     bool isplugin = false;
-    bool with_main = true;
-    bool jsop_only = false;
-    bool simp_call = true;
+    bool withMain = true;
+    bool jsopOnly = false;
+    bool simpCall = true;
 
     if (argc >= 3) {
         for (int i = 2; i < argc; i++) {
@@ -106,13 +106,13 @@ int main(int argc, const char *argv[]) {
             } else if (!strcmp(argv[i], "-plugin")) {
                 isplugin = true;
             } else if (!strcmp(argv[i], "-main")) {
-                with_main = true;
+                withMain = true;
             } else if (!strcmp(argv[i], "-nomain")) {
-                with_main = false;
+                withMain = false;
             } else if (!strcmp(argv[i], "-jsop")) {
-                jsop_only = true;
+                jsopOnly = true;
             } else if (!strcmp(argv[i], "-nosimpcall")) {
-                simp_call = false;
+                simpCall = false;
             } else if (!strcmp(argv[i], "-help")) {
                 help();
             } else {
@@ -128,20 +128,20 @@ int main(int argc, const char *argv[]) {
     }
 
     const char *fn = argv[1];
-    string file_name(fn);
+    string fileName(fn);
 
     string name;
     string pluginname;
-    ProcessSrcInfo(file_name, name, pluginname);
+    ProcessSrcInfo(fileName, name, pluginname);
 
     if (isplugin) {
         name = pluginname;
     }
 
-    JSMIRContext jsmirctx(isplugin, name, with_main, jsop_only, simp_call);
+    JSMIRContext jsmirctx(isplugin, name, withMain, jsopOnly, simpCall);
 
     MIRModule themodule(fn);
-    themodule.srclang_ = maple::SrcLangJS;
+    themodule.srclang_ = maple::kSrcLangJs;
     if (!maple::js2mpldriver(fn, &themodule, jsmirctx)) {
         exit(1);
     }
@@ -159,7 +159,7 @@ int main(int argc, const char *argv[]) {
     if (js2mplDebug > 0)
         themodule.Dump();
 
-    themodule.flavor_ = maple::FEproduced;
+    themodule.flavor_ = maple::kFeProduced;
     themodule.OutputAsciiMpl("");
     return 0;
 }

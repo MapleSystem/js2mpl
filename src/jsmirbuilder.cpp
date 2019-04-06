@@ -38,15 +38,15 @@ namespace maple {
             st->SetNameStridx(GetOrCreateStringIndex(name[i]));
             if (!globaltable.AddToStringSymbolMap(st))
                 return;
-            st->sclass = SC_text;
-            st->skind = ST_func;
+            st->sclass = kScText;
+            st->skind = kStFunc;
             InsertGlobalName((char *) name[i]);
         }
     }
 
     void JSMIRBuilder::Init() {
-        jsvalue_type_ = CreateJSValueType();
-        jsvalue_ptr_ = GetOrCreatePointerType(jsvalue_type_);
+        jsvalueType = CreateJSValueType();
+        jsvalue_ptr_ = GetOrCreatePointerType(jsvalueType);
 
         InitGlobalName();
         // InitBuiltinMethod();
@@ -66,7 +66,7 @@ namespace maple {
         return fn;
     }
 
-    JSMIRFunction *JSMIRBuilder::GetOrCreateFunction(const char *name, MIRType *return_type, ArgVector arguments,
+    JSMIRFunction *JSMIRBuilder::GetOrCreateFunction(const char *name, MIRType *returnType, ArgVector arguments,
                                                      bool isvarg) {
         DEBUGPRINTsv2("GetOrCreateFunction", name);
         JSMIRFunction *fn = GetFunc(name);
@@ -86,15 +86,15 @@ namespace maple {
         funcst->SetNameStridx(stridx);
         if (!globaltable.AddToStringSymbolMap(funcst))
             return NULL;
-        funcst->sclass = SC_text;
-        funcst->skind = ST_func;
+        funcst->sclass = kScText;
+        funcst->skind = kStFunc;
 
         fn = module_->mp_->New<JSMIRFunction>(module_, funcst->GetStIdx());
         fn->Init();
         fn->puidx = globaltable.functable.size();
         globaltable.functable.push_back(fn);
 
-        fn->_return_tyidx = return_type->_ty_idx;
+        fn->_return_tyidx = returnType->_ty_idx;
 
         MapleVector<tyidx_t> funcvectype(module_->mp_allocator_.Adapter());
         MapleVector<TypeAttrs> funcvecattr(module_->mp_allocator_.Adapter());
@@ -104,14 +104,14 @@ namespace maple {
             argst->SetNameStridx(GetOrCreateStringIndex(var));
             MIRType *ty = arguments[i].second;
             argst->SetTyIdx(ty->_ty_idx);
-            argst->sclass = SC_formal;
-            argst->skind = ST_var;
+            argst->sclass = kScFormal;
+            argst->skind = kStVar;
             fn->symtab->AddToStringSymbolMap(argst);
             fn->AddArgument(argst);
             funcvectype.push_back(ty->_ty_idx);
             funcvecattr.push_back(TypeAttrs());
         }
-        funcst->SetTyIdx(GetOrCreateFunctionType(return_type->_ty_idx, funcvectype, funcvecattr, isvarg)->_ty_idx);
+        funcst->SetTyIdx(GetOrCreateFunctionType(returnType->_ty_idx, funcvectype, funcvecattr, isvarg)->_ty_idx);
         funcst->SetFunction(fn);
         fn->body = fn->code_mp->New<BlockNode>();
 
@@ -127,13 +127,13 @@ namespace maple {
         DEBUGPRINTnode(n);
     }
 
-    NaryStmtNode *JSMIRBuilder::CreateStmtReturn(BaseNode *rval, bool adj_type, unsigned linenum) {
+    NaryStmtNode *JSMIRBuilder::CreateStmtReturn(BaseNode *rval, bool adjType, unsigned linenum) {
         NaryStmtNode *stmt = MIRBuilder::CreateStmtReturn(rval);
         stmt->srcpos.SetLinenum(linenum);
         AddStmtInCurrentFunctionBody(stmt);
 
         JSMIRFunction *func = GetCurrentFunction();
-        if (adj_type && !IsMain(func) && rval->op == OP_dread) {
+        if (adjType && !IsMain(func) && rval->op == OP_dread) {
             DEBUGPRINTsv2("modify _return_type", (rval->op));
             AddrofNode *dn = (AddrofNode *) rval;
             stidx_t stidx = dn->stidx;
@@ -142,17 +142,17 @@ namespace maple {
             DEBUGPRINT3(type);
             int fid = dn->fieldid;
             if (fid) {
-                MIRStructType *Stype = static_cast<MIRStructType *>(type);
+                MIRStructType *stype = static_cast<MIRStructType *>(type);
                 // fieldid in a structure starts from 1 while type vector starts from 0
-                type = Stype->GetElemType(fid - 1);
+                type = stype->GetElemType(fid - 1);
             }
         }
         return stmt;
     }
 
-    void JSMIRBuilder::UpdateFunction(JSMIRFunction *func, MIRType *return_type, ArgVector arguments) {
-        if (return_type) {
-            func->_return_tyidx = return_type->_ty_idx;
+    void JSMIRBuilder::UpdateFunction(JSMIRFunction *func, MIRType *returnType, ArgVector arguments) {
+        if (returnType) {
+            func->_return_tyidx = returnType->_ty_idx;
         }
 
         for (uint32 i = 0; i < arguments.size(); i++) {
@@ -161,8 +161,8 @@ namespace maple {
             st->SetNameStridx(GetOrCreateStringIndex(var));
             MIRType *ty = arguments[i].second;
             st->SetTyIdx(ty->_ty_idx);
-            st->sclass = SC_formal;
-            st->skind = ST_var;
+            st->sclass = kScFormal;
+            st->skind = kStVar;
             func->symtab->AddToStringSymbolMap(st);
             func->AddArgument(st);
         }
@@ -172,17 +172,17 @@ namespace maple {
 void JSMIRBuilder::SaveReturnValue(MIRSymbol *var) {
   DEBUGPRINT4("in SaveReturnValue")
 
-  BaseNode *bn = CreateExprRegread(globaltable.type_table_[var->GetTyIdx().idx]->GetPrimType(), -SREG_retval0);
+  BaseNode *bn = CreateExprRegread(globaltable.type_table_[var->GetTyIdx().idx]->GetPrimType(), -kSregRetval0);
   StmtNode *stmt = CreateStmtDassign(var, 0, bn);
   stmt->srcpos.SetLinenum(lineNo);
   MIRBuilder::AddStmtInCurrentFunctionBody(stmt);
 }
 #endif
 
-    StmtNode *JSMIRBuilder::CreateStmtDassign(MIRSymbol *symbol, fldid_t field_id, BaseNode *src, unsigned linenum) {
+    StmtNode *JSMIRBuilder::CreateStmtDassign(MIRSymbol *symbol, fldid_t fieldId, BaseNode *src, unsigned linenum) {
         DEBUGPRINT4("in CreateStmtDassign")
 
-        StmtNode *stmt = MIRBuilder::CreateStmtDassign(symbol, field_id, src);
+        StmtNode *stmt = MIRBuilder::CreateStmtDassign(symbol, fieldId, src);
         stmt->srcpos.SetLinenum(linenum);
         AddStmtInCurrentFunctionBody(stmt);
         return stmt;

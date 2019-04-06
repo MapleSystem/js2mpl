@@ -31,9 +31,9 @@ namespace maple {
     }
 
     void ScopeNode::AddChild(ScopeNode *node) {
-        list<ScopeNode *>::iterator I;
-        for (I = children_.begin(); I != children_.end(); I++) {
-            if (*I == node)
+        list<ScopeNode *>::iterator i;
+        for (i = children_.begin(); i != children_.end(); i++) {
+            if (*i == node)
                 return;
         }
         children_.push_back(node);
@@ -63,9 +63,9 @@ namespace maple {
         func_ = func;
         if (parent_)
             parent_->SetChild(this);
-        list<ScopeNode *>::iterator I;
-        for (I = children_.begin(); I != children_.end(); I++) {
-            (*I)->SetParent(this);
+        list<ScopeNode *>::iterator i;
+        for (i = children_.begin(); i != children_.end(); i++) {
+            (*i)->SetParent(this);
         }
 
         // set scope in function
@@ -81,27 +81,27 @@ namespace maple {
         DEBUGPRINT2pure(useAliased_);
         DEBUGPRINT2pure(withEnv_);
         DEBUGPRINT2pure(parent_);
-        list<ScopeNode *>::iterator I;
+        list<ScopeNode *>::iterator i;
         ScopeNode *child;
-        for (I = children_.begin(); I != children_.end(); I++) {
-            child = *I;
+        for (i = children_.begin(); i != children_.end(); i++) {
+            child = *i;
             DEBUGPRINT2pure(child);
         }
         DEBUGPRINT0;
     }
 
     ScopeNode *Scope::GetOrCreateSN(char *name) {
-        list<pair<char *, ScopeNode *>>::iterator I;
-        for (I = scopeChain.begin(); I != scopeChain.end(); I++) {
-            if (strcmp(name, (*I).first) == 0) {
-                return (*I).second;
+        list<pair<char *, ScopeNode *>>::iterator i;
+        for (i = scopeChain.begin(); i != scopeChain.end(); i++) {
+            if (strcmp(name, (*i).first) == 0) {
+                return (*i).second;
             }
         }
 
         // create new one
         ScopeNode *sn = mp_->New<ScopeNode>(name);
-        pair<char *, ScopeNode *> P(name, sn);
-        scopeChain.push_back(P);
+        pair<char *, ScopeNode *> p(name, sn);
+        scopeChain.push_back(p);
 
         return sn;
     }
@@ -141,11 +141,11 @@ namespace maple {
         vector<funcVarVecPair> formals = jsscript_->funcFormals;
         char *name;
         char *funcname;
-        vector<funcVarVecPair>::iterator I;
+        vector<funcVarVecPair>::iterator i;
         vector<char *> nameVec;
         JSFunction *jsfun;
-        for (I = formals.begin(); I != formals.end(); I++) {
-            jsfun = (*I).first;
+        for (i = formals.begin(); i != formals.end(); i++) {
+            jsfun = (*i).first;
 
             if (!jsfun->name()) {
                 DEBUGPRINT3(jsfun);
@@ -228,14 +228,14 @@ namespace maple {
                             name = Util::GetString(atom, mp_, ctx_);
                         } else {
                             name = (char *) Util::GetSequentialName0("anonymous_func_", GetAnonyidx(jsfun), mp_);
-                            pair<jsbytecode *, char *> P(pc, name);
-                            bytecodeAnonyFunc.push_back(P);
+                            pair<jsbytecode *, char *> p(pc, name);
+                            bytecodeAnonyFunc.push_back(p);
                         }
                         DEBUGPRINT3(name);
                         funcNames_.push_back(name);
                         SetJSFunc(name, jsfun);
-                        pair<JSScript *, char *> P(scr, name);
-                        scriptstack_.push(P);
+                        pair<JSScript *, char *> p(scr, name);
+                        scriptstack_.push(p);
 
                         parent = funcstack_.top();
                         SetSNParent(name, parent);
@@ -322,20 +322,20 @@ namespace maple {
     }
 
     char *Scope::GetAnonyFunctionName(jsbytecode *pc) {
-        list<pair<jsbytecode *, char *>>::iterator I;
+        list<pair<jsbytecode *, char *>>::iterator i;
         jsbytecode *bytecode;
-        for (I = bytecodeAnonyFunc.begin(); I != bytecodeAnonyFunc.end(); I++) {
-            bytecode = (*I).first;
+        for (i = bytecodeAnonyFunc.begin(); i != bytecodeAnonyFunc.end(); i++) {
+            bytecode = (*i).first;
             if (bytecode == pc)
-                return (*I).second;
+                return (*i).second;
         }
         return NULL;
     }
 
     bool Scope::IsFunction(char *name) {
-        vector<char *>::iterator I;
-        for (I = funcNames_.begin(); I != funcNames_.end(); I++) {
-            if (strcmp(*I, name) == 0) {
+        vector<char *>::iterator i;
+        for (i = funcNames_.begin(); i != funcNames_.end(); i++) {
+            if (strcmp(*i, name) == 0) {
                 return true;
             }
         }
@@ -343,19 +343,19 @@ namespace maple {
     }
 
     void Scope::DumpScopeChain() {
-        list<pair<char *, ScopeNode *>>::iterator I;
+        list<pair<char *, ScopeNode *>>::iterator i;
         ScopeNode *sn;
-        for (I = scopeChain.begin(); I != scopeChain.end(); I++) {
-            sn = (*I).second;
+        for (i = scopeChain.begin(); i != scopeChain.end(); i++) {
+            sn = (*i).second;
             sn->Dump();
         }
     }
 
     void Scope::PopulateSNInfo() {
-        list<pair<char *, ScopeNode *>>::iterator I;
+        list<pair<char *, ScopeNode *>>::iterator i;
         ScopeNode *sn;
-        for (I = scopeChain.begin(); I != scopeChain.end(); I++) {
-            sn = (*I).second;
+        for (i = scopeChain.begin(); i != scopeChain.end(); i++) {
+            sn = (*i).second;
             // set leaf
             if (sn->GetChildren().size() == 0) {
                 sn->SetLeaf();
@@ -363,8 +363,8 @@ namespace maple {
             }
         }
 
-        for (I = scopeChain.begin(); I != scopeChain.end(); I++) {
-            sn = (*I).second;
+        for (i = scopeChain.begin(); i != scopeChain.end(); i++) {
+            sn = (*i).second;
             // propagate closure
             if (sn->IsWithEnv() || sn->UseAliased())
                 sn->PropWithEnv();
@@ -372,20 +372,20 @@ namespace maple {
     }
 
     char *Scope::GetJSFuncName(JSFunction *func) {
-        vector<pair<char *, JSFunction *>>::iterator I;
-        for (I = nameJSfunc_.begin(); I != nameJSfunc_.end(); I++) {
-            if (func == (*I).second) {
-                return (*I).first;
+        vector<pair<char *, JSFunction *>>::iterator i;
+        for (i = nameJSfunc_.begin(); i != nameJSfunc_.end(); i++) {
+            if (func == (*i).second) {
+                return (*i).first;
             }
         }
         return NULL;
     }
 
     JSFunction *Scope::GetJSFunc(char *name) {
-        vector<pair<char *, JSFunction *>>::iterator I;
-        for (I = nameJSfunc_.begin(); I != nameJSfunc_.end(); I++) {
-            if (strcmp(name, (*I).first) == 0) {
-                return (*I).second;
+        vector<pair<char *, JSFunction *>>::iterator i;
+        for (i = nameJSfunc_.begin(); i != nameJSfunc_.end(); i++) {
+            if (strcmp(name, (*i).first) == 0) {
+                return (*i).second;
             }
         }
         return NULL;
@@ -394,8 +394,8 @@ namespace maple {
     void Scope::SetJSFunc(char *name, JSFunction *func) {
         if (GetJSFunc(name))
             return;
-        pair<char *, JSFunction *> P(name, func);
-        nameJSfunc_.push_back(P);
+        pair<char *, JSFunction *> p(name, func);
+        nameJSfunc_.push_back(p);
     }
 
 } // namespace maple

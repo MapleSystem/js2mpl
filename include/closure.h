@@ -58,7 +58,7 @@ class JSClosure {
     JSScript *currscr_;
     std::stack<JSMIRFunction *> funcstack_;
     JSMIRFunction *jsmain_;
-    MIRType *jsvalue_type_;
+    MIRType *jsvalueType;
     MIRType *jsvalue_ptr_;
     std::vector<funcArgPair> funcFormals;
     std::vector<char *> funcMod;

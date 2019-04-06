@@ -21,7 +21,7 @@ class JSCompiler{
   JSScript *jsscript_;
   JSMIRBuilder *jsbuilder_;
 
-  MIRType *jsvalue_type_;
+  MIRType *jsvalueType;
   MIRType *jsvalue_ptr_;
 
   JSMIRFunction *jsmain_;

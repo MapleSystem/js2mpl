@@ -8,20 +8,20 @@ namespace maple {
     // of previous trypc1, and in this case, we want to let trypc2 be part of
     // (trypc1, endtrypc1]
     EHstruct *EH::GetEHstruct(jsbytecode *pc) {
-        vector<EHstruct *>::reverse_iterator I;
-        for (I = EHstructvec_.rbegin(); I != EHstructvec_.rend(); I++) {
-            if (pc > (*I)->trypc && pc <= (*I)->endtrypc)
-                return *I;
+        vector<EHstruct *>::reverse_iterator i;
+        for (i = EHstructvec_.rbegin(); i != EHstructvec_.rend(); i++) {
+            if (pc > (*i)->trypc && pc <= (*i)->endtrypc)
+                return *i;
         }
         return NULL;
     }
 
     EHstruct *EH::GetEHstruct(jsbytecode *trypc, jsbytecode *catchpc, jsbytecode *finallypc, jsbytecode *endtrypc) {
-        vector<EHstruct *>::reverse_iterator I;
-        for (I = EHstructvec_.rbegin(); I != EHstructvec_.rend(); I++) {
-            if ((trypc && (*I)->trypc == trypc) || (catchpc && (*I)->catchpc == catchpc) ||
-                (finallypc && (*I)->finallypc == finallypc) || (endtrypc && (*I)->endtrypc == endtrypc)) {
-                return *I;
+        vector<EHstruct *>::reverse_iterator i;
+        for (i = EHstructvec_.rbegin(); i != EHstructvec_.rend(); i++) {
+            if ((trypc && (*i)->trypc == trypc) || (catchpc && (*i)->catchpc == catchpc) ||
+                (finallypc && (*i)->finallypc == finallypc) || (endtrypc && (*i)->endtrypc == endtrypc)) {
+                return *i;
             }
         }
         return NULL;
@@ -34,9 +34,9 @@ namespace maple {
     }
 
     void EH::DumpEHstructVec() {
-        vector<EHstruct *>::iterator I;
-        for (I = EHstructvec_.begin(); I != EHstructvec_.end(); I++)
-            DumpEHstruct(*I);
+        vector<EHstruct *>::iterator i;
+        for (i = EHstructvec_.begin(); i != EHstructvec_.end(); i++)
+            DumpEHstruct(*i);
     }
 
     bool EH::Build(JSScript *script) {
@@ -78,8 +78,8 @@ namespace maple {
                     jsfun = script->getFunction(GET_UINT32_INDEX(pc));
                     scr = jsfun->nonLazyScript();
                     name = scope_->GetJSFuncName(jsfun);
-                    pair<JSScript *, char *> P(scr, name);
-                    scriptstack_.push(P);
+                    pair<JSScript *, char *> p(scr, name);
+                    scriptstack_.push(p);
                     break;
                 }
                 case JSOP_TRY: {

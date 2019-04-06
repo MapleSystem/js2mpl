@@ -6,9 +6,9 @@
 namespace maple {
 
     bool JSClosure::IsFuncModified(char *name) {
-        std::vector<char *>::iterator I;
-        for (I = funcMod.begin(); I != funcMod.end(); I++)
-            if (!strcmp(name, *I))
+        std::vector<char *>::iterator i;
+        for (i = funcMod.begin(); i != funcMod.end(); i++)
+            if (!strcmp(name, *i))
                 return true;
         return false;
     }
@@ -49,59 +49,59 @@ namespace maple {
 
     MIRType *JSClosure::GetOrCreateEnvType(JSMIRFunction *func) {
         std::stringstream ss;
-        MIRSymbol *func_st = globaltable.GetSymbolFromStidx(func->stidx.Idx());
-        ss << func_st->GetName();
-        std::string env_name = ss.str() + "_env_type";
-        DEBUGPRINT2(env_name);
+        MIRSymbol *funcSt = globaltable.GetSymbolFromStidx(func->stidx.Idx());
+        ss << funcSt->GetName();
+        std::string envName = ss.str() + "_env_type";
+        DEBUGPRINT2(envName);
 
         if (func->envtype) {
-            DEBUGPRINTsv2("env for func has been setup!", env_name);
+            DEBUGPRINTsv2("env for func has been setup!", envName);
             return func->envtype;
         }
 
-        FieldVector env_fields(module_->mp_allocator_.Adapter());
-        FieldVector prnt_fields(module_->mp_allocator_.Adapter());
+        FieldVector envFields(module_->mp_allocator_.Adapter());
+        FieldVector prntFields(module_->mp_allocator_.Adapter());
 
         gstridx_t argnums = jsbuilder_->GetOrCreateStringIndex("argnums");
-        env_fields.push_back(FieldPair(argnums, TyidxFldAttrPair(jsbuilder_->GetUInt32()->_ty_idx, FieldAttrs())));
+        envFields.push_back(FieldPair(argnums, TyidxFldAttrPair(jsbuilder_->GetUInt32()->_ty_idx, FieldAttrs())));
 
         gstridx_t parentenv = jsbuilder_->GetOrCreateStringIndex("parentenv");
         if (func->scope->IsTopLevel()) {
-            env_fields.push_back(
+            envFields.push_back(
                 FieldPair(parentenv, TyidxFldAttrPair(jsbuilder_->GetVoidPtr()->_ty_idx, FieldAttrs())));
         } else {
             ScopeNode *sn = func->scope;
             JSMIRFunction *parent = sn->GetParentFunc();
-            MIRType *parentenv_type = parent->envtype;
-            DEBUGPRINT3(parentenv_type);
-            MIRType *envptr = jsbuilder_->GetOrCreatePointerType(parentenv_type);
+            MIRType *parentenvType = parent->envtype;
+            DEBUGPRINT3(parentenvType);
+            MIRType *envptr = jsbuilder_->GetOrCreatePointerType(parentenvType);
             DEBUGPRINT3(envptr);
-            func->penvtype = parentenv_type;
+            func->penvtype = parentenvType;
             func->penvptr = envptr;
-            env_fields.push_back(FieldPair(parentenv, TyidxFldAttrPair(envptr->_ty_idx, FieldAttrs())));
+            envFields.push_back(FieldPair(parentenv, TyidxFldAttrPair(envptr->_ty_idx, FieldAttrs())));
         }
 
-        MIRType *env_type = jsbuilder_->CreateStructType(env_name.c_str(), env_fields, prnt_fields);
-        DEBUGPRINT2(env_name);
-        DEBUGPRINT2(env_type);
-        MIRStructType *stf = (MIRStructType *) (env_type);
+        MIRType *envType = jsbuilder_->CreateStructType(envName.c_str(), envFields, prntFields);
+        DEBUGPRINT2(envName);
+        DEBUGPRINT2(envType);
+        MIRStructType *stf = (MIRStructType *) (envType);
         DEBUGPRINT2(stf->GetElemType(0));
         gstridx_t idxf = globaltable.GetSymbolFromStidx(func->stidx.Idx())->GetNameStridx();
         DEBUGPRINT2(idxf.idx);
         DEBUGPRINT2(func->stidx.Fullidx());
 
-        func->envtype = env_type;
-        func->envptr = jsbuilder_->GetOrCreatePointerType(env_type);
+        func->envtype = envType;
+        func->envptr = jsbuilder_->GetOrCreatePointerType(envType);
 
-        return env_type;
+        return envType;
     }
 
-    void JSClosure::AddAliasToEnvType(MIRType *env_type, char *name, MIRType *T) {
+    void JSClosure::AddAliasToEnvType(MIRType *envType, char *name, MIRType *t) {
         DEBUGPRINTsv3("add env", name);
         gstridx_t stridx = jsbuilder_->GetOrCreateStringIndex(name);
-        MIRStructType *env_struct = static_cast<MIRStructType *>(env_type);
+        MIRStructType *envStruct = static_cast<MIRStructType *>(envType);
 
-        env_struct->fields.push_back(FieldPair(stridx, TyidxFldAttrPair(T->_ty_idx, FieldAttrs())));
+        envStruct->fields.push_back(FieldPair(stridx, TyidxFldAttrPair(t->_ty_idx, FieldAttrs())));
     }
 
     void JSClosure::AddFuncFormalsToEnvType(JSMIRFunction *func) {
@@ -112,10 +112,10 @@ namespace maple {
         char *name;
         char *funcname;
         JSFunction *jsfun;
-        std::vector<funcVarVecPair>::iterator I;
+        std::vector<funcVarVecPair>::iterator i;
         std::vector<char *> nameVec;
-        for (I = formals.begin(); I != formals.end(); I++) {
-            jsfun = (*I).first;
+        for (i = formals.begin(); i != formals.end(); i++) {
+            jsfun = (*i).first;
             funcname = Util::GetString(jsfun->name(), mp_, jscontext_);
             DEBUGPRINT2(jsfun);
             // anonymous function.
@@ -123,19 +123,19 @@ namespace maple {
                 funcname = (char *) Util::GetSequentialName0("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_);
             }
             DEBUGPRINT2(funcname);
-            MIRSymbol *func_st = globaltable.GetSymbolFromStidx(func->stidx.Idx());
-            if (func_st && strcmp(funcname, func_st->GetName().c_str()) == 0) {
-                std::vector<JSAtom *> args = (*I).second;
-                std::vector<JSAtom *>::iterator IA;
+            MIRSymbol *funcSt = globaltable.GetSymbolFromStidx(func->stidx.Idx());
+            if (funcSt && strcmp(funcname, funcSt->GetName().c_str()) == 0) {
+                std::vector<JSAtom *> args = (*i).second;
+                std::vector<JSAtom *>::iterator ia;
                 DEBUGPRINTsv3("AddFuncFormalsToEnvType", funcname);
                 DEBUGPRINT3((args.size()));
-                for (IA = args.begin(); IA != args.end(); IA++) {
-                    name = Util::GetString(*IA, mp_, jscontext_);
+                for (ia = args.begin(); ia != args.end(); ia++) {
+                    name = Util::GetString(*ia, mp_, jscontext_);
                     nameVec.push_back(name);
-                    AddAliasToEnvType(func->envtype, name, jsvalue_type_);
+                    AddAliasToEnvType(func->envtype, name, jsvalueType);
                 }
-                funcArgPair P(func, nameVec);
-                funcFormals.push_back(P);
+                funcArgPair p(func, nameVec);
+                funcFormals.push_back(p);
 
                 break;
             }
@@ -145,10 +145,10 @@ namespace maple {
     }
 
     JSMIRFunction *JSClosure::ProcessFunc(JSFunction *jsfun, char *funcname) {
-        MIRType *retuen_type = jsvalue_type_;
+        MIRType *retuenType = jsvalueType;
         ArgVector arguments(module_->mp_allocator_.Adapter());
 
-        JSMIRFunction *func = jsbuilder_->GetOrCreateFunction(funcname, retuen_type, arguments, false);
+        JSMIRFunction *func = jsbuilder_->GetOrCreateFunction(funcname, retuenType, arguments, false);
         module_->AddFunction(func);
         SetJSMIRFunc(funcname, func);
         DEBUGPRINT2(funcname);
@@ -196,8 +196,8 @@ namespace maple {
 
         jsbuilder_->UpdateFunction(func, NULL, arguments);
 
-        std::pair<JSScript *, JSMIRFunction *> P(jsfun->nonLazyScript(), func);
-        scriptstack_.push(P);
+        std::pair<JSScript *, JSMIRFunction *> p(jsfun->nonLazyScript(), func);
+        scriptstack_.push(p);
 
         return func;
     }
@@ -206,7 +206,7 @@ namespace maple {
     bool JSClosure::ProcessOpDefFun(jsbytecode *pc) {
         JSFunction *jsfun = currscr_->getFunction(GET_UINT32_INDEX(pc));
         JSScript *scr = jsfun->nonLazyScript();
-        MIRType *retuen_type = jsvalue_type_;
+        MIRType *retuenType = jsvalueType;
         ArgVector arguments(module_->mp_allocator_.Adapter());
         JSAtom *atom = jsfun->displayAtom();
         DEBUGPRINT2(atom);
@@ -248,26 +248,26 @@ namespace maple {
 
         char *funcname;
         JSFunction *jsfun;
-        std::vector<funcVarVec>::iterator I;
+        std::vector<funcVarVec>::iterator i;
         std::vector<char *> nameVec;
         DEBUGPRINT2(name);
-        for (I = locals.begin(); I != locals.end(); I++) {
-            jsfun = (*I).first;
+        for (i = locals.begin(); i != locals.end(); i++) {
+            jsfun = (*i).first;
             funcname = Util::GetString(jsfun->name(), mp_, jscontext_);
             // anonymous function.
             if (!funcname) {
                 funcname = (char *) Util::GetSequentialName0("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_);
             }
             DEBUGPRINT2(funcname);
-            MIRSymbol *func_st = globaltable.GetSymbolFromStidx(func->stidx.Idx());
-            if (func_st && strcmp(funcname, func_st->GetName().c_str()) == 0) {
-                std::vector<JSAtom *> vars = (*I).second;
-                std::vector<JSAtom *>::iterator IA;
+            MIRSymbol *funcSt = globaltable.GetSymbolFromStidx(func->stidx.Idx());
+            if (funcSt && strcmp(funcname, funcSt->GetName().c_str()) == 0) {
+                std::vector<JSAtom *> vars = (*i).second;
+                std::vector<JSAtom *>::iterator ia;
                 DEBUGPRINTsv3("IsLocalVar", funcname);
                 DEBUGPRINT3((vars.size()));
                 char *varname;
-                for (IA = vars.begin(); IA != vars.end(); IA++) {
-                    varname = Util::GetString(*IA, mp_, jscontext_);
+                for (ia = vars.begin(); ia != vars.end(); ia++) {
+                    varname = Util::GetString(*ia, mp_, jscontext_);
                     DEBUGPRINT2(varname);
                     if (strcmp(name, varname) == 0)
                         return true;
@@ -278,7 +278,7 @@ namespace maple {
         return false;
     }
 
-    char *JSClosure::GetLocalVar(JSMIRFunction *func, uint32_t local_no) {
+    char *JSClosure::GetLocalVar(JSMIRFunction *func, uint32_t localNo) {
         typedef std::pair<JSFunction *, std::vector<JSAtom *>> funcVarVecPair;
         std::vector<funcVarVecPair> locals = jsscript_->funcLocals;
 
@@ -296,16 +296,16 @@ namespace maple {
             }
             DEBUGPRINT2(funcname);
             // found the function
-            MIRSymbol *func_st = globaltable.GetSymbolFromStidx(func->stidx.Idx());
-            if (func_st && strcmp(funcname, func_st->GetName().c_str()) == 0) {
+            MIRSymbol *funcSt = globaltable.GetSymbolFromStidx(func->stidx.Idx());
+            if (funcSt && strcmp(funcname, funcSt->GetName().c_str()) == 0) {
                 std::vector<JSAtom *> args = locals[i].second;
-                if (local_no < args.size())
-                    name = Util::GetString(args[local_no], mp_, jscontext_);
+                if (localNo < args.size())
+                    name = Util::GetString(args[localNo], mp_, jscontext_);
                 break;
             }
         }
         if (!name)
-            name = Util::GetSequentialName("local_var_", local_no, mp_);
+            name = Util::GetSequentialName("local_var_", localNo, mp_);
         return name;
     }
 
@@ -318,8 +318,8 @@ namespace maple {
         if (!name)
             return;
         DEBUGPRINT3(name);
-        MIRSymbol *func_st = globaltable.GetSymbolFromStidx(func->stidx.Idx());
-        const char *funcname = func_st->GetName().c_str();
+        MIRSymbol *funcSt = globaltable.GetSymbolFromStidx(func->stidx.Idx());
+        const char *funcname = funcSt->GetName().c_str();
         ScopeNode *sn = scope_->GetOrCreateSN((char *) funcname);
         ScopeNode *psn = sn->GetParent();
 
@@ -331,12 +331,12 @@ namespace maple {
         JSMIRFunction *parent = psn->GetFunc();
 
         int idx = 0;
-        MIRType *env_type = NULL;
+        MIRType *envType = NULL;
 
         // check if this alias is in current func's env
         if (sn->IsWithEnv()) {
-            env_type = func->envtype;
-            idx = jsbuilder_->GetStructFieldIdFromFieldName(env_type, name);
+            envType = func->envtype;
+            idx = jsbuilder_->GetStructFieldIdFromFieldName(envType, name);
 
             if (idx)
                 return;
@@ -344,9 +344,9 @@ namespace maple {
 
         // check if this alias is a local var need to be added into env
         if (sn->IsWithEnv() && IsLocalVar(func, name)) {
-            env_type = func->envtype;
-            AddAliasToEnvType(env_type, name, jsvalue_type_);
-            idx = jsbuilder_->GetStructFieldIdFromFieldName(env_type, name);
+            envType = func->envtype;
+            AddAliasToEnvType(envType, name, jsvalueType);
+            idx = jsbuilder_->GetStructFieldIdFromFieldName(envType, name);
             DEBUGPRINT3(idx);
             return;
         }
@@ -354,8 +354,8 @@ namespace maple {
         // recursively search in parent's alias list
         JSMIRFunction *p = parent;
         while (p != jsmain_ && !idx && psn->IsWithEnv()) {
-            env_type = p->envtype;
-            idx = jsbuilder_->GetStructFieldIdFromFieldName(env_type, name);
+            envType = p->envtype;
+            idx = jsbuilder_->GetStructFieldIdFromFieldName(envType, name);
             DEBUGPRINT3(idx);
             if (idx)
                 return;
@@ -402,7 +402,7 @@ namespace maple {
         // TODO: since GetOrCreateSN() doesn't change name, so we should declare the parameter as const name
         scope_->GetOrCreateSN(name)->SetFunc(jsmain_);
 
-        jsvalue_type_ = jsbuilder_->jsvalue_type_;
+        jsvalueType = jsbuilder_->jsvalueType;
         jsvalue_ptr_ = jsbuilder_->jsvalue_ptr_;
     }
 
@@ -482,10 +482,10 @@ namespace maple {
     }
 
     JSMIRFunction *JSClosure::GetJSMIRFunc(char *name) {
-        std::vector<std::pair<char *, JSMIRFunction *>>::iterator I;
-        for (I = nameJSMIRfunc_.begin(); I != nameJSMIRfunc_.end(); I++) {
-            if (strcmp(name, (*I).first) == 0) {
-                return (*I).second;
+        std::vector<std::pair<char *, JSMIRFunction *>>::iterator i;
+        for (i = nameJSMIRfunc_.begin(); i != nameJSMIRfunc_.end(); i++) {
+            if (strcmp(name, (*i).first) == 0) {
+                return (*i).second;
             }
         }
         return NULL;
@@ -494,8 +494,8 @@ namespace maple {
     void JSClosure::SetJSMIRFunc(char *name, JSMIRFunction *func) {
         if (GetJSMIRFunc(name))
             return;
-        std::pair<char *, JSMIRFunction *> P(name, func);
-        nameJSMIRfunc_.push_back(P);
+        std::pair<char *, JSMIRFunction *> p(name, func);
+        nameJSMIRfunc_.push_back(p);
     }
 
 } // namespace maple

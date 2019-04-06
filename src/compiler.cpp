@@ -13,7 +13,7 @@
 #include "js/src/vm/ScopeObject.h"
 #include "../include/compiler.h"
 
-const maple::OpcodeTable maple::opcodeinfo;
+const maple::OpcodeTable maple::kOpcodeInfo;
 
 namespace maple {
 
@@ -26,7 +26,7 @@ namespace maple {
 
     void JSCompiler::Init() {
         jsmain_ = jsbuilder_->jsmain_;
-        jsvalue_type_ = jsbuilder_->jsvalue_type_;
+        jsvalueType = jsbuilder_->jsvalueType;
         jsvalue_ptr_ = jsbuilder_->jsvalue_ptr_;
 
         // push main() on funcstack_
@@ -73,7 +73,7 @@ namespace maple {
     }
 
     MIRSymbol *JSCompiler::CreateTempJSValueTypeVar() {
-        return CreateTempVar(jsvalue_type_);
+        return CreateTempVar(jsvalueType);
     }
 
     void JSCompiler::InitWithUndefined(bool doit, MIRSymbol *var) {
@@ -101,12 +101,12 @@ namespace maple {
                 tagname = "i32";
                 break;
         }
-        return jsbuilder_->GetStructFieldIdFromFieldName(jsvalue_type_, tagname);
+        return jsbuilder_->GetStructFieldIdFromFieldName(jsvalueType, tagname);
     }
 
     MIRType *JSCompiler::DetermineTypeFromNode(BaseNode *node) {
         tyidx_t tyidx;
-        if (opcodeinfo.IsCompare(node->op))
+        if (kOpcodeInfo.IsCompare(node->op))
             return globaltable.GetTypeFromTyIdx((tyidx_t) PTY_u1);
         if (node->op == OP_intrinsicop) {
             // TODO: look up intrinsic table
@@ -124,31 +124,31 @@ namespace maple {
         } else {
             tyidx = node->ptyp;
         }
-        if (tyidx == jsvalue_type_->_ty_idx)
-            return jsvalue_type_;
+        if (tyidx == jsvalueType->_ty_idx)
+            return jsvalueType;
 
         return globaltable.GetTypeFromTyIdx(tyidx);
     }
 
     // create a new temporary, store expr to the temporary and return the temporary
-    MIRSymbol *JSCompiler::SymbolFromSavingInATemp(BaseNode *expr, bool jsvalue_p) {
+    MIRSymbol *JSCompiler::SymbolFromSavingInATemp(BaseNode *expr, bool jsvalueP) {
         MIRType *exprty;
-        if (jsvalue_p) {
-            exprty = jsvalue_type_;
+        if (jsvalueP) {
+            exprty = jsvalueType;
             expr = CheckConvertToJSValueType(expr);
         } else {
             exprty = jsbuilder_->GetPrimType(expr->ptyp);
         }
-        MIRSymbol *temp_var = CreateTempVar(exprty);
-        jsbuilder_->CreateStmtDassign(temp_var, 0, expr, linenum_);
-        return temp_var;
+        MIRSymbol *tempVar = CreateTempVar(exprty);
+        jsbuilder_->CreateStmtDassign(tempVar, 0, expr, linenum_);
+        return tempVar;
     }
 
     // create a new temporary, store expr to the temporary and return a dread node
     // of the new temporary
     AddrofNode *JSCompiler::NodeFromSavingInATemp(BaseNode *expr) {
-        MIRSymbol *temp_var = SymbolFromSavingInATemp(expr, false);
-        return jsbuilder_->CreateExprDread(temp_var->GetType(), temp_var);
+        MIRSymbol *tempVar = SymbolFromSavingInATemp(expr, false);
+        return jsbuilder_->CreateExprDread(tempVar->GetType(), tempVar);
     }
 
     // JSOP_UNDEFINED 1
@@ -158,9 +158,9 @@ namespace maple {
     // JSOP_UINT24 188
     // JSOP_INT8 215
     // JSOP_INT32 216
-    BaseNode *JSCompiler::CompileOpConstValue(uint32_t jsvalue_tag, int32_t payload) {
+    BaseNode *JSCompiler::CompileOpConstValue(uint32_t jsvalueTag, int32_t payload) {
         PrimType pty;
-        switch (jsvalue_tag) {
+        switch (jsvalueTag) {
             case JSTYPE_NUMBER:
                 return jsbuilder_->CreateIntConst((uint64_t)(uint32_t) payload, PTY_i32);
             case JSTYPE_UNDEFINED:
@@ -179,13 +179,13 @@ namespace maple {
                 assert(false && "NIY");
                 break;
         }
-        int64_t val = (int64_t)((uint64_t)(uint32_t) jsvalue_tag << 32 | (uint64_t)(uint32_t) payload);
+        int64_t val = (int64_t)((uint64_t)(uint32_t) jsvalueTag << 32 | (uint64_t)(uint32_t) payload);
         return jsbuilder_->CreateIntConst(val, pty);
     }
 
     // Return the corresponding intrinsic code for JSop binary or unary opcode.
     uint32_t JSCompiler::FindIntrinsicForOp(JSOp opcode) {
-        static const uint32_t op_to_intrinsic[][2] = { { JSOP_STRICTEQ, INTRN_JSOP_STRICTEQ },
+        static const uint32_t opToIntrinsic[][2] = { { JSOP_STRICTEQ, INTRN_JSOP_STRICTEQ },
                                                        { JSOP_STRICTNE, INTRN_JSOP_STRICTNE },
                                                        { JSOP_INSTANCEOF, INTRN_JSOP_INSTANCEOF },
                                                        { JSOP_IN, INTRN_JSOP_IN },
@@ -193,15 +193,15 @@ namespace maple {
                                                        { JSOP_OR, INTRN_JSOP_OR },
                                                        { JSOP_AND, INTRN_JSOP_AND },
                                                        { JSOP_TYPEOF, INTRN_JSOP_TYPEOF } };
-        int32_t intrinsic_code = -1;
-        for (uint32_t i = 0; i < sizeof(op_to_intrinsic) / 8; i++) {
-            if (op_to_intrinsic[i][0] == opcode) {
-                intrinsic_code = op_to_intrinsic[i][1];
+        int32_t intrinsicCode = -1;
+        for (uint32_t i = 0; i < sizeof(opToIntrinsic) / 8; i++) {
+            if (opToIntrinsic[i][0] == opcode) {
+                intrinsicCode = opToIntrinsic[i][1];
                 break;
             }
         }
-        assert(intrinsic_code >= 0);
-        return (uint32_t) intrinsic_code;
+        assert(intrinsicCode >= 0);
+        return (uint32_t) intrinsicCode;
     }
 
     // JSOP_BITOR JSOP_BITXOR JSOP_BITAND JSOP_EQ JSOP_NE JSOP_LT JSOP_GT
@@ -285,12 +285,12 @@ namespace maple {
         }
         if (mop != 0) {
             if (op0->ptyp == PTY_i32 && op1->ptyp == PTY_i32) {
-                if (opcodeinfo.IsCompare(mop))
+                if (kOpcodeInfo.IsCompare(mop))
                     return jsbuilder_->CreateExprCompare(mop, restype, jsbuilder_->GetInt32(), op0, op1);
                 return jsbuilder_->CreateExprBinary(mop, jsbuilder_->GetInt32(), op0, op1);
             }
 
-            if (opcodeinfo.IsCompare(mop)) {
+            if (kOpcodeInfo.IsCompare(mop)) {
                 return jsbuilder_->CreateExprCompare(mop, restype, jsbuilder_->GetDynany(),
                                                      CheckConvertToJSValueType(op0), CheckConvertToJSValueType(op1));
             } else if (restype->GetPrimType() == PTY_u32) {
@@ -358,7 +358,7 @@ namespace maple {
         return jsbuilder_->CreateExprIntrinsicop1(idx, retty, CheckConvertToJSValueType(val));
     }
 
-    int32_t JSCompiler::GetBuiltinMethod(uint32_t argc, bool *need_this) {
+    int32_t JSCompiler::GetBuiltinMethod(uint32_t argc, bool *needThis) {
         BaseNode *bn = GetOpAt(argc + 1);
         if (bn->op == OP_intrinsicop) {
             IntrinsicopNode *ion = static_cast<IntrinsicopNode *>(bn);
@@ -414,28 +414,28 @@ namespace maple {
             if (!map[i].name)
                 break;
             if (!strcmp(name.c_str(), map[i].name)) {
-                *need_this = map[i].need_this;
+                *needThis = map[i].need_this;
                 return (int32_t) map[i].intrn_code;
             }
         }
         return -1;
     }
 
-    BaseNode *JSCompiler::CompileBuiltinMethod(int32_t idx, int arg_num, bool need_this) {
+    BaseNode *JSCompiler::CompileBuiltinMethod(int32_t idx, int argNum, bool needThis) {
         // Reverse the order of args.
-        std::stack<BaseNode *> tmp_stack;
-        if (arg_num == 0 && (MIRIntrinsicId) idx == INTRN_JS_BOOLEAN) {
+        std::stack<BaseNode *> tmpStack;
+        if (argNum == 0 && (MIRIntrinsicId) idx == INTRN_JS_BOOLEAN) {
             Pop();
             Pop();
             return CompileOpConstValue(JSTYPE_BOOLEAN, 0);
         }
 
-        for (uint32_t i = 0; i < arg_num; i++) {
-            tmp_stack.push(Pop());
+        for (uint32_t i = 0; i < argNum; i++) {
+            tmpStack.push(Pop());
         }
-        if (need_this) {
-            tmp_stack.push(Pop());
-            arg_num += 1;
+        if (needThis) {
+            tmpStack.push(Pop());
+            argNum += 1;
         } else {
             Pop();
         }
@@ -445,45 +445,45 @@ namespace maple {
             MapleVector<BaseNode *> args(module_->CurFuncCodeMpAllocator()->Adapter());
             MIRSymbol *arguments = NULL;
             arguments = jsbuilder_->GetCurrentFunction()->symtab->CreateSymbol(SCOPE_LOCAL);
-            const char *temp_name = Util::GetSequentialName("js_arguments_", temp_var_no_, mp_);
-            std::string argname(temp_name);
+            const char *tempName = Util::GetSequentialName("js_arguments_", temp_var_no_, mp_);
+            std::string argname(tempName);
             arguments->SetNameStridx(globaltable.GetOrCreateGstridxFromName(argname));
             jsbuilder_->GetCurrentFunction()->symtab->AddToStringSymbolMap(arguments);
-            arguments->sclass = SC_auto;
-            arguments->skind = ST_var;
+            arguments->sclass = kScAuto;
+            arguments->skind = kStVar;
 
-            uint32_t size_array[1];
-            size_array[0] = arg_num;
-            MIRType *array_type = jsbuilder_->GetOrCreateArrayType(jsvalue_type_, 1, size_array);
-            MIRType *array_ptr_type = jsbuilder_->GetOrCreatePointerType(array_type);
-            tyidx_t tyidx = array_type->_ty_idx;
+            uint32_t sizeArray[1];
+            sizeArray[0] = argNum;
+            MIRType *arrayType = jsbuilder_->GetOrCreateArrayType(jsvalueType, 1, sizeArray);
+            MIRType *arrayPtrType = jsbuilder_->GetOrCreatePointerType(arrayType);
+            tyidx_t tyidx = arrayType->_ty_idx;
             arguments->SetTyIdx(tyidx);
             BaseNode *bn;
             MIRType *pargtype = jsbuilder_->GetOrCreatePointerType(arguments->GetType());
-            BaseNode *addr_base = jsbuilder_->CreateExprAddrof(0, arguments);
+            BaseNode *addrBase = jsbuilder_->CreateExprAddrof(0, arguments);
 
-            for (uint32_t i = 0; i < arg_num; i++) {
-                bn = CheckConvertToJSValueType(tmp_stack.top());
+            for (uint32_t i = 0; i < argNum; i++) {
+                bn = CheckConvertToJSValueType(tmpStack.top());
                 DEBUGPRINT3(bn->op);
-                tmp_stack.pop();
+                tmpStack.pop();
                 MapleVector<BaseNode *> opnds(module_->CurFuncCodeMpAllocator()->Adapter());
-                opnds.push_back(static_cast<BaseNode *>(addr_base));
-                BaseNode *addr_offset = jsbuilder_->GetConstInt(i);
-                opnds.push_back(static_cast<BaseNode *>(addr_offset));
-                BaseNode *array_expr = jsbuilder_->CreateExprArray(array_type, opnds);
-                StmtNode *stmt = jsbuilder_->CreateStmtIassign(array_ptr_type, 0, array_expr, bn);
+                opnds.push_back(static_cast<BaseNode *>(addrBase));
+                BaseNode *addrOffset = jsbuilder_->GetConstInt(i);
+                opnds.push_back(static_cast<BaseNode *>(addrOffset));
+                BaseNode *arrayExpr = jsbuilder_->CreateExprArray(arrayType, opnds);
+                StmtNode *stmt = jsbuilder_->CreateStmtIassign(arrayPtrType, 0, arrayExpr, bn);
                 stmt->srcpos.SetLinenum(linenum_);
                 jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
             }
 
-            BaseNode *addrof_arg;
+            BaseNode *addrofArg;
             if (arguments)
-                addrof_arg = jsbuilder_->CreateExprAddrof(0, arguments);
+                addrofArg = jsbuilder_->CreateExprAddrof(0, arguments);
             else
-                addrof_arg = jsbuilder_->GetConstUInt32(0);
-            args.push_back(addrof_arg);
-            BaseNode *arg_length = jsbuilder_->GetConstUInt32(arg_num);
-            args.push_back(arg_length);
+                addrofArg = jsbuilder_->GetConstUInt32(0);
+            args.push_back(addrofArg);
+            BaseNode *argLength = jsbuilder_->GetConstUInt32(argNum);
+            args.push_back(argLength);
 
             IntrinDesc *intrindesc = &IntrinDesc::intrintable[idx];
             MIRType *retty = intrindesc->GetReturnType();
@@ -496,10 +496,10 @@ namespace maple {
 
         if ((MIRIntrinsicId) idx == INTRN_JS_NUMBER || (MIRIntrinsicId) idx == INTRN_JS_STRING) {
             BaseNode *argument;
-            if (arg_num == 0) {
+            if (argNum == 0) {
                 argument = CompileOpConstValue(JSTYPE_NONE, 0);
             } else {
-                BaseNode *bn = tmp_stack.top();
+                BaseNode *bn = tmpStack.top();
                 argument = CheckConvertToJSValueType(bn);
             }
             IntrinDesc *intrindesc = &IntrinDesc::intrintable[idx];
@@ -514,9 +514,9 @@ namespace maple {
         IntrinDesc *intrindesc = &IntrinDesc::intrintable[idx];
         MapleVector<BaseNode *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
         // Push args into arguments.
-        for (uint32_t i = 0; i < arg_num; i++) {
-            BaseNode *bn = tmp_stack.top();
-            tmp_stack.pop();
+        for (uint32_t i = 0; i < argNum; i++) {
+            BaseNode *bn = tmpStack.top();
+            tmpStack.pop();
             arguments.push_back(CheckConvertToRespectiveType(bn, intrindesc->GetArgType(i)));
         }
 
@@ -532,10 +532,10 @@ namespace maple {
     BaseNode *JSCompiler::CompileOpCall(uint32_t argc) {
         DEBUGPRINT2(argc);
         // May be call the method of builtin-object, just emit the corresponding intrinsic call.
-        bool need_this = false;
-        int32_t idx = GetBuiltinMethod(argc, &need_this);
+        bool needThis = false;
+        int32_t idx = GetBuiltinMethod(argc, &needThis);
         if (idx != -1) {
-            return CompileBuiltinMethod(idx, argc, need_this);
+            return CompileBuiltinMethod(idx, argc, needThis);
         }
 
         // to reverse the order of args
@@ -584,7 +584,7 @@ namespace maple {
             }
         }
 
-        MIRSymbol *returnVar = CreateTempVar(jsvalue_type_);
+        MIRSymbol *returnVar = CreateTempVar(jsvalueType);
 
         if (useSimpleCall) {
             JSMIRFunction *func = closure_->GetJSMIRFunc(funcname);
@@ -604,8 +604,8 @@ namespace maple {
             stmt = jsbuilder_->CreateStmtCallAssigned(puidx, args, returnVar, OP_callassigned);
         } else if (funcname && IsCCall(funcname)) {
             args.push_back(argsvec[argc - 1]);
-            BaseNode *argc_node = jsbuilder_->GetConstUInt32((uint32_t) argc - 1);
-            args.push_back(argc_node);
+            BaseNode *argcNode = jsbuilder_->GetConstUInt32((uint32_t) argc - 1);
+            args.push_back(argcNode);
             for (int32_t i = argc - 2; i >= 0; i--)
                 args.push_back(argsvec[i]);
 
@@ -627,7 +627,7 @@ namespace maple {
             stmt->srcpos.SetLinenum(linenum_);
         jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
 
-        return jsbuilder_->CreateExprDread(jsvalue_type_, 0, returnVar);
+        return jsbuilder_->CreateExprDread(jsvalueType, 0, returnVar);
     }
 
     BaseNode *JSCompiler::CompileOpNew(uint32_t argc) {
@@ -647,11 +647,11 @@ namespace maple {
         args.push_back(impnode);
         for (int32_t i = argc - 1; i >= 0; i--)
             args.push_back(argsvec[i]);
-        MIRSymbol *returnVar = CreateTempVar(jsvalue_type_);
+        MIRSymbol *returnVar = CreateTempVar(jsvalueType);
         StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssignedN(INTRN_JSOP_NEW, args, returnVar);
         stmt->srcpos.SetLinenum(linenum_);
         jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
-        return jsbuilder_->CreateExprDread(jsvalue_type_, 0, returnVar);
+        return jsbuilder_->CreateExprDread(jsvalueType, 0, returnVar);
     }
 
     js_builtin_id JSCompiler::EcmaNameToId(char *name) {
@@ -683,8 +683,8 @@ namespace maple {
         js_builtin_id id = EcmaNameToId(name);
         if (id == JS_BUILTIN_COUNT)
             return NULL;
-        BaseNode *id_node = jsbuilder_->GetConstUInt32((uint32_t) id);
-        return CompileGeneric1(INTRN_JS_GET_BIOBJECT, id_node, false);
+        BaseNode *idNode = jsbuilder_->GetConstUInt32((uint32_t) id);
+        return CompileGeneric1(INTRN_JS_GET_BIOBJECT, idNode, false);
     }
 
     // JSOP_NAME 59
@@ -720,17 +720,17 @@ namespace maple {
         if (!strcmp(name, "undefined"))
             return CompileOpConstValue(JSTYPE_UNDEFINED, 0);
 
-        BaseNode *builtin_object = CompileBuiltinObject(name);
-        if (builtin_object)
-            return builtin_object;
+        BaseNode *builtinObject = CompileBuiltinObject(name);
+        if (builtinObject)
+            return builtinObject;
 
         BaseNode *bn = NULL;
         if (scope_->IsFunction(name)) {
             DEBUGPRINT2(name);
             char *objname = Util::GetNameWithSuffix(name, "_obj_", mp_);
             if (!GetFuncName(objname)) {
-                std::pair<char *, char *> P(objname, name);
-                objFuncMap.push_back(P);
+                std::pair<char *, char *> p(objname, name);
+                objFuncMap.push_back(p);
             }
             name = objname;
         }
@@ -739,9 +739,9 @@ namespace maple {
         MIRSymbol *var;
         bool created;
         if (jsbuilder_->IsGlobalName(name) || IsCCall(name) || IsXcCall(name)) {
-            var = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalue_type_, created);
+            var = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalueType, created);
         } else {
-            var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_, created);
+            var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalueType, created);
         }
 
         // print is a builtin function.
@@ -755,7 +755,7 @@ namespace maple {
         stidx_t stidx = var->GetStIdx();
         DEBUGPRINT3(stidx.Idx());
 
-        bn = jsbuilder_->CreateExprDread(jsvalue_type_, var);
+        bn = jsbuilder_->CreateExprDread(jsvalueType, var);
 
         if (created && eh_->IsInEHrange(pc)) {
             StmtNode *throwstmt = jsbuilder_->CreateStmtThrow(bn);
@@ -771,18 +771,18 @@ namespace maple {
         static const struct {
             const char *chars;
             uint32_t length;
-        } builtin_strings[JSBUILTIN_STRING_ID_COUNT] = {
+        } builtinStrings[JSBUILTIN_STRING_ID_COUNT] = {
 #define JSBUILTIN_STRING_DEF(id, length, str) { (const char *) str, length },
 #include "../include/jsbuiltinstrings.inc.h"
 #undef JSBUILTIN_STRING_DEF
         };
         uint32_t i;
         for (i = 0; i < JSBUILTIN_STRING_ID_COUNT; i++) {
-            if (builtin_strings[i].length != length)
+            if (builtinStrings[i].length != length)
                 continue;
             uint32_t j;
             for (j = 0; j < length; j++) {
-                if (builtin_strings[i].chars[j + 4] != chars[j])
+                if (builtinStrings[i].chars[j + 4] != chars[j])
                     break;
             }
             if (j == length)
@@ -817,50 +817,50 @@ namespace maple {
 
         if (length >= pow(2, 16))
             assert(false && "Not Support too long string now");
-        MIRType *unit_type = IsAsciiChars(chars, length) ? jsbuilder_->GetUInt8() : jsbuilder_->GetUInt16();
+        MIRType *unitType = IsAsciiChars(chars, length) ? jsbuilder_->GetUInt8() : jsbuilder_->GetUInt16();
         uint32_t pad = IsAsciiChars(chars, length) ? 4 : 2;
-        uint32_t string_class = IsAsciiChars(chars, length) ? 0 : JSSTRING_UNICODE;
+        uint32_t stringClass = IsAsciiChars(chars, length) ? 0 : JSSTRING_UNICODE;
 
-        size_t padding_length = length + pad;
-        MIRType *type = jsbuilder_->GetOrCreateArrayType(unit_type, 1, &(padding_length));
-        const char *temp_name = Util::GetSequentialName("const_chars_", temp_var_no_, mp_);
-        MIRSymbol *var = jsbuilder_->GetOrCreateGlobalDecl(temp_name, type);
+        size_t paddingLength = length + pad;
+        MIRType *type = jsbuilder_->GetOrCreateArrayType(unitType, 1, &(paddingLength));
+        const char *tempName = Util::GetSequentialName("const_chars_", temp_var_no_, mp_);
+        MIRSymbol *var = jsbuilder_->GetOrCreateGlobalDecl(tempName, type);
         MIRAggConst *init = module_->mp_->New<MIRAggConst>(module_, type);
 
         uint8_t cl[4];
-        cl[0] = string_class;
+        cl[0] = stringClass;
         cl[1] = 0;
         cl[2] = length & 0xff;
         cl[3] = (length & 0xff00) >> 8;
 
-        if ((string_class & JSSTRING_UNICODE) == 0) {
+        if ((stringClass & JSSTRING_UNICODE) == 0) {
             uint64_t val = (uint64_t)(cl[0]);
-            MIRIntConst *int_const = mp_->New<MIRIntConst>(val, unit_type);
-            init->const_vec.push_back(int_const);
+            MIRIntConst *intConst = mp_->New<MIRIntConst>(val, unitType);
+            init->const_vec.push_back(intConst);
             val = (uint64_t)(cl[1]);
-            int_const = mp_->New<MIRIntConst>(val, unit_type);
-            init->const_vec.push_back(int_const);
+            intConst = mp_->New<MIRIntConst>(val, unitType);
+            init->const_vec.push_back(intConst);
 
             val = (uint64_t)(cl[2]);
-            int_const = mp_->New<MIRIntConst>(val, unit_type);
-            init->const_vec.push_back(int_const);
+            intConst = mp_->New<MIRIntConst>(val, unitType);
+            init->const_vec.push_back(intConst);
             val = (uint64_t)(cl[3]);
-            int_const = mp_->New<MIRIntConst>(val, unit_type);
-            init->const_vec.push_back(int_const);
+            intConst = mp_->New<MIRIntConst>(val, unitType);
+            init->const_vec.push_back(intConst);
         } else {
             uint16_t *tmp = (uint16_t *) cl;
             uint64_t val = (uint64_t)(cl[0]);
-            MIRIntConst *int_const = mp_->New<MIRIntConst>(val, unit_type);
-            init->const_vec.push_back(int_const);
+            MIRIntConst *intConst = mp_->New<MIRIntConst>(val, unitType);
+            init->const_vec.push_back(intConst);
             val = (uint64_t)(tmp[1]);
-            int_const = mp_->New<MIRIntConst>(val, unit_type);
-            init->const_vec.push_back(int_const);
+            intConst = mp_->New<MIRIntConst>(val, unitType);
+            init->const_vec.push_back(intConst);
         }
 
         for (uint32_t i = 0; i < length; i++) {
             uint64_t val = chars[i];
-            MIRIntConst *int_const = mp_->New<MIRIntConst>(val, unit_type);
-            init->const_vec.push_back(int_const);
+            MIRIntConst *intConst = mp_->New<MIRIntConst>(val, unitType);
+            init->const_vec.push_back(intConst);
         }
         var->value_.const_ = init;
         BaseNode *expr = jsbuilder_->CreateExprAddrof(0, var);
@@ -899,7 +899,7 @@ namespace maple {
         stmt->srcpos.SetLinenum(linenum_);
         jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
 
-        return jsbuilder_->CreateExprDread(jsvalue_type_, var);
+        return jsbuilder_->CreateExprDread(jsvalueType, var);
     }
 
     // JSOP_GETARG 84
@@ -920,15 +920,15 @@ namespace maple {
         MIRSymbol *arg = jsbuilder_->GetFunctionArgument(fun, i + start); // skip this and env parameters
         opstack_->ReplaceStackItemsWithTemps(this, arg);
         jsbuilder_->CreateStmtDassign(arg, 0, val, linenum_);
-        BaseNode *bn = jsbuilder_->CreateExprDread(jsvalue_type_, arg);
+        BaseNode *bn = jsbuilder_->CreateExprDread(jsvalueType, arg);
         Push(bn);
         return;
     }
 
     // JSOP_GETLOCAL 86
-    BaseNode *JSCompiler::CompileOpGetLocal(uint32_t local_no) {
+    BaseNode *JSCompiler::CompileOpGetLocal(uint32_t localNo) {
         JSMIRFunction *func = jsbuilder_->GetCurrentFunction();
-        char *name = closure_->GetLocalVar(func, local_no);
+        char *name = closure_->GetLocalVar(func, localNo);
         bool created;
         MIRSymbol *var;
 
@@ -936,37 +936,37 @@ namespace maple {
         if (scope_->IsFunction(name)) {
             char *objname = Util::GetNameWithSuffix(name, "_obj_", mp_);
             if (!GetFuncName(objname)) {
-                std::pair<char *, char *> P(objname, name);
-                objFuncMap.push_back(P);
+                std::pair<char *, char *> p(objname, name);
+                objFuncMap.push_back(p);
             }
             name = objname;
         }
-        var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_, created);
+        var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalueType, created);
         InitWithUndefined(created, var);
         if (!created) {
             MIRType *type = globaltable.GetTypeFromTyIdx(var->GetTyIdx());
             return jsbuilder_->CreateExprDread(type, var);
         }
 
-        return jsbuilder_->CreateExprDread(jsvalue_type_, var);
+        return jsbuilder_->CreateExprDread(jsvalueType, var);
     }
 
     // JSOP_SETLOCAL 87
-    StmtNode *JSCompiler::CompileOpSetLocal(uint32_t local_no, BaseNode *src) {
+    StmtNode *JSCompiler::CompileOpSetLocal(uint32_t localNo, BaseNode *src) {
         JSMIRFunction *func = jsbuilder_->GetCurrentFunction();
-        char *name = closure_->GetLocalVar(func, local_no);
+        char *name = closure_->GetLocalVar(func, localNo);
         MIRSymbol *var;
 
         // for function name, use suffix _obj_
         if (scope_->IsFunction(name)) {
             char *objname = Util::GetNameWithSuffix(name, "_obj_", mp_);
             if (!GetFuncName(objname)) {
-                std::pair<char *, char *> P(objname, name);
-                objFuncMap.push_back(P);
+                std::pair<char *, char *> p(objname, name);
+                objFuncMap.push_back(p);
             }
             name = objname;
         }
-        var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_);
+        var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalueType);
         // if the stack is not empty, for each stack item that contains the
         // variable being set, evaluate and store the result in a new temp and replace
         // the stack items by the temp
@@ -987,56 +987,56 @@ namespace maple {
         return NULL;
     }
 
-    BaseNode *JSCompiler::CompileGenericN(int32_t intrin_id, MapleVector<BaseNode *> &arguments, bool is_call) {
-        IntrinDesc *intrindesc = &IntrinDesc::intrintable[intrin_id];
+    BaseNode *JSCompiler::CompileGenericN(int32_t intrinId, MapleVector<BaseNode *> &arguments, bool isCall) {
+        IntrinDesc *intrindesc = &IntrinDesc::intrintable[intrinId];
         MIRType *retty = intrindesc->GetReturnType();
-        if (is_call) {
+        if (isCall) {
             MIRSymbol *var = CreateTempVar(retty);
-            StmtNode *call = jsbuilder_->CreateStmtIntrinsicCallAssignedN((MIRIntrinsicId) intrin_id, arguments, var);
+            StmtNode *call = jsbuilder_->CreateStmtIntrinsicCallAssignedN((MIRIntrinsicId) intrinId, arguments, var);
             call->srcpos.SetLinenum(linenum_);
             jsbuilder_->AddStmtInCurrentFunctionBody(call);
             //  TODO: if retty is void, return NULL
             return jsbuilder_->CreateExprDread(retty, var);
         } else {
-            return jsbuilder_->CreateExprIntrinsicopN((MIRIntrinsicId) intrin_id, retty, arguments);
+            return jsbuilder_->CreateExprIntrinsicopN((MIRIntrinsicId) intrinId, retty, arguments);
         }
     }
 
-    BaseNode *JSCompiler::CompileGeneric0(int32_t intrin_id, bool is_call) {
+    BaseNode *JSCompiler::CompileGeneric0(int32_t intrinId, bool isCall) {
         MapleVector<BaseNode *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
-        return CompileGenericN(intrin_id, arguments, is_call);
+        return CompileGenericN(intrinId, arguments, isCall);
     }
 
-    BaseNode *JSCompiler::CompileGeneric1(int32_t intrin_id, BaseNode *arg, bool is_call) {
+    BaseNode *JSCompiler::CompileGeneric1(int32_t intrinId, BaseNode *arg, bool isCall) {
         MapleVector<BaseNode *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
         arguments.push_back(arg);
-        return CompileGenericN(intrin_id, arguments, is_call);
+        return CompileGenericN(intrinId, arguments, isCall);
     }
 
-    BaseNode *JSCompiler::CompileGeneric2(int32_t intrin_id, BaseNode *arg1, BaseNode *arg2, bool is_call) {
+    BaseNode *JSCompiler::CompileGeneric2(int32_t intrinId, BaseNode *arg1, BaseNode *arg2, bool isCall) {
         MapleVector<BaseNode *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
         arguments.push_back(arg1);
         arguments.push_back(arg2);
-        return CompileGenericN(intrin_id, arguments, is_call);
+        return CompileGenericN(intrinId, arguments, isCall);
     }
 
-    BaseNode *JSCompiler::CompileGeneric3(int32_t intrin_id, BaseNode *arg1, BaseNode *arg2, BaseNode *arg3,
-                                          bool is_call) {
+    BaseNode *JSCompiler::CompileGeneric3(int32_t intrinId, BaseNode *arg1, BaseNode *arg2, BaseNode *arg3,
+                                          bool isCall) {
         MapleVector<BaseNode *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
         arguments.push_back(arg1);
         arguments.push_back(arg2);
         arguments.push_back(arg3);
-        return CompileGenericN(intrin_id, arguments, is_call);
+        return CompileGenericN(intrinId, arguments, isCall);
     }
 
-    BaseNode *JSCompiler::CompileGeneric4(int32_t intrin_id, BaseNode *arg1, BaseNode *arg2, BaseNode *arg3,
-                                          BaseNode *arg4, bool is_call) {
+    BaseNode *JSCompiler::CompileGeneric4(int32_t intrinId, BaseNode *arg1, BaseNode *arg2, BaseNode *arg3,
+                                          BaseNode *arg4, bool isCall) {
         MapleVector<BaseNode *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
         arguments.push_back(arg1);
         arguments.push_back(arg2);
         arguments.push_back(arg3);
         arguments.push_back(arg4);
-        return CompileGenericN(intrin_id, arguments, is_call);
+        return CompileGenericN(intrinId, arguments, isCall);
     }
 
     bool JSCompiler::CompileOpSetElem(BaseNode *obj, BaseNode *index, BaseNode *val) {
@@ -1096,9 +1096,9 @@ namespace maple {
     BaseNode *JSCompiler::CompileOpBindName(JSAtom *atom) {
         char *name = Util::GetString(atom, mp_, jscontext_);
         JS_ASSERT(!name && "empty name");
-        BaseNode *builtin_object = CompileBuiltinObject(name);
-        if (builtin_object)
-            return builtin_object;
+        BaseNode *builtinObject = CompileBuiltinObject(name);
+        if (builtinObject)
+            return builtinObject;
 
         MIRSymbol *var;
         JSMIRFunction *func = funcstack_.top();
@@ -1106,14 +1106,14 @@ namespace maple {
         // search the scope chain
         while (func) {
             if (closure_->IsLocalVar(func, name)) {
-                var = jsbuilder_->GetOrCreateDeclInFunc(name, jsvalue_type_, func, created);
+                var = jsbuilder_->GetOrCreateDeclInFunc(name, jsvalueType, func, created);
                 InitWithUndefined(created, var);
                 break;
             }
 
             // function introduced a global var
             if (func == jsmain_) {
-                var = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalue_type_, created);
+                var = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalueType, created);
                 InitWithUndefined(created, var);
                 jsbuilder_->InsertGlobalName(name);
                 break;
@@ -1123,7 +1123,7 @@ namespace maple {
         }
 
         // ??? Generate a dread node to pass the name.
-        BaseNode *bn = jsbuilder_->CreateExprDread(jsvalue_type_, var);
+        BaseNode *bn = jsbuilder_->CreateExprDread(jsvalueType, var);
 
         return bn;
     }
@@ -1135,7 +1135,7 @@ namespace maple {
         JSMIRFunction *func = funcstack_.top();
         MIRSymbol *var = closure_->GetSymbolFromEnclosingScope(func, name);
         if (!var) {
-            var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_);
+            var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalueType);
         }
 
         // if the stack is not empty, for each stack item that contains the
@@ -1143,7 +1143,7 @@ namespace maple {
         // the stack items by the temp
         opstack_->ReplaceStackItemsWithTemps(this, var);
         jsbuilder_->CreateStmtDassign(var, 0, CheckConvertToJSValueType(val), linenum_);
-        BaseNode *bn = jsbuilder_->CreateExprDread(jsvalue_type_, var);
+        BaseNode *bn = jsbuilder_->CreateExprDread(jsvalueType, var);
         Push(bn);
         return true;
     }
@@ -1160,30 +1160,30 @@ namespace maple {
         JSMIRFunction *mfun = jsbuilder_->GetFunction(funcname);
         mfun->SetUserFunc();
 
-        MIRSymbol *func_st = jsbuilder_->GetOrCreateGlobalDecl(funcname, jsvalue_type_);
-        BaseNode *ptr = jsbuilder_->CreateExprAddroffunc(func_st->value_.func_->puidx);
+        MIRSymbol *funcSt = jsbuilder_->GetOrCreateGlobalDecl(funcname, jsvalueType);
+        BaseNode *ptr = jsbuilder_->CreateExprAddroffunc(funcSt->value_.func_->puidx);
         assert(jsfun && "not a jsfunction");
 
         char *name = Util::GetNameWithSuffix(funcname, "_obj_", mp_);
         if (jsbuilder_->GetStringIndex(name).idx == 0) {
             DEBUGPRINT2(name);
-            uint32_t varg_p = 0;
+            uint32_t vargP = 0;
             uint32_t nargs = (uint32_t)(uint8_t) jsfun->nargs();
             uint32_t length = nargs;
             uint32_t flag = jsfun->strict() ? JSFUNCPROP_STRICT | JSFUNCPROP_USERFUNC : JSFUNCPROP_USERFUNC;
-            uint32_t attrs = varg_p << 24 | nargs << 16 | length << 8 | flag;
-            BaseNode *func_node = CompileGeneric3(INTRN_JS_NEW_FUNCTION, ptr, jsbuilder_->GetConstInt(0),
+            uint32_t attrs = vargP << 24 | nargs << 16 | length << 8 | flag;
+            BaseNode *funcNode = CompileGeneric3(INTRN_JS_NEW_FUNCTION, ptr, jsbuilder_->GetConstInt(0),
                                                   jsbuilder_->GetConstUInt32(attrs), true);
 
-            MIRSymbol *func_obj;
+            MIRSymbol *funcObj;
             if (mfun->scope->IsWithEnv()) {
-                func_obj = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_);
+                funcObj = jsbuilder_->GetOrCreateLocalDecl(name, jsvalueType);
             } else {
-                func_obj = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalue_type_);
+                funcObj = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalueType);
                 jsbuilder_->InsertGlobalName(name);
             }
 
-            StmtNode *stmt = jsbuilder_->CreateStmtDassign(func_obj, 0, func_node, linenum_);
+            StmtNode *stmt = jsbuilder_->CreateStmtDassign(funcObj, 0, funcNode, linenum_);
             stmt->srcpos.SetLinenum(linenum_);
             jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
         }
@@ -1204,7 +1204,7 @@ namespace maple {
         DEBUGPRINT2((fun == funcstack_.top()));
         DEBUGPRINT2(fun);
         bool created;
-        MIRSymbol *var = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalue_type_, created);
+        MIRSymbol *var = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalueType, created);
         InitWithUndefined(created, var);
         if (fun == jsmain_) {
             jsbuilder_->InsertGlobalName(name);
@@ -1222,10 +1222,10 @@ namespace maple {
         // isLambda() && displayAtom() && !hasGuessedAtom()
         // if((jsfun->isNamedLambda()))
         char *funcname = NULL;
-        bool has_name = false;
+        bool hasName = false;
         if (atom && !jsfun->hasGuessedAtom()) {
             funcname = Util::GetString(atom, mp_, jscontext_);
-            has_name = true;
+            hasName = true;
         } else {
             funcname = scope_->GetAnonyFunctionName(pc);
         }
@@ -1236,48 +1236,48 @@ namespace maple {
 
         JSMIRFunction *parentFunc = funcstack_.top();
 
-        MIRSymbol *funcsymbol = jsbuilder_->GetOrCreateGlobalDecl(funcname, jsvalue_type_);
+        MIRSymbol *funcsymbol = jsbuilder_->GetOrCreateGlobalDecl(funcname, jsvalueType);
         BaseNode *ptr = jsbuilder_->CreateExprAddroffunc(funcsymbol->value_.func_->puidx);
-        MIRSymbol *env_var = NULL;
+        MIRSymbol *envVar = NULL;
         BaseNode *node;
         DEBUGPRINT2((lambda->scope->GetName()));
         DEBUGPRINT2((lambda->scope->IsTopLevel()));
         if (parentFunc->scope->IsWithEnv()) {
-            env_var = jsbuilder_->GetOrCreateLocalDecl("environment", jsbuilder_->GetDynany());
-            node = jsbuilder_->CreateExprDread(jsbuilder_->GetDynany(), env_var);
+            envVar = jsbuilder_->GetOrCreateLocalDecl("environment", jsbuilder_->GetDynany());
+            node = jsbuilder_->CreateExprDread(jsbuilder_->GetDynany(), envVar);
             lambda->penvtype = parentFunc->envptr;
         } else {
             node = jsbuilder_->GetConstInt(0);
             DEBUGPRINTs3("lambda->scope->IsTopLevel()");
         }
 
-        uint32_t varg_p = 0;
+        uint32_t vargP = 0;
         uint32_t nargs = (uint32_t)(uint8_t) jsfun->nargs();
         uint32_t length = nargs;
         uint32_t flag = jsfun->strict() ? JSFUNCPROP_STRICT | JSFUNCPROP_USERFUNC : JSFUNCPROP_USERFUNC;
-        uint32_t attrs = varg_p << 24 | nargs << 16 | length << 8 | flag;
+        uint32_t attrs = vargP << 24 | nargs << 16 | length << 8 | flag;
         BaseNode *bn = CompileGeneric3(INTRN_JS_NEW_FUNCTION, ptr, node, jsbuilder_->GetConstUInt32(attrs), true);
 
-        if (has_name) {
+        if (hasName) {
             char *name = Util::GetNameWithSuffix(funcname, "_obj_", mp_);
-            MIRSymbol *func_obj = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalue_type_);
+            MIRSymbol *funcObj = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalueType);
             jsbuilder_->InsertGlobalName(name);
-            jsbuilder_->CreateStmtDassign(func_obj, 0, bn, linenum_);
-            bn = jsbuilder_->CreateExprDread(func_obj);
+            jsbuilder_->CreateStmtDassign(funcObj, 0, bn, linenum_);
+            bn = jsbuilder_->CreateExprDread(funcObj);
         }
-        std::pair<JSScript *, JSMIRFunction *> P(jsfun->nonLazyScript(), lambda);
-        scriptstack_.push(P);
+        std::pair<JSScript *, JSMIRFunction *> p(jsfun->nonLazyScript(), lambda);
+        scriptstack_.push(p);
         return bn;
     }
 
     // JSOP_GETALIASEDVAR 136
-    int JSCompiler::ProcessAliasedVar(JSAtom *atom, MIRType *&env_ptr, BaseNode *&env_node, int &depth) {
+    int JSCompiler::ProcessAliasedVar(JSAtom *atom, MIRType *&envPtr, BaseNode *&envNode, int &depth) {
         JSMIRFunction *func = funcstack_.top();
         DEBUGPRINT3(func);
         char *name = Util::GetString(atom, mp_, jscontext_);
         JS_ASSERT(!name && "empty name");
-        MIRSymbol *func_st = globaltable.GetSymbolFromStidx(func->stidx.Idx());
-        const char *funcname = func_st->GetName().c_str();
+        MIRSymbol *funcSt = globaltable.GetSymbolFromStidx(func->stidx.Idx());
+        const char *funcname = funcSt->GetName().c_str();
         ScopeNode *sn = scope_->GetOrCreateSN((char *) funcname);
         ScopeNode *psn = sn->GetParent();
 
@@ -1290,15 +1290,15 @@ namespace maple {
         JSMIRFunction *pfunc = psn->GetFunc();
 
         depth = 0;
-        MIRSymbol *env_var = NULL;
-        const char *env_name;
+        MIRSymbol *envVar = NULL;
+        const char *envName;
         BaseNode *bn = NULL;
         StmtNode *stmt = NULL;
 
         // search in current func's alias list
         // depth = 0
         if (!idx && sn->IsWithEnv()) {
-            env_var = jsbuilder_->GetOrCreateLocalDecl("environment", func->envptr);
+            envVar = jsbuilder_->GetOrCreateLocalDecl("environment", func->envptr);
             DEBUGPRINTsv3("environment", func->envptr);
             idx = jsbuilder_->GetStructFieldIdFromFieldName(func->envtype, name);
             DEBUGPRINT3(idx);
@@ -1306,8 +1306,8 @@ namespace maple {
 
             DEBUGPRINTsv3("func to get env_ptr", func);
 
-            env_ptr = func->envptr;
-            env_node = jsbuilder_->CreateExprDread(func->envptr, env_var);
+            envPtr = func->envptr;
+            envNode = jsbuilder_->CreateExprDread(func->envptr, envVar);
         }
 
         // recursively search in parent's alias list
@@ -1315,10 +1315,10 @@ namespace maple {
         if (pfunc != jsmain_ && !idx) {
             depth = 1;
             DEBUGPRINTs3("recursively search in parent's alias lists");
-            env_var = func->_formals[ENV_POSITION_IN_ARGS];
+            envVar = func->_formals[ENV_POSITION_IN_ARGS];
 
-            env_ptr = pfunc->envptr;
-            env_node = jsbuilder_->CreateExprDread(pfunc->envptr, env_var);
+            envPtr = pfunc->envptr;
+            envNode = jsbuilder_->CreateExprDread(pfunc->envptr, envVar);
             idx = jsbuilder_->GetStructFieldIdFromFieldName(pfunc->envtype, name);
             DEBUGPRINT3(idx);
 
@@ -1333,15 +1333,15 @@ namespace maple {
                     depth++;
                     DEBUGPRINTsv3("func to get env_ptr", pfunc);
 
-                    env_ptr = pfunc->envptr;
-                    env_node = jsbuilder_->CreateExprDread(pfunc->envptr, env_var);
+                    envPtr = pfunc->envptr;
+                    envNode = jsbuilder_->CreateExprDread(pfunc->envptr, envVar);
                     idx = jsbuilder_->GetStructFieldIdFromFieldName(pfunc->envtype, "parentenv");
-                    env_node = jsbuilder_->CreateExprIread(pfunc->envptr, pfunc->envptr, idx, env_node);
+                    envNode = jsbuilder_->CreateExprIread(pfunc->envptr, pfunc->envptr, idx, envNode);
 
-                    env_name = Util::GetSequentialName("env_", temp_var_no_, mp_);
-                    env_var = jsbuilder_->GetOrCreateLocalDecl(env_name, pfunc->envptr);
-                    stmt = jsbuilder_->CreateStmtDassign(env_var, 0, env_node, linenum_);
-                    env_node = jsbuilder_->CreateExprDread(pfunc->envptr, env_var);
+                    envName = Util::GetSequentialName("env_", temp_var_no_, mp_);
+                    envVar = jsbuilder_->GetOrCreateLocalDecl(envName, pfunc->envptr);
+                    stmt = jsbuilder_->CreateStmtDassign(envVar, 0, envNode, linenum_);
+                    envNode = jsbuilder_->CreateExprDread(pfunc->envptr, envVar);
                     idx = jsbuilder_->GetStructFieldIdFromFieldName(pfunc->envtype, name);
                     DEBUGPRINT3(idx);
 
@@ -1361,21 +1361,21 @@ namespace maple {
     }
 
     BaseNode *JSCompiler::CompileOpGetAliasedVar(JSAtom *atom) {
-        MIRType *env_ptr;
-        BaseNode *env_node;
+        MIRType *envPtr;
+        BaseNode *envNode;
         int depth = 0;
 
-        int idx = ProcessAliasedVar(atom, env_ptr, env_node, depth);
+        int idx = ProcessAliasedVar(atom, envPtr, envNode, depth);
 
         BaseNode *bn = NULL;
         if (idx) {
-            bn = jsbuilder_->CreateExprIread(jsvalue_type_, env_ptr, idx, env_node);
+            bn = jsbuilder_->CreateExprIread(jsvalueType, envPtr, idx, envNode);
         } else {
             // add to local
             DEBUGPRINT3("alias var not found, could be from block");
             char *name = Util::GetString(atom, mp_, jscontext_);
-            MIRSymbol *var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_);
-            bn = jsbuilder_->CreateExprDread(jsvalue_type_, var);
+            MIRSymbol *var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalueType);
+            bn = jsbuilder_->CreateExprDread(jsvalueType, var);
         }
 
         return bn;
@@ -1383,20 +1383,20 @@ namespace maple {
 
     // JSOP_SETALIASEDVAR 137
     BaseNode *JSCompiler::CompileOpSetAliasedVar(JSAtom *atom, BaseNode *val) {
-        MIRType *env_ptr;
-        BaseNode *env_node;
+        MIRType *envPtr;
+        BaseNode *envNode;
         int depth = 0;
 
-        int idx = ProcessAliasedVar(atom, env_ptr, env_node, depth);
+        int idx = ProcessAliasedVar(atom, envPtr, envNode, depth);
 
         StmtNode *bn = NULL;
         if (idx) {
-            bn = jsbuilder_->CreateStmtIassign(env_ptr, idx, env_node, val);
+            bn = jsbuilder_->CreateStmtIassign(envPtr, idx, envNode, val);
         } else {
             // add to local
             DEBUGPRINT3("alias var not found, could be from block");
             char *name = Util::GetString(atom, mp_, jscontext_);
-            MIRSymbol *var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalue_type_);
+            MIRSymbol *var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalueType);
             bn = jsbuilder_->CreateStmtDassign(var, 0, val, linenum_);
         }
         bn->srcpos.SetLinenum(linenum_);
@@ -1417,8 +1417,8 @@ namespace maple {
             JSMIRFunction *lambda = scriptstack_.top().second;
             jsbuilder_->SetCurrentFunction(lambda);
             DEBUGPRINT0;
-            MIRSymbol *lambda_st = globaltable.GetSymbolFromStidx(lambda->stidx.Idx());
-            DEBUGPRINTfunc((lambda_st->GetName().c_str()));
+            MIRSymbol *lambdaSt = globaltable.GetSymbolFromStidx(lambda->stidx.Idx());
+            DEBUGPRINTfunc((lambdaSt->GetName().c_str()));
             funcstack_.push(lambda);
             scriptstack_.pop();
 
@@ -1476,7 +1476,7 @@ namespace maple {
 
     SwitchNode *JSCompiler::CompileOpCondSwitch(BaseNode *opnd, JSScript *script, jsbytecode *pcstart,
                                                 jsbytecode *pcend) {
-        int64_t const_val;
+        int64_t constVal;
         int offset;
         jsbytecode *pcjump;
         jsbytecode *pctemp1 = pcstart;
@@ -1496,12 +1496,12 @@ namespace maple {
         }
 
         while (pcstart < pcend) {
-            const_val = GetIntValue(pcstart);
+            constVal = GetIntValue(pcstart);
             pcstart = js::GetNextPc(pcstart);
             offset = GET_JUMP_OFFSET(pcstart);
             pcjump = pcstart + offset;
             mirlabel = GetorCreateLabelofPc(pcjump);
-            switchtable.push_back(CasePair(const_val, mirlabel));
+            switchtable.push_back(CasePair(constVal, mirlabel));
             pcstart = js::GetNextPc(pcstart);
         }
 
@@ -1552,8 +1552,8 @@ namespace maple {
     }
 
     labidx_t JSCompiler::CreateLabel(char *pref) {
-        const char *temp_name = Util::GetSequentialName(pref ? pref : "label", temp_var_no_, mp_);
-        labidx_t labidx = jsbuilder_->GetorCreateMIRLabel(temp_name);
+        const char *tempName = Util::GetSequentialName(pref ? pref : "label", temp_var_no_, mp_);
+        labidx_t labidx = jsbuilder_->GetorCreateMIRLabel(tempName);
         return labidx;
     }
 
@@ -1603,7 +1603,7 @@ namespace maple {
         return gosubnode;
     }
 
-    TryNode *JSCompiler::CompileOpTry(jsbytecode *catch_pc) {
+    TryNode *JSCompiler::CompileOpTry(jsbytecode *catchPc) {
         TryNode *trynode = jsbuilder_->CreateStmtTry(OP_try, 0, 0);
         trynode->srcpos.SetLinenum(linenum_);
         jsbuilder_->AddStmtInCurrentFunctionBody(trynode);
@@ -1612,7 +1612,7 @@ namespace maple {
         labidx_t mirlabel = CreateLabel();
         DEBUGPRINT3(mirlabel);
         // passed in is the catchpc which could also be finallypc in case there is no catch
-        EHstruct *eh = eh_->GetEHstruct(0, catch_pc, catch_pc, 0);
+        EHstruct *eh = eh_->GetEHstruct(0, catchPc, catchPc, 0);
         MIR_ASSERT(eh);
         eh_->SetEHLabel(eh, mirlabel);
 
@@ -1636,8 +1636,8 @@ namespace maple {
         if (label_map_[pc] != 0) {
             mirlabel = label_map_[pc];
         } else {
-            const char *temp_name = Util::GetSequentialName("label", temp_var_no_, mp_);
-            mirlabel = jsbuilder_->GetorCreateMIRLabel(temp_name);
+            const char *tempName = Util::GetSequentialName("label", temp_var_no_, mp_);
+            mirlabel = jsbuilder_->GetorCreateMIRLabel(tempName);
             label_map_[pc] = mirlabel;
         }
         StmtNode *stmt = jsbuilder_->CreateStmtLabel(label_map_[pc]);
@@ -1647,18 +1647,18 @@ namespace maple {
     }
 
     BaseNode *JSCompiler::CheckConvertToJSValueType(BaseNode *data) {
-        MIRType *to_type = NULL;
+        MIRType *toType = NULL;
         if (IsPrimitiveDynType(data->ptyp))
             return data;
         switch (data->ptyp) {
             case PTY_ptr:
                 return data;
             case PTY_u1:
-                to_type = jsbuilder_->GetDynbool();
+                toType = jsbuilder_->GetDynbool();
                 break;
             case PTY_i32:
             case PTY_u32:
-                to_type = jsbuilder_->GetDyni32();
+                toType = jsbuilder_->GetDyni32();
                 if (data->op == OP_constval) {
                     ConstvalNode *cv = static_cast<ConstvalNode *>(data);
                     if (cv) {
@@ -1671,16 +1671,16 @@ namespace maple {
                 }
                 break;
             case PTY_simplestr:
-                to_type = jsbuilder_->GetDynstr();
+                toType = jsbuilder_->GetDynstr();
                 break;
             case PTY_simpleobj:
-                to_type = jsbuilder_->GetDynobj();
+                toType = jsbuilder_->GetDynobj();
                 break;
             default:
                 assert("NIY");
                 break;
         }
-        return jsbuilder_->CreateExprTypeCvt(OP_cvt, to_type, jsbuilder_->GetPrimType(data->ptyp), data);
+        return jsbuilder_->CreateExprTypeCvt(OP_cvt, toType, jsbuilder_->GetPrimType(data->ptyp), data);
     }
 
     // Pops the top two values on the stack as rval and lval, compare them with ===,
@@ -1738,7 +1738,7 @@ namespace maple {
     }
 
     BaseNode *JSCompiler::CheckConvertToRespectiveType(BaseNode *node, MIRType *ty) {
-        if (ty == NULL || ty == jsvalue_type_)
+        if (ty == NULL || ty == jsvalueType)
             return CheckConvertToJSValueType(node);
         if (ty == jsbuilder_->GetPrimType(PTY_u1))
             return CheckConvertToBoolean(node);
@@ -1774,31 +1774,31 @@ namespace maple {
         BaseNode *bn;
         StmtNode *stmt;
 
-        MIRType *env_type = func->envtype;
-        MIRType *env_ptr = func->envptr;
-        MIRSymbol *env_var = jsbuilder_->GetOrCreateLocalDecl("environment", jsbuilder_->GetDynany());
-        DEBUGPRINTsv3("environment", env_ptr);
+        MIRType *envType = func->envtype;
+        MIRType *envPtr = func->envptr;
+        MIRSymbol *envVar = jsbuilder_->GetOrCreateLocalDecl("environment", jsbuilder_->GetDynany());
+        DEBUGPRINTsv3("environment", envPtr);
 
-        BaseNode *size = jsbuilder_->CreateExprSizeoftype(env_type);
-        stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned1(INTRN_JS_NEW, size, env_var);
+        BaseNode *size = jsbuilder_->CreateExprSizeoftype(envType);
+        stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned1(INTRN_JS_NEW, size, envVar);
         stmt->srcpos.SetLinenum(linenum_);
         jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
         func->env_setup = true;
 
-        BaseNode *env = jsbuilder_->CreateExprDread(env_ptr, 0, env_var);
-        MIRStructType *env_struct = static_cast<MIRStructType *>(env_type);
-        bn = jsbuilder_->GetConstInt(env_struct->fields.size() - 2);
-        int idx = jsbuilder_->GetStructFieldIdFromFieldName(env_type, "argnums");
-        stmt = jsbuilder_->CreateStmtIassign(env_ptr, idx, env, bn);
+        BaseNode *env = jsbuilder_->CreateExprDread(envPtr, 0, envVar);
+        MIRStructType *envStruct = static_cast<MIRStructType *>(envType);
+        bn = jsbuilder_->GetConstInt(envStruct->fields.size() - 2);
+        int idx = jsbuilder_->GetStructFieldIdFromFieldName(envType, "argnums");
+        stmt = jsbuilder_->CreateStmtIassign(envPtr, idx, env, bn);
         stmt->srcpos.SetLinenum(linenum_);
         jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
 
         // set up parentenv in env
         if (func->with_env_arg) {
-            MIRSymbol *env_arg = jsbuilder_->GetFunctionArgument(func, ENV_POSITION_IN_ARGS);
-            bn = jsbuilder_->CreateExprDread(env_ptr, env_arg);
-            idx = jsbuilder_->GetStructFieldIdFromFieldName(env_type, "parentenv");
-            StmtNode *stmt = jsbuilder_->CreateStmtIassign(env_ptr, idx, env, bn);
+            MIRSymbol *envArg = jsbuilder_->GetFunctionArgument(func, ENV_POSITION_IN_ARGS);
+            bn = jsbuilder_->CreateExprDread(envPtr, envArg);
+            idx = jsbuilder_->GetStructFieldIdFromFieldName(envType, "parentenv");
+            StmtNode *stmt = jsbuilder_->CreateStmtIassign(envPtr, idx, env, bn);
             stmt->srcpos.SetLinenum(linenum_);
             jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
         }
@@ -1806,16 +1806,16 @@ namespace maple {
 #ifdef DYNAMICLANG
         // set up arguments in env
 
-        std::vector<funcArgPair>::iterator I;
-        for (I = funcFormals.begin(); I != funcFormals.end(); I++) {
-            if (func == (*I).first) {
-                std::vector<char *>::iterator IN;
+        std::vector<funcArgPair>::iterator it;
+        for (it = funcFormals.begin(); it != funcFormals.end(); it++) {
+            if (func == (*it).first) {
+                std::vector<char *>::iterator in;
                 int i = (func->with_env_arg) ? 2 : 1;
-                for (IN = (*I).second.begin(); IN != (*I).second.end(); IN++, i++) {
+                for (in = (*it).second.begin(); in != (*it).second.end(); in++, i++) {
                     MIRSymbol *arg = jsbuilder_->GetFunctionArgument(func, i);
                     bn = jsbuilder_->CreateExprDread(arg->GetType(), 0, arg);
-                    uint32_t id = jsbuilder_->GetStructFieldIdFromFieldName(env_type, *IN);
-                    stmt = jsbuilder_->CreateStmtIassign(env_ptr, id, env, bn);
+                    uint32_t id = jsbuilder_->GetStructFieldIdFromFieldName(envType, *in);
+                    stmt = jsbuilder_->CreateStmtIassign(envPtr, id, env, bn);
                     stmt->srcpos.SetLinenum(linenum_);
                     jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
                 }
@@ -1829,7 +1829,7 @@ namespace maple {
         BaseNode *env = jsbuilder_->CreateExprDread(env_ptr, 0, env_var);
         BaseNode *offset;
         BaseNode *addr;
-        size = jsbuilder_->CreateExprSizeoftype(jsvalue_type_);
+        size = jsbuilder_->CreateExprSizeoftype(jsvalueType);
 
         std::vector<funcArgPair>::iterator I;
         for (I = funcFormals.begin(); I != funcFormals.end(); I++) {
@@ -1843,7 +1843,7 @@ namespace maple {
                                                               jsbuilder_->GetConstInt(i), size);
                         addr = jsbuilder_->CreateExprBinary(OP_add, jsbuilder_->GetVoidPtr(), base, offset);
                     }
-                    bn = jsbuilder_->CreateExprIread(jsvalue_type_, jsvalue_ptr_, 0, addr);
+                    bn = jsbuilder_->CreateExprIread(jsvalueType, jsvalue_ptr_, 0, addr);
                     uint32_t id = jsbuilder_->GetStructFieldIdFromFieldName(env_type, *IN);
                     stmt = jsbuilder_->CreateStmtIassign(env_ptr, id, env, bn);
                     stmt->srcpos.SetLinenum(linenum_);
@@ -1972,9 +1972,9 @@ namespace maple {
                         BaseNode *expr = CheckConvertToJSValueType(Pop());
                         jsbuilder_->CreateStmtDassign(tempvar, 0, expr, linenum_);
                         if (!opstack_->Empty()) {
-                            BaseNode *top_value = Top();
-                            if (!(top_value->op == OP_dread && static_cast<AddrofNode *>(top_value)->stidx.Islocal() &&
-                                  ((AddrofNode *) top_value)->stidx == tempvar->GetStIdx())) {
+                            BaseNode *topValue = Top();
+                            if (!(topValue->op == OP_dread && static_cast<AddrofNode *>(topValue)->stidx.Islocal() &&
+                                  ((AddrofNode *) topValue)->stidx == tempvar->GetStIdx())) {
                                 Push(jsbuilder_->CreateExprDread(tempvar->GetType(), tempvar));
                             } else {
                                 scope_->DecDepth();
@@ -2410,8 +2410,8 @@ namespace maple {
                             BaseNode *node2 = CheckConvertToJSValueType(CompileGeneric1(
                                 INTRN_JS_GET_BISTRING, jsbuilder_->GetConstUInt32((uint32_t) JSBUILTIN_STRING_EXPORTS),
                                 false));
-                            BaseNode *ret_expr = CompileGeneric2(INTRN_JSOP_GETPROP, node1, node2, true);
-                            SetupMainFuncRet(ret_expr);
+                            BaseNode *retExpr = CompileGeneric2(INTRN_JSOP_GETPROP, node1, node2, true);
+                            SetupMainFuncRet(retExpr);
                         } else if (func == jsmain_) {
                             SetupMainFuncRet(jsbuilder_->GetConstInt(0)); // main function always returns 0
                         } else {
@@ -2428,8 +2428,8 @@ namespace maple {
                             BaseNode *node2 = CheckConvertToJSValueType(CompileGeneric1(
                                 INTRN_JS_GET_BISTRING, jsbuilder_->GetConstUInt32((uint32_t) JSBUILTIN_STRING_EXPORTS),
                                 false));
-                            BaseNode *ret_expr = CompileGeneric2(INTRN_JSOP_GETPROP, node1, node2, true);
-                            jsbuilder_->CreateStmtReturn(ret_expr, false, linenum_);
+                            BaseNode *retExpr = CompileGeneric2(INTRN_JSOP_GETPROP, node1, node2, true);
+                            jsbuilder_->CreateStmtReturn(retExpr, false, linenum_);
                         } else if (func == jsmain_) {
                             BaseNode *undefined = CompileOpConstValue(JSTYPE_UNDEFINED, 0);
                             jsbuilder_->CreateStmtReturn(undefined, false, linenum_);
@@ -2471,8 +2471,8 @@ namespace maple {
                     int offset = GET_JUMP_OFFSET(pc);
                     BaseNode *opnd0 = CheckConvertToJSValueType(Pop()); // Pop IFEQ stmt
                     BaseNode *cond0 = CheckConvertToBoolean(opnd0);
-                    MIRSymbol *temp_var = SymbolFromSavingInATemp(opnd0, true);
-                    opnd0 = jsbuilder_->CreateExprDread(jsbuilder_->GetUInt1(), temp_var);
+                    MIRSymbol *tempVar = SymbolFromSavingInATemp(opnd0, true);
+                    opnd0 = jsbuilder_->CreateExprDread(jsbuilder_->GetUInt1(), tempVar);
                     Push(opnd0);
 
                     labidx_t mirlabel = GetorCreateLabelofPc(pc + offset);
@@ -2486,8 +2486,8 @@ namespace maple {
                     // list
                     CompileScriptBytecodes(script, start, pc, NULL);
                     BaseNode *opnd1 = CheckConvertToJSValueType(Pop());
-                    jsbuilder_->CreateStmtDassign(temp_var, 0, opnd1, linenum_);
-                    opnd0 = jsbuilder_->CreateExprDread(temp_var->GetType(), temp_var);
+                    jsbuilder_->CreateStmtDassign(tempVar, 0, opnd1, linenum_);
+                    opnd0 = jsbuilder_->CreateExprDread(tempVar->GetType(), tempVar);
                     Push(opnd0);
                     continue;
                 }
@@ -2501,8 +2501,8 @@ namespace maple {
                 }
                 case JSOP_MOREITER: /*76, 1, 1, 2*/ {
                     BaseNode *iterator = Top();
-                    BaseNode *is_iterator = CompileOpMoreIterator(iterator);
-                    Push(is_iterator);
+                    BaseNode *isIterator = CompileOpMoreIterator(iterator);
+                    Push(isIterator);
                     break;
                 }
                 case JSOP_ITERNEXT: /*77, 1, 0, 1*/ {
@@ -2540,14 +2540,14 @@ namespace maple {
                 }
                 case JSOP_PICK: /*133, 2, 0, 0*/ {
                     uint32_t n = GET_UINT8(pc);
-                    std::vector<BaseNode *> temp_stack;
+                    std::vector<BaseNode *> tempStack;
                     for (uint32_t i = 0; i < n; i++) {
-                        temp_stack.push_back(Pop());
+                        tempStack.push_back(Pop());
                     }
                     BaseNode *bn = Pop();
                     for (uint32_t i = 0; i < n; i++) {
-                        Push(temp_stack[temp_stack.size() - 1]);
-                        temp_stack.pop_back();
+                        Push(tempStack[tempStack.size() - 1]);
+                        tempStack.pop_back();
                     }
                     Push(bn);
                     break;
@@ -2945,12 +2945,12 @@ namespace maple {
                     std::string argname(temp_name, mp_);
                     arguments->SetNameStridx(module_->stringtable.GetOrCreateStridxFromName(argname));
                     jsbuilder_->GetCurrentFunction()->symtab->AddToStringSymbolMap(arguments);
-                    arguments->sclass = SC_auto;
-                    arguments->skind = ST_var;
+                    arguments->sclass = kScAuto;
+                    arguments->skind = kStVar;
 
                     uint32_t size_array[1];
                     size_array[0] = length;
-                    MIRType *array_type = jsbuilder_->GetOrCreateArrayType(jsvalue_type_, 1, size_array);
+                    MIRType *array_type = jsbuilder_->GetOrCreateArrayType(jsvalueType, 1, size_array);
                     MIRType *array_ptr_type = jsbuilder_->GetOrCreatePointerType(array_type);
                     tyidx_t tyidx = array_type->_ty_idx;
                     arguments->SetTyIdx(tyidx);
@@ -3015,7 +3015,7 @@ namespace maple {
                 case JSOP_CALLEE: /*132, 1, 0, 1*/ {
                     char *name = funcstack_.top()->scope->GetName();
                     char *objname = Util::GetNameWithSuffix(name, "_obj_", mp_);
-                    MIRSymbol *var = jsbuilder_->GetOrCreateGlobalDecl(objname, jsvalue_type_);
+                    MIRSymbol *var = jsbuilder_->GetOrCreateGlobalDecl(objname, jsvalueType);
                     BaseNode *bn = jsbuilder_->CreateExprDread(var);
                     Push(bn);
                     break;
@@ -3059,8 +3059,8 @@ namespace maple {
                     break;
                 }
                 case JSOP_HOLE: /*218, 1, 0, 1*/ {
-                    BaseNode *hole_elem = CompileOpConstValue(JSTYPE_NONE, 0);
-                    Push(hole_elem);
+                    BaseNode *holeElem = CompileOpConstValue(JSTYPE_NONE, 0);
+                    Push(holeElem);
                     break;
                 }
                 case JSOP_MUTATEPROTO: /*194, 1, 2, 1*/ {
@@ -3121,7 +3121,7 @@ namespace maple {
                     break;
                 }
                 case JSOP_EXCEPTION: /*118, 1, 0, 1*/ {
-                    BaseNode *rr = jsbuilder_->CreateExprRegread(PTY_dynany, -SREG_thrownval);
+                    BaseNode *rr = jsbuilder_->CreateExprRegread(PTY_dynany, -kSregThrownval);
                     Push(rr);
                     break;
                 }

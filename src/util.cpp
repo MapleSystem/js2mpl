@@ -84,17 +84,17 @@ namespace maple {
         return name;
     }
 
-    char *Util::GetNameWithPrefix(const char *orig_name, const char *prefix, MemPool *mp) {
+    char *Util::GetNameWithPrefix(const char *origName, const char *prefix, MemPool *mp) {
         std::stringstream ss;
         ss << prefix;
-        MapleString name(ss.str() + orig_name, mp);
+        MapleString name(ss.str() + origName, mp);
         return name.c_str();
     }
 
-    char *Util::GetNameWithSuffix(const char *orig_name, const char *suffix, MemPool *mp) {
+    char *Util::GetNameWithSuffix(const char *origName, const char *suffix, MemPool *mp) {
         std::stringstream ss;
         ss << suffix;
-        MapleString name(orig_name + ss.str(), mp);
+        MapleString name(origName + ss.str(), mp);
         return name.c_str();
     }
 
