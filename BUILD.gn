@@ -3,8 +3,7 @@ MOZJS_SOURCE_DIR = "${MOZJS_ROOT}/mozjs-31.2.0"
 MOZJS_BUILD_DIR = "${MOZJS_ROOT}/mozjs-build"
 MOZJS_INSTALL_DIR = "${MOZJS_BUILD_DIR}/dist"
 
-print("---------------${MOZJS_INSTALL_DIR}/system_wrappers ${USE_CLANG}")
-executable("js2mpl1"){
+executable("js2mpl"){
     sources = [
         "src/closure.cpp",
         "src/compiler.cpp",
@@ -18,7 +17,7 @@ executable("js2mpl1"){
     ]
 
     include_dirs = [
-        "//mapleall",
+        "${MAPLEALL_ROOT}",
         "${MOZJS_INSTALL_DIR}/include",
         "${MOZJS_INSTALL_DIR}/system_wrappers",
         "${MOZJS_SOURCE_DIR}",
@@ -31,10 +30,10 @@ executable("js2mpl1"){
     ]
 
     deps = [
-        "//mapleall/mapleir:libmplir",
-        "//mapleall/mapleutil:libmplutil",
-        "//mapleall/Mempool:libmempool",
-        "//mapleall/HuaweiSecureC:libHWSecureC",
+        "${MAPLEALL_ROOT}/mapleir:libmplir",
+        "${MAPLEALL_ROOT}/mapleutil:libmplutil",
+        "${MAPLEALL_ROOT}/Mempool:libmempool",
+        "${MAPLEALL_ROOT}/HuaweiSecureC:libHWSecureC",
     ]
 
     cflags_cc +=[
@@ -68,9 +67,3 @@ executable("js2mpl1"){
         "-ldl",
     ]
 }
-
-
-# -O3 -Wall -m64 -DDYNAMICLANG -DRC_NO_MMAP -DMIR_FEATURE_FULL=1 -DMIR_DEX=1 -DDEXHACK=1
-# -Wall  -m32 -DDYNAMICLANG -DRC_NO_MMAP -DMIR_FEATURE_FULL=1 -DMIR_DEX=0 -std=c++11 -Werror -Wno-unused-variable -O3
-# -O3 -Wall -m32 -DDYNAMICLANG -DRC_NO_MMAP -DMIR_FEATURE_FULL=1 -DMIR_DEX=0  -std=c++11 -Werror -Wno-unused-variable
-#g++  -Wall  -m32 -DDYNAMICLANG -DRC_NO_MMAP -DMIR_FEATURE_FULL=1 -DMIR_DEX=0 -std=c++11 -w -O3  -rdynamic js2mpl/src/CMakeFiles/js2mpl.dir/closure.cpp.o js2mpl/src/CMakeFiles/js2mpl.dir/compiler.cpp.o js2mpl/src/CMakeFiles/js2mpl.dir/eh.cpp.o js2mpl/src/CMakeFiles/js2mpl.dir/js2mpl.cpp.o js2mpl/src/CMakeFiles/js2mpl.dir/jsfunction.cpp.o js2mpl/src/CMakeFiles/js2mpl.dir/jsmirbuilder.cpp.o js2mpl/src/CMakeFiles/js2mpl.dir/operandstack.cpp.o js2mpl/src/CMakeFiles/js2mpl.dir/scope.cpp.o js2mpl/src/CMakeFiles/js2mpl.dir/util.cpp.o  -o ../../target/product/maple_arm32-gnu-release/bin/js2mpl -L/home/lpc/figo/maple/mozjs/mozjs-build/dist/lib -Wl,-rpath,/home/lpc/figo/maple/mozjs/mozjs-build/dist/lib lib/32/libmplir.a lib/32/libmplutil.a lib/32/libmempool.a -ljs_static -lz -lpthread -ldl lib/32/libHWSecureC.a 
