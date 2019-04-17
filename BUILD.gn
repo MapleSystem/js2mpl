@@ -40,12 +40,17 @@ executable("js2mpl"){
         "-DMIR_FEATURE_FULL=1",
         "-std=c++11",
         "-w",
-        "-include${MOZJS_SOURCE_DIR}/config/gcc_hidden.h",
-        "-include${MOZJS_BUILD_DIR}/js/src/js-confdefs.h"
+        "-include",
+        "${MOZJS_SOURCE_DIR}/config/gcc_hidden.h",
+        "-include",
+        "${MOZJS_BUILD_DIR}/js/src/js-confdefs.h"
     ]
 
     libs = [
         "${MOZJS_INSTALL_DIR}/lib/libjs_static.a",
+        "-lz",
+        "-lpthread",
+        "-ldl",
     ]
 
     ldflags = [
@@ -62,8 +67,5 @@ executable("js2mpl"){
         "-L${MOZJS_INSTALL_DIR}/lib",
         "-Wl,-rpath,${MOZJS_INSTALL_DIR}/lib",
         "-ljs_static",
-        "-lz",
-        "-lpthread",
-        "-ldl",
     ]
 }
