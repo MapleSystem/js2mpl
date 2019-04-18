@@ -1,8 +1,8 @@
 #ifndef JSVALUE_H
 #define JSVALUE_H
-#define JSFUNCPROP_STRICT    ((uint8_t)0x01)
-#define JSFUNCPROP_NATIVE    ((uint8_t)0x02)
-#define JSFUNCPROP_USERFUNC  ((uint8_t)0x04)
+#define JSFUNCPROP_STRICT ((uint8_t)0x01)
+#define JSFUNCPROP_NATIVE ((uint8_t)0x02)
+#define JSFUNCPROP_USERFUNC ((uint8_t)0x04)
 namespace maple {
 enum __jstype {
   JSTYPE_UNDEFINED = 0,
@@ -20,10 +20,10 @@ enum __jstype {
 #define JSSTRING_UNICODE ((uint8_t)0x01)
 // Bit is set for non-const code units
 #define JSSTRING_GEN ((uint8_t)0x02)
-// Bit is set for large strs whose length > 255 
+// Bit is set for large strs whose length > 255
 #define JSSTRING_LARGE ((uint8_t)0x04)
 
-enum js_builtin_id{ // must in accordance with js_value.h:js_builtin_id in the runtime
+enum js_builtin_id {  // must in accordance with js_value.h:js_builtin_id in the runtime
   JS_BUILTIN_GLOBAL = 0,
   JS_BUILTIN_OBJECT,
   JS_BUILTIN_OBJECT_PROTOTYPE,
@@ -43,5 +43,5 @@ enum js_builtin_id{ // must in accordance with js_value.h:js_builtin_id in the r
   JS_BUILTIN_JSON,
   JS_BUILTIN_COUNT
 };
-}
+}  // namespace maple
 #endif

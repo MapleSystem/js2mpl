@@ -13,7 +13,7 @@
 #include "../include/util.h"
 
 namespace maple {
-class JSCompiler{
+class JSCompiler {
  private:
   const char *filename_;
   unsigned linenum_;
@@ -36,8 +36,10 @@ class JSCompiler{
   std::stack<std::pair<JSScript *, JSMIRFunction *>> scriptstack_;
 
   MemPool *mp_;
+
  public:
   maple::MIRModule *module_;
+
  private:
   BaseNode *dummyNode;
 
@@ -50,19 +52,12 @@ class JSCompiler{
 
   typedef std::pair<JSMIRFunction *, std::vector<char *>> funcArgPair;
   std::vector<funcArgPair> funcFormals;
-  std::vector<std::pair<char*, char*>> objFuncMap;
+  std::vector<std::pair<char *, char *>> objFuncMap;
 
  public:
-  explicit JSCompiler(const char *filename, 
-                      JSContext *context,
-                      JSScript *script, 
-                      maple::MIRModule *module, 
-                      JSMIRBuilder *jsbuilder,
-                      Scope *scope,
-                      EH *eh,
-                      JSClosure *closure,
-                      OperandStack *opstack):
-      filename_(filename),
+  explicit JSCompiler(const char *filename, JSContext *context, JSScript *script, maple::MIRModule *module,
+                      JSMIRBuilder *jsbuilder, Scope *scope, EH *eh, JSClosure *closure, OperandStack *opstack)
+    : filename_(filename),
       linenum_(0),
       jscontext_(context),
       jsscript_(script),
@@ -73,35 +68,38 @@ class JSCompiler{
       scope_(scope),
       eh_(eh),
       closure_(closure),
-      opstack_(opstack){}
+      opstack_(opstack) {}
 
-  void Push(BaseNode *node) { assert(node->op != OP_dassign); opstack_->Push(node); }
+  void Push(BaseNode *node) {
+    assert(node->op != OP_dassign);
+    opstack_->Push(node);
+  }
+
   BaseNode *Pop() {
-    BaseNode *bn = static_cast <BaseNode *>(opstack_->Pop());
+    BaseNode *bn = static_cast<BaseNode *>(opstack_->Pop());
     assert(bn);
     return bn;
   }
 
   BaseNode *Top() {
-    BaseNode *bn = static_cast <BaseNode *>(opstack_->Top());
-    assert(bn);
-    return bn;
-  }
-  BaseNode *GetOpAt(uint32_t n) {
-    BaseNode *bn = static_cast <BaseNode *>(opstack_->GetOpAt(n));
+    BaseNode *bn = static_cast<BaseNode *>(opstack_->Top());
     assert(bn);
     return bn;
   }
 
-  bool UseSimpleCall(char *name) { 
-    return jsbuilder_->UseSimpCall() &&
-           name && scope_->IsFunction(name) &&
-           !closure_->FuncUseEnv(name) &&
+  BaseNode *GetOpAt(uint32_t n) {
+    BaseNode *bn = static_cast<BaseNode *>(opstack_->GetOpAt(n));
+    assert(bn);
+    return bn;
+  }
+
+  bool UseSimpleCall(char *name) {
+    return jsbuilder_->UseSimpCall() && name && scope_->IsFunction(name) && !closure_->FuncUseEnv(name) &&
            !closure_->IsFuncModified(name);
   }
 
   char *GetFuncName(const char *objname) {
-    std::vector<std::pair<char*, char*>>::iterator I;
+    std::vector<std::pair<char *, char *>>::iterator I;
     for (I = objFuncMap.begin(); I != objFuncMap.end(); I++) {
       if (!strcmp(objname, (*I).first)) {
         return (*I).second;
@@ -131,19 +129,13 @@ class JSCompiler{
   uint32_t FindIntrinsicForOp(JSOp opcode);
   BaseNode *CompileOpBinary(JSOp op, BaseNode *opnd0, BaseNode *opnd1);
   BaseNode *CompileOpUnary(JSOp op, BaseNode *opnd);
-  BaseNode *CompileGenericN(int32_t intrin_id,
-                               MapleVector<BaseNode *> &arguments,
-                               bool is_call);
-  BaseNode *CompileGeneric0(int32_t intrin_id,
-                               bool is_call);
-  BaseNode *CompileGeneric1(int32_t intrin_id, BaseNode *arg,
-                               bool is_call);
-  BaseNode *CompileGeneric2(int32_t intrin_id, BaseNode *arg0,
-                               BaseNode *arg1, bool is_call);
-  BaseNode *CompileGeneric3(int32_t intrin_id, BaseNode *arg0,
-                               BaseNode *arg1, BaseNode *arg2, bool is_call);
-  BaseNode *CompileGeneric4(int32_t intrin_id, BaseNode *arg0,
-                               BaseNode *arg1, BaseNode *arg2, BaseNode *arg3, bool is_call);
+  BaseNode *CompileGenericN(int32_t intrin_id, MapleVector<BaseNode *> &arguments, bool is_call);
+  BaseNode *CompileGeneric0(int32_t intrin_id, bool is_call);
+  BaseNode *CompileGeneric1(int32_t intrin_id, BaseNode *arg, bool is_call);
+  BaseNode *CompileGeneric2(int32_t intrin_id, BaseNode *arg0, BaseNode *arg1, bool is_call);
+  BaseNode *CompileGeneric3(int32_t intrin_id, BaseNode *arg0, BaseNode *arg1, BaseNode *arg2, bool is_call);
+  BaseNode *CompileGeneric4(int32_t intrin_id, BaseNode *arg0, BaseNode *arg1, BaseNode *arg2, BaseNode *arg3,
+                            bool is_call);
   BaseNode *CompileOpGetProp(BaseNode *obj, JSString *name);
   BaseNode *CompileOpCallprop(BaseNode *obj, JSAtom *atom);
   BaseNode *CompileOpString(JSString *str);
@@ -173,14 +165,12 @@ class JSCompiler{
   BaseNode *CompileOpNew(uint32_t argc);
   BaseNode *CompileOpName(JSAtom *atom, jsbytecode *pc);
   StmtNode *CompileOpIfJump(JSOp op, BaseNode *cond, jsbytecode *pcend);
-  
+
   labidx_t CreateLabel(char *pref = NULL);
   labidx_t GetorCreateLabelofPc(jsbytecode *pc, char *pref = NULL);
   int64_t GetIntValue(jsbytecode *pc);
-  SwitchNode *CompileOpCondSwitch(BaseNode *opnd, JSScript *script,
-                                jsbytecode *pcstart, jsbytecode *pcend);
-  SwitchNode *CompileOpTableSwitch(BaseNode *opnd, int32_t len,
-                                 JSScript *script, jsbytecode *pc);
+  SwitchNode *CompileOpCondSwitch(BaseNode *opnd, JSScript *script, jsbytecode *pcstart, jsbytecode *pcend);
+  SwitchNode *CompileOpTableSwitch(BaseNode *opnd, int32_t len, JSScript *script, jsbytecode *pc);
   GotoNode *CompileOpGoto(jsbytecode *pc, jsbytecode *jumptopc, MIRSymbol *tempvar);
   GotoNode *CompileOpGosub(jsbytecode *pc);
   TryNode *CompileOpTry(jsbytecode *pc);
@@ -191,13 +181,11 @@ class JSCompiler{
   BaseNode *CheckConvertToUInt32(BaseNode *node);
   BaseNode *CheckConvertToRespectiveType(BaseNode *node, MIRType *ty);
   bool CompileOpSetName(JSAtom *atom, BaseNode *val);
-  void CompileOpCase(jsbytecode *pc, int offset, BaseNode *rval,
-		     BaseNode *lval);
+  void CompileOpCase(jsbytecode *pc, int offset, BaseNode *rval, BaseNode *lval);
   bool CompileOpDefFun(JSFunction *jsfun);
   bool CompileOpDefVar(JSAtom *atom);
   bool CompileScript(JSScript *script);
-  bool CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart,
-                              jsbytecode *pcend, jsbytecode **newpc);
+  bool CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, jsbytecode *pcend, jsbytecode **newpc);
   bool MarkLabels(JSScript *s, jsbytecode *pc0, jsbytecode *pc1);
   bool CollectInfo(JSScript *script, jsbytecode *pcstart, jsbytecode *pcend);
   // Finish job.

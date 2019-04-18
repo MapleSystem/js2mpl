@@ -19,18 +19,18 @@ extern int js2mplDebugIndent;
 
 namespace maple {
 
-  extern void PrintIndentation(int indent);
+extern void PrintIndentation(int indent);
 
 class Util {
-  public:
-    static const char *getOpcodeName[228];
-    static void AdjIndent(int n);
-    static void SetIndent(int n);
-    static char *GetString(JSAtom *atom, MemPool *mp, JSContext *ctx);
-    static char *GetSequentialName0(const char *prefix, uint32_t num, MemPool *mp);
-    static char *GetSequentialName(const char *prefix, uint32_t &num, MemPool *mp);
-    static char *GetNameWithPrefix(const char *orig_name, const char *prefix, MemPool *mp);
-    static char *GetNameWithSuffix(const char *orig_name, const char *suffix, MemPool *mp);
+ public:
+  static const char *getOpcodeName[228];
+  static void AdjIndent(int n);
+  static void SetIndent(int n);
+  static char *GetString(JSAtom *atom, MemPool *mp, JSContext *ctx);
+  static char *GetSequentialName0(const char *prefix, uint32_t num, MemPool *mp);
+  static char *GetSequentialName(const char *prefix, uint32_t &num, MemPool *mp);
+  static char *GetNameWithPrefix(const char *orig_name, const char *prefix, MemPool *mp);
+  static char *GetNameWithSuffix(const char *orig_name, const char *suffix, MemPool *mp);
 };
 }  // namespace maple
 

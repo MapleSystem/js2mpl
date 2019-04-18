@@ -22,21 +22,27 @@ class OperandStack {
   bool flag_in_try_block;
   bool flag_after_throwing;
   explicit OperandStack(unsigned max_depth)
-      : current_depth_(0), flag_has_rval(false), flag_has_iter(false), 
-        flag_in_try_block(false),
-        flag_after_throwing(false),
-        max_depth_(max_depth) {}
+    : current_depth_(0),
+      flag_has_rval(false),
+      flag_has_iter(false),
+      flag_in_try_block(false),
+      flag_after_throwing(false),
+      max_depth_(max_depth) {}
 
-  bool CheckDepth(unsigned expected) { return current_depth_ == expected; }
-  unsigned GetDepth() { return current_depth_; }
+  bool CheckDepth(unsigned expected) {
+    return current_depth_ == expected;
+  }
+
+  unsigned GetDepth() {
+    return current_depth_;
+  }
 
   void Push(void *node) {
     stack_.push_back(node);
     current_depth_++;
     if (js2mplDebug >= 2) {
       PrintIndentation(js2mplDebugIndent);
-      std::cout << "------stack depth increased to "
-        << current_depth_ << "------- " << node << std::endl;
+      std::cout << "------stack depth increased to " << current_depth_ << "------- " << node << std::endl;
     }
     assert(current_depth_ <= max_depth_);
   }
@@ -47,8 +53,7 @@ class OperandStack {
     void *last = stack_[stack_.size() - 1];
     if (js2mplDebug >= 2) {
       PrintIndentation(js2mplDebugIndent);
-      std::cout << "------stack depth decreased to "
-        << current_depth_ << "------- " << last << std::endl;
+      std::cout << "------stack depth decreased to " << current_depth_ << "------- " << last << std::endl;
     }
     stack_.pop_back();
     return last;
@@ -59,10 +64,12 @@ class OperandStack {
     return stack_[stack_.size() - 1];
   }
 
-  bool Empty() { return current_depth_ == 0; }
+  bool Empty() {
+    return current_depth_ == 0;
+  }
 
   void *GetOpAt(uint32_t n) {
-    std::vector <void *> temp_stack;
+    std::vector<void *> temp_stack;
     for (uint32_t i = 0; i < n; i++) {
       temp_stack.push_back(Pop());
     }
@@ -79,5 +86,3 @@ class OperandStack {
 };
 }  // namespace maple
 #endif  // JS2MPL_INCLUDE_OPERANDSTACK_H_
-
-

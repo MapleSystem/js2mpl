@@ -15,87 +15,93 @@ int js2mplDebugIndent = 0;
 
 namespace maple {
 
-    void Util::AdjIndent(int n) {
-        js2mplDebugIndent += n;
-    }
+void Util::AdjIndent(int n) {
+  js2mplDebugIndent += n;
+}
 
-    void Util::SetIndent(int n) {
-        js2mplDebugIndent = n;
-    }
+void Util::SetIndent(int n) {
+  js2mplDebugIndent = n;
+}
 
-    const char *Util::getOpcodeName[228] = {
+const char *Util::getOpcodeName[228] = {
 #include "opcname.def"
-    };
+};
 
-    static bool ValidInName(char c) {
-        if (c >= 'a' && c <= 'z')
-            return true;
-        if (c >= 'A' && c <= 'Z')
-            return true;
-        if (c >= '0' && c <= '9')
-            return true;
-        if (c == '_' || c == '$')
-            return true;
-        return false;
+static bool ValidInName(char c) {
+  if (c >= 'a' && c <= 'z') {
+    return true;
+  }
+  if (c >= 'A' && c <= 'Z') {
+    return true;
+  }
+  if (c >= '0' && c <= '9') {
+    return true;
+  }
+  if (c == '_' || c == '$') {
+    return true;
+  }
+  return false;
+}
+
+char *Util::GetString(JSAtom *atom, MemPool *mp, JSContext *ctx) {
+  if (!atom) {
+    return NULL;
+  }
+
+  js::ExclusiveContext *ect = (js::ExclusiveContext *)ctx;
+  int len = atom->length();
+  const jschar *js = atom->getCharsZ(ect);
+  char *name = static_cast<char *>(mp->Malloc(len + 1));
+  char c;
+
+  bool isGood = true;
+  for (int i = 0; i < len; i++) {
+    c = js[i];
+    if (ValidInName(c)) {
+      name[i] = c;
+    } else {
+      isGood = false;
+      DEBUGPRINT2(c);
     }
+  }
+  name[len] = '\0';
 
-    char *Util::GetString(JSAtom *atom, MemPool *mp, JSContext *ctx) {
-        if (!atom)
-            return NULL;
+  DEBUGPRINT2(name);
 
-        js::ExclusiveContext *ect = (js::ExclusiveContext *) ctx;
-        int len = atom->length();
-        const jschar *js = atom->getCharsZ(ect);
-        char *name = static_cast<char *>(mp->Malloc(len + 1));
-        char c;
+  if (!isGood) {
+    return NULL;
+  }
 
-        bool isGood = true;
-        for (int i = 0; i < len; i++) {
-            c = js[i];
-            if (ValidInName(c))
-                name[i] = c;
-            else {
-                isGood = false;
-                DEBUGPRINT2(c);
-            }
-        }
-        name[len] = '\0';
+  return name;
+}
 
-        DEBUGPRINT2(name);
+char *Util::GetSequentialName0(const char *prefix, uint32_t num, MemPool *mp) {
+  std::stringstream ss;
+  ss << num;
 
-        if (!isGood)
-            return NULL;
+  MapleString name(prefix + ss.str(), mp);
+  DEBUGPRINT2(name.c_str());
+  return name.c_str();
+}
 
-        return name;
-    }
+char *Util::GetSequentialName(const char *prefix, uint32_t &num, MemPool *mp) {
+  char *name = GetSequentialName0(prefix, num, mp);
+  num++;
+  return name;
+}
 
-    char *Util::GetSequentialName0(const char *prefix, uint32_t num, MemPool *mp) {
-        std::stringstream ss;
-        ss << num;
+char *Util::GetNameWithPrefix(const char *origName, const char *prefix, MemPool *mp) {
+  std::stringstream ss;
+  ss << prefix;
+  MapleString name(ss.str() + origName, mp);
+  return name.c_str();
+}
 
-        MapleString name(prefix + ss.str(), mp);
-        DEBUGPRINT2(name.c_str());
-        return name.c_str();
-    }
+char *Util::GetNameWithSuffix(const char *origName, const char *suffix, MemPool *mp) {
+  std::stringstream ss;
+  ss << suffix;
+  MapleString name(origName + ss.str(), mp);
+  return name.c_str();
+}
 
-    char *Util::GetSequentialName(const char *prefix, uint32_t &num, MemPool *mp) {
-        char *name = GetSequentialName0(prefix, num, mp);
-        num++;
-        return name;
-    }
-
-    char *Util::GetNameWithPrefix(const char *origName, const char *prefix, MemPool *mp) {
-        std::stringstream ss;
-        ss << prefix;
-        MapleString name(ss.str() + origName, mp);
-        return name.c_str();
-    }
-
-    char *Util::GetNameWithSuffix(const char *origName, const char *suffix, MemPool *mp) {
-        std::stringstream ss;
-        ss << suffix;
-        MapleString name(origName + ss.str(), mp);
-        return name.c_str();
-    }
-
-} // namespace maple
+}  // namespace maple

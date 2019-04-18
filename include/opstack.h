@@ -12,8 +12,7 @@ namespace maple {
 class OpInfo {
   BaseNode *bn_;
   uint32_t tag_;
-  explicit OpInfo(BaseNode *bn, uint32_t tag)
-      : bn_(bn), tag_(tag){}
+  explicit OpInfo(BaseNode *bn, uint32_t tag) : bn_(bn), tag_(tag) {}
 };
 
 class OpStack {
@@ -25,22 +24,20 @@ class OpStack {
  public:
   BaseNode *rval;
   bool flag_has_rval;
-  explicit OpStack(unsigned max_depth)
-      : current_depth_(0), flag_has_rval(false),
-      max_depth_(max_depth) {}
+  explicit OpStack(unsigned max_depth) : current_depth_(0), flag_has_rval(false), max_depth_(max_depth) {}
 
-  bool CheckDepth(unsigned expected) { return current_depth_ == expected; }
-
-  void Push(BaseNode *bn) {
-    
+  bool CheckDepth(unsigned expected) {
+    return current_depth_ == expected;
   }
+
+  void Push(BaseNode *bn) {}
+
   void Push(void *node) {
     stack_.push_back(node);
     current_depth_++;
     if (js2mplDebug >= 2) {
       PrintIndentation(js2mplDebugIndent);
-      std::cout << "------stack depth increased to "
-        << current_depth_ << "------- " << node << std::endl;
+      std::cout << "------stack depth increased to " << current_depth_ << "------- " << node << std::endl;
     }
     assert(current_depth_ <= max_depth_);
   }
@@ -51,8 +48,7 @@ class OpStack {
     void *last = stack_[stack_.size() - 1];
     if (js2mplDebug >= 2) {
       PrintIndentation(js2mplDebugIndent);
-      std::cout << "------stack depth decreased to "
-        << current_depth_ << "------- " << last << std::endl;
+      std::cout << "------stack depth decreased to " << current_depth_ << "------- " << last << std::endl;
     }
     stack_.pop_back();
     return last;
@@ -64,7 +60,7 @@ class OpStack {
   }
 
   void *GetOpAt(uint32_t n) {
-    std::vector <void *> temp_stack;
+    std::vector<void *> temp_stack;
     for (uint32_t i = 0; i < n; i++) {
       temp_stack.push_back(Pop());
     }
@@ -77,13 +73,7 @@ class OpStack {
     return bn;
   }
 
-  OpInfo Pop() {
-    
-  }
-
-
+  OpInfo Pop() {}
 };
 }  // namespace maple
 #endif  // JS2MPL_INCLUDE_OPERANDSTACK_H_
-
-
