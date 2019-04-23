@@ -67,28 +67,28 @@ MIRType *JSClosure::GetOrCreateEnvType(JSMIRFunction *func) {
     return func->envtype;
   }
 
-  FieldVector envFields(module_->mp_allocator_.Adapter());
-  FieldVector prntFields(module_->mp_allocator_.Adapter());
+  FieldVector envFields;
+  FieldVector prntFields;
 
   gstridx_t argnums = jsbuilder_->GetOrCreateStringIndex("argnums");
-  envFields.push_back(FieldPair(argnums, TyidxFldAttrPair(jsbuilder_->GetUInt32()->_ty_idx, FieldAttrs())));
+  envFields.push_back(FieldPair(argnums, TyidxFieldAttrPair(globaltable.GetUInt32()->_ty_idx, FieldAttrs())));
 
   gstridx_t parentenv = jsbuilder_->GetOrCreateStringIndex("parentenv");
   if (func->scope->IsTopLevel()) {
-    envFields.push_back(FieldPair(parentenv, TyidxFldAttrPair(jsbuilder_->GetVoidPtr()->_ty_idx, FieldAttrs())));
+    envFields.push_back(FieldPair(parentenv, TyidxFieldAttrPair(globaltable.GetVoidPtr()->_ty_idx, FieldAttrs())));
   } else {
     ScopeNode *sn = func->scope;
     JSMIRFunction *parent = sn->GetParentFunc();
     MIRType *parentenvType = parent->envtype;
     DEBUGPRINT3(parentenvType);
-    MIRType *envptr = jsbuilder_->GetOrCreatePointerType(parentenvType);
+    MIRType *envptr = globaltable.GetOrCreatePointerType(parentenvType);
     DEBUGPRINT3(envptr);
     func->penvtype = parentenvType;
     func->penvptr = envptr;
-    envFields.push_back(FieldPair(parentenv, TyidxFldAttrPair(envptr->_ty_idx, FieldAttrs())));
+    envFields.push_back(FieldPair(parentenv, TyidxFieldAttrPair(envptr->_ty_idx, FieldAttrs())));
   }
 
-  MIRType *envType = jsbuilder_->CreateStructType(envName.c_str(), envFields, prntFields);
+  MIRType *envType = globaltable.CreateStructType(envName.c_str(), envFields, prntFields, module_);
   DEBUGPRINT2(envName);
   DEBUGPRINT2(envType);
   MIRStructType *stf = (MIRStructType *)(envType);
@@ -98,7 +98,7 @@ MIRType *JSClosure::GetOrCreateEnvType(JSMIRFunction *func) {
   DEBUGPRINT2(func->stidx.Fullidx());
 
   func->envtype = envType;
-  func->envptr = jsbuilder_->GetOrCreatePointerType(envType);
+  func->envptr = globaltable.GetOrCreatePointerType(envType);
 
   return envType;
 }
@@ -108,7 +108,7 @@ void JSClosure::AddAliasToEnvType(MIRType *envType, char *name, MIRType *t) {
   gstridx_t stridx = jsbuilder_->GetOrCreateStringIndex(name);
   MIRStructType *envStruct = static_cast<MIRStructType *>(envType);
 
-  envStruct->fields.push_back(FieldPair(stridx, TyidxFldAttrPair(t->_ty_idx, FieldAttrs())));
+  envStruct->fields.push_back(FieldPair(stridx, TyidxFieldAttrPair(t->_ty_idx, FieldAttrs())));
 }
 
 void JSClosure::AddFuncFormalsToEnvType(JSMIRFunction *func) {
@@ -165,7 +165,7 @@ JSMIRFunction *JSClosure::ProcessFunc(JSFunction *jsfun, char *funcname) {
   sn->SetFunc(func);
 
   func->initAliasList();
-  arguments.push_back(ArgPair("_this", jsbuilder_->GetDynany()));
+  arguments.push_back(ArgPair("_this", globaltable.GetDynany()));
 
   DEBUGPRINT3((sn->IsWithEnv()));
   if (sn->IsWithEnv()) {
@@ -176,7 +176,7 @@ JSMIRFunction *JSClosure::ProcessFunc(JSFunction *jsfun, char *funcname) {
   if (!sn->IsTopLevel() && (sn->IsWithEnv() || sn->UseAliased())) {
     if (!func->with_env_arg) {
       JSMIRFunction *parent = sn->GetParentFunc();
-      arguments.push_back(ArgPair("_env", jsbuilder_->GetDynany()));
+      arguments.push_back(ArgPair("_env", globaltable.GetDynany()));
       DEBUGPRINTsv3("_env", funcname);
       func->with_env_arg = true;
     }
@@ -195,7 +195,7 @@ JSMIRFunction *JSClosure::ProcessFunc(JSFunction *jsfun, char *funcname) {
         char *name = Util::GetString(args[i], mp_, jscontext_);
         DEBUGPRINT3(name);
         MapleString argname(name, module_->mp_);
-        arguments.push_back(ArgPair(argname.c_str(), jsbuilder_->GetDynany()));
+        arguments.push_back(ArgPair(argname.c_str(), globaltable.GetDynany()));
       }
       break;
     }

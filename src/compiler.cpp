@@ -141,7 +141,7 @@ MIRSymbol *JSCompiler::SymbolFromSavingInATemp(BaseNode *expr, bool jsvalueP) {
     exprty = jsvalueType;
     expr = CheckConvertToJSValueType(expr);
   } else {
-    exprty = jsbuilder_->GetPrimType(expr->ptyp);
+    exprty = globaltable.GetPrimType(expr->ptyp);
   }
   MIRSymbol *tempVar = CreateTempVar(exprty);
   jsbuilder_->CreateStmtDassign(tempVar, 0, expr, linenum_);
@@ -215,71 +215,71 @@ uint32_t JSCompiler::FindIntrinsicForOp(JSOp opcode) {
 // JSOP_STRICTNE 73
 BaseNode *JSCompiler::CompileOpBinary(JSOp opcode, BaseNode *op0, BaseNode *op1) {
   Opcode mop = (Opcode)0;
-  MIRType *restype = jsbuilder_->GetDynany();
+  MIRType *restype = globaltable.GetDynany();
   switch (opcode) {
     case JSOP_BITOR:
       mop = OP_bior;
-      restype = jsbuilder_->GetInt32();
+      restype = globaltable.GetInt32();
       break;
     case JSOP_BITXOR:
       mop = OP_bxor;
-      restype = jsbuilder_->GetInt32();
+      restype = globaltable.GetInt32();
       break;
     case JSOP_BITAND:
       mop = OP_band;
-      restype = jsbuilder_->GetInt32();
+      restype = globaltable.GetInt32();
       break;
     case JSOP_EQ:
       mop = OP_eq;
-      restype = jsbuilder_->GetUInt1();
+      restype = globaltable.GetUInt1();
       break;
     case JSOP_NE:
       mop = OP_ne;
-      restype = jsbuilder_->GetUInt1();
+      restype = globaltable.GetUInt1();
       break;
     case JSOP_LT:
       mop = OP_lt;
-      restype = jsbuilder_->GetUInt1();
+      restype = globaltable.GetUInt1();
       break;
     case JSOP_LE:
       mop = OP_le;
-      restype = jsbuilder_->GetUInt1();
+      restype = globaltable.GetUInt1();
       break;
     case JSOP_GT:
       mop = OP_gt;
-      restype = jsbuilder_->GetUInt1();
+      restype = globaltable.GetUInt1();
       break;
     case JSOP_GE:
       mop = OP_ge;
-      restype = jsbuilder_->GetUInt1();
+      restype = globaltable.GetUInt1();
       break;
     case JSOP_LSH:
       mop = OP_shl;
-      restype = jsbuilder_->GetInt32();
+      restype = globaltable.GetInt32();
       break;
     case JSOP_RSH:
       mop = OP_ashr;
-      restype = jsbuilder_->GetInt32();
+      restype = globaltable.GetInt32();
       break;
     case JSOP_URSH:
       mop = OP_lshr;
-      restype = jsbuilder_->GetUInt32();
+      restype = globaltable.GetUInt32();
       break;
     case JSOP_SUB:
       mop = OP_sub;
-      restype = jsbuilder_->GetInt32();
+      restype = globaltable.GetInt32();
       break;
     case JSOP_MUL:
       mop = OP_mul;
-      restype = jsbuilder_->GetInt32();
+      restype = globaltable.GetInt32();
       break;
     case JSOP_DIV:
       mop = OP_div;
-      restype = jsbuilder_->GetInt32();
+      restype = globaltable.GetInt32();
       break;
     case JSOP_MOD:
       mop = OP_rem;
-      restype = jsbuilder_->GetInt32();
+      restype = globaltable.GetInt32();
       break;
     case JSOP_ADD:
       return CompileGeneric2(INTRN_JSOP_ADD, CheckConvertToJSValueType(op0), CheckConvertToJSValueType(op1), true);
@@ -289,13 +289,13 @@ BaseNode *JSCompiler::CompileOpBinary(JSOp opcode, BaseNode *op0, BaseNode *op1)
   if (mop != 0) {
     if (op0->ptyp == PTY_i32 && op1->ptyp == PTY_i32) {
       if (kOpcodeInfo.IsCompare(mop)) {
-        return jsbuilder_->CreateExprCompare(mop, restype, jsbuilder_->GetInt32(), op0, op1);
+        return jsbuilder_->CreateExprCompare(mop, restype, globaltable.GetInt32(), op0, op1);
       }
-      return jsbuilder_->CreateExprBinary(mop, jsbuilder_->GetInt32(), op0, op1);
+      return jsbuilder_->CreateExprBinary(mop, globaltable.GetInt32(), op0, op1);
     }
 
     if (kOpcodeInfo.IsCompare(mop)) {
-      return jsbuilder_->CreateExprCompare(mop, restype, jsbuilder_->GetDynany(), CheckConvertToJSValueType(op0),
+      return jsbuilder_->CreateExprCompare(mop, restype, globaltable.GetDynany(), CheckConvertToJSValueType(op0),
                                            CheckConvertToJSValueType(op1));
     } else if (restype->GetPrimType() == PTY_u32) {
       return jsbuilder_->CreateExprBinary(mop, restype, CheckConvertToUInt32(op0), CheckConvertToUInt32(op1));
@@ -316,21 +316,21 @@ BaseNode *JSCompiler::CompileOpBinary(JSOp opcode, BaseNode *op0, BaseNode *op1)
 // JSOP_NOT JSOP_BITNOT JSOP_NEG JSOP_POS 32~35
 BaseNode *JSCompiler::CompileOpUnary(JSOp opcode, BaseNode *val) {
   Opcode mop = (Opcode)0;
-  MIRType *restype = jsbuilder_->GetDynany();
+  MIRType *restype = globaltable.GetDynany();
   switch (opcode) {
     case JSOP_NOT:
       mop = OP_lnot;
-      restype = jsbuilder_->GetUInt1();
+      restype = globaltable.GetUInt1();
       val = CheckConvertToBoolean(val);
       break;
     case JSOP_BITNOT:
       mop = OP_bnot;
-      restype = jsbuilder_->GetInt32();
+      restype = globaltable.GetInt32();
       val = CheckConvertToInt32(val);
       break;
     case JSOP_NEG:
       mop = OP_neg;
-      restype = jsbuilder_->GetInt32();
+      restype = globaltable.GetInt32();
       val = CheckConvertToInt32(val);
       break;
     default:
@@ -463,12 +463,12 @@ BaseNode *JSCompiler::CompileBuiltinMethod(int32_t idx, int argNum, bool needThi
 
     uint32_t sizeArray[1];
     sizeArray[0] = argNum;
-    MIRType *arrayType = jsbuilder_->GetOrCreateArrayType(jsvalueType, 1, sizeArray);
-    MIRType *arrayPtrType = jsbuilder_->GetOrCreatePointerType(arrayType);
+    MIRType *arrayType = globaltable.GetOrCreateArrayType(jsvalueType, 1, sizeArray);
+    MIRType *arrayPtrType = globaltable.GetOrCreatePointerType(arrayType);
     tyidx_t tyidx = arrayType->_ty_idx;
     arguments->SetTyIdx(tyidx);
     BaseNode *bn;
-    MIRType *pargtype = jsbuilder_->GetOrCreatePointerType(arguments->GetType());
+    MIRType *pargtype = globaltable.GetOrCreatePointerType(arguments->GetType());
     BaseNode *addrBase = jsbuilder_->CreateExprAddrof(0, arguments);
 
     for (uint32_t i = 0; i < argNum; i++) {
@@ -855,12 +855,12 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
   if (length >= pow(2, 16)) {
     assert(false && "Not Support too long string now");
   }
-  MIRType *unitType = IsAsciiChars(chars, length) ? jsbuilder_->GetUInt8() : jsbuilder_->GetUInt16();
+  MIRType *unitType = IsAsciiChars(chars, length) ? globaltable.GetUInt8() : globaltable.GetUInt16();
   uint32_t pad = IsAsciiChars(chars, length) ? 4 : 2;
   uint32_t stringClass = IsAsciiChars(chars, length) ? 0 : JSSTRING_UNICODE;
 
   size_t paddingLength = length + pad;
-  MIRType *type = jsbuilder_->GetOrCreateArrayType(unitType, 1, &(paddingLength));
+  MIRType *type = globaltable.GetOrCreateArrayType(unitType, 1, &(paddingLength));
   const char *tempName = Util::GetSequentialName("const_chars_", temp_var_no_, mp_);
   MIRSymbol *var = jsbuilder_->GetOrCreateGlobalDecl(tempName, type);
   MIRAggConst *init = module_->mp_->New<MIRAggConst>(module_, type);
@@ -909,7 +909,7 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
 
 // JSOP_ITER 75
 BaseNode *JSCompiler::CompileOpNewIterator(BaseNode *bn, uint8_t flags) {
-  MIRType *retty = jsbuilder_->GetOrCreatePointerType(jsbuilder_->GetVoid());
+  MIRType *retty = globaltable.GetOrCreatePointerType(globaltable.GetVoid());
   MIRSymbol *retsy = CreateTempVar(retty);
 
   StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned2((MIRIntrinsicId)INTRN_JSOP_NEW_ITERATOR, bn,
@@ -920,13 +920,13 @@ BaseNode *JSCompiler::CompileOpNewIterator(BaseNode *bn, uint8_t flags) {
 }
 
 BaseNode *JSCompiler::CompileOpMoreIterator(BaseNode *iterator) {
-  MIRSymbol *retsy = CreateTempVar(jsbuilder_->GetUInt32());
+  MIRSymbol *retsy = CreateTempVar(globaltable.GetUInt32());
   StmtNode *stmt =
     jsbuilder_->CreateStmtIntrinsicCallAssigned1((MIRIntrinsicId)INTRN_JSOP_MORE_ITERATOR, iterator, retsy);
   stmt->srcpos.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
 
-  return jsbuilder_->CreateExprDread(jsbuilder_->GetUInt32(), retsy);
+  return jsbuilder_->CreateExprDread(globaltable.GetUInt32(), retsy);
 }
 
 // JSOP_ITERNEXT 77
@@ -946,7 +946,7 @@ BaseNode *JSCompiler::CompileOpGetArg(uint32_t i) {
   JSMIRFunction *fun = jsbuilder_->GetCurrentFunction();
   int start = (fun->with_env_arg) ? 2 : 1;
   MIRSymbol *arg = jsbuilder_->GetFunctionArgument(fun, i + start);
-  BaseNode *irn = jsbuilder_->CreateExprDread(jsbuilder_->GetDynany(), arg);
+  BaseNode *irn = jsbuilder_->CreateExprDread(globaltable.GetDynany(), arg);
   return irn;
 }
 
@@ -1280,8 +1280,8 @@ BaseNode *JSCompiler::CompileOpLambda(jsbytecode *pc, JSFunction *jsfun) {
   DEBUGPRINT2((lambda->scope->GetName()));
   DEBUGPRINT2((lambda->scope->IsTopLevel()));
   if (parentFunc->scope->IsWithEnv()) {
-    envVar = jsbuilder_->GetOrCreateLocalDecl("environment", jsbuilder_->GetDynany());
-    node = jsbuilder_->CreateExprDread(jsbuilder_->GetDynany(), envVar);
+    envVar = jsbuilder_->GetOrCreateLocalDecl("environment", globaltable.GetDynany());
+    node = jsbuilder_->CreateExprDread(globaltable.GetDynany(), envVar);
     lambda->penvtype = parentFunc->envptr;
   } else {
     node = jsbuilder_->GetConstInt(0);
@@ -1696,11 +1696,11 @@ BaseNode *JSCompiler::CheckConvertToJSValueType(BaseNode *data) {
     case PTY_ptr:
       return data;
     case PTY_u1:
-      toType = jsbuilder_->GetDynbool();
+      toType = globaltable.GetDynbool();
       break;
     case PTY_i32:
     case PTY_u32:
-      toType = jsbuilder_->GetDyni32();
+      toType = globaltable.GetDyni32();
       if (data->op == OP_constval) {
         ConstvalNode *cv = static_cast<ConstvalNode *>(data);
         if (cv) {
@@ -1713,16 +1713,16 @@ BaseNode *JSCompiler::CheckConvertToJSValueType(BaseNode *data) {
       }
       break;
     case PTY_simplestr:
-      toType = jsbuilder_->GetDynstr();
+      toType = globaltable.GetDynstr();
       break;
     case PTY_simpleobj:
-      toType = jsbuilder_->GetDynobj();
+      toType = globaltable.GetDynobj();
       break;
     default:
       assert("NIY");
       break;
   }
-  return jsbuilder_->CreateExprTypeCvt(OP_cvt, toType, jsbuilder_->GetPrimType(data->ptyp), data);
+  return jsbuilder_->CreateExprTypeCvt(OP_cvt, toType, globaltable.GetPrimType(data->ptyp), data);
 }
 
 // Pops the top two values on the stack as rval and lval, compare them with ===,
@@ -1749,9 +1749,9 @@ BaseNode *JSCompiler::CheckConvertToBoolean(BaseNode *node) {
     if (node->ptyp == PTY_u1) {
       return node;
     }
-    return jsbuilder_->CreateExprTypeCvt(OP_cvt, jsbuilder_->GetUInt1(), jsbuilder_->GetPrimType(node->ptyp), node);
+    return jsbuilder_->CreateExprTypeCvt(OP_cvt, globaltable.GetUInt1(), globaltable.GetPrimType(node->ptyp), node);
   }
-  return jsbuilder_->CreateExprIntrinsicop1(INTRN_JS_BOOLEAN, jsbuilder_->GetUInt1(), node);
+  return jsbuilder_->CreateExprIntrinsicop1(INTRN_JS_BOOLEAN, globaltable.GetUInt1(), node);
 }
 
 BaseNode *JSCompiler::CheckConvertToInt32(BaseNode *node) {
@@ -1759,11 +1759,11 @@ BaseNode *JSCompiler::CheckConvertToInt32(BaseNode *node) {
     return node;
   }
 #ifdef DYNAMICLANG
-  return jsbuilder_->CreateExprTypeCvt(OP_cvt, jsbuilder_->GetInt32(), jsbuilder_->GetPrimType(node->ptyp), node);
+  return jsbuilder_->CreateExprTypeCvt(OP_cvt, globaltable.GetInt32(), globaltable.GetPrimType(node->ptyp), node);
 #else
-  BaseNode *expr = jsbuilder_->CreateExprIntrinsicop1(INTRN_JS_INT32, jsbuilder_->GetInt32(), node);
-  MIRSymbol *var = CreateTempVar(jsbuilder_->GetInt32());
-  return jsbuilder_->CreateExprDread(jsbuilder_->GetInt32(), var);
+  BaseNode *expr = jsbuilder_->CreateExprIntrinsicop1(INTRN_JS_INT32, globaltable.GetInt32(), node);
+  MIRSymbol *var = CreateTempVar(globaltable.GetInt32());
+  return jsbuilder_->CreateExprDread(globaltable.GetInt32(), var);
 #endif
 }
 
@@ -1772,11 +1772,11 @@ BaseNode *JSCompiler::CheckConvertToUInt32(BaseNode *node) {
     return node;
   }
 #ifdef DYNAMICLANG
-  return jsbuilder_->CreateExprTypeCvt(OP_cvt, jsbuilder_->GetUInt32(), jsbuilder_->GetPrimType(node->ptyp), node);
+  return jsbuilder_->CreateExprTypeCvt(OP_cvt, globaltable.GetUInt32(), globaltable.GetPrimType(node->ptyp), node);
 #else
-  BaseNode *expr = jsbuilder_->CreateExprIntrinsicop1(INTRN_JS_INT32, jsbuilder_->GetInt32(), node);
-  MIRSymbol *var = CreateTempVar(jsbuilder_->GetInt32());
-  return jsbuilder_->CreateExprDread(jsbuilder_->GetInt32(), var);
+  BaseNode *expr = jsbuilder_->CreateExprIntrinsicop1(INTRN_JS_INT32, globaltable.GetInt32(), node);
+  MIRSymbol *var = CreateTempVar(globaltable.GetInt32());
+  return jsbuilder_->CreateExprDread(globaltable.GetInt32(), var);
 #endif
 }
 
@@ -1784,7 +1784,7 @@ BaseNode *JSCompiler::CheckConvertToRespectiveType(BaseNode *node, MIRType *ty) 
   if (ty == NULL || ty == jsvalueType) {
     return CheckConvertToJSValueType(node);
   }
-  if (ty == jsbuilder_->GetPrimType(PTY_u1)) {
+  if (ty == globaltable.GetPrimType(PTY_u1)) {
     return CheckConvertToBoolean(node);
   }
   return CheckConvertToInt32(node);
@@ -1824,7 +1824,7 @@ void JSCompiler::EnvInit(JSMIRFunction *func) {
 
   MIRType *envType = func->envtype;
   MIRType *envPtr = func->envptr;
-  MIRSymbol *envVar = jsbuilder_->GetOrCreateLocalDecl("environment", jsbuilder_->GetDynany());
+  MIRSymbol *envVar = jsbuilder_->GetOrCreateLocalDecl("environment", globaltable.GetDynany());
   DEBUGPRINTsv3("environment", envPtr);
 
   BaseNode *size = jsbuilder_->CreateExprSizeoftype(envType);
@@ -1887,8 +1887,8 @@ void JSCompiler::EnvInit(JSMIRFunction *func) {
       std::vector<char *>::iterator IN;
       for (IN = (*I).second.begin(); IN != (*I).second.end(); IN++, i++) {
         if (i) {
-          offset = jsbuilder_->CreateExprBinary(OP_mul, jsbuilder_->GetVoidPtr(), jsbuilder_->GetConstInt(i), size);
-          addr = jsbuilder_->CreateExprBinary(OP_add, jsbuilder_->GetVoidPtr(), base, offset);
+          offset = jsbuilder_->CreateExprBinary(OP_mul, globaltable.GetVoidPtr(), jsbuilder_->GetConstInt(i), size);
+          addr = jsbuilder_->CreateExprBinary(OP_add, globaltable.GetVoidPtr(), base, offset);
         }
         bn = jsbuilder_->CreateExprIread(jsvalueType, jsvalue_ptr_, 0, addr);
         uint32_t id = jsbuilder_->GetStructFieldIdFromFieldName(env_type, *IN);
@@ -2520,7 +2520,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         BaseNode *opnd0 = CheckConvertToJSValueType(Pop());  // Pop IFEQ stmt
         BaseNode *cond0 = CheckConvertToBoolean(opnd0);
         MIRSymbol *tempVar = SymbolFromSavingInATemp(opnd0, true);
-        opnd0 = jsbuilder_->CreateExprDread(jsbuilder_->GetUInt1(), tempVar);
+        opnd0 = jsbuilder_->CreateExprDread(globaltable.GetUInt1(), tempVar);
         Push(opnd0);
 
         labidx_t mirlabel = GetorCreateLabelofPc(pc + offset);
@@ -2999,12 +2999,12 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
 
         uint32_t size_array[1];
         size_array[0] = length;
-        MIRType *array_type = jsbuilder_->GetOrCreateArrayType(jsvalueType, 1, size_array);
-        MIRType *array_ptr_type = jsbuilder_->GetOrCreatePointerType(array_type);
+        MIRType *array_type = globaltable.GetOrCreateArrayType(jsvalueType, 1, size_array);
+        MIRType *array_ptr_type = globaltable.GetOrCreatePointerType(array_type);
         tyidx_t tyidx = array_type->_ty_idx;
         arguments->SetTyIdx(tyidx);
         BaseNode *bn;
-        MIRType *pargtype = jsbuilder_->GetOrCreatePointerType(arguments->GetType());
+        MIRType *pargtype = globaltable.GetOrCreatePointerType(arguments->GetType());
         BaseNode *addr_base = jsbuilder_->CreateExprAddrof(0, arguments);
 
         for (uint32_t i = 0; i < length; i++) {

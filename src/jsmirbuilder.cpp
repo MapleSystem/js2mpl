@@ -6,17 +6,17 @@ namespace maple {
 // Create jsvalue_type as the JS::Value from mozjs-31.2.0/js/public/Value.h.
 // We only consider littel_endian and 32-bit architectures here.
 MIRType *JSMIRBuilder::CreateJSValueType() {
-  return GetDynany();
+  return globaltable.GetDynany();
 }
 
 JSMIRFunction *JSMIRBuilder::CreateJSMain() {
   ArgVector arguments(module_->mp_allocator_.Adapter());
   JSMIRFunction *jsmain = NULL;
   if (IsPlugin()) {
-    jsmain = GetOrCreateFunction(GetWrapperName(), GetDynany(), arguments, false);
+    jsmain = GetOrCreateFunction(GetWrapperName(), globaltable.GetDynany(), arguments, false);
     SetCurrentFunction(jsmain);
   } else {
-    jsmain = GetOrCreateFunction("main", GetInt32(), arguments, false);
+    jsmain = GetOrCreateFunction("main", globaltable.GetInt32(), arguments, false);
     SetCurrentFunction(jsmain);
     IntrinsiccallNode *stmt = CreateStmtIntrinsicCallAssigned0((MIRIntrinsicId)INTRN_JS_INIT_CONTEXT, NULL);
     AddStmtInCurrentFunctionBody(stmt);
@@ -48,7 +48,7 @@ void JSMIRBuilder::InitBuiltinMethod() {
 
 void JSMIRBuilder::Init() {
   jsvalueType = CreateJSValueType();
-  jsvalue_ptr_ = GetOrCreatePointerType(jsvalueType);
+  jsvalue_ptr_ = globaltable.GetOrCreatePointerType(jsvalueType);
 
   InitGlobalName();
   // InitBuiltinMethod();
@@ -101,8 +101,8 @@ JSMIRFunction *JSMIRBuilder::GetOrCreateFunction(const char *name, MIRType *retu
 
   fn->returnTyidx = returnType->_ty_idx;
 
-  MapleVector<tyidx_t> funcvectype(module_->mp_allocator_.Adapter());
-  MapleVector<TypeAttrs> funcvecattr(module_->mp_allocator_.Adapter());
+  std::vector<tyidx_t> funcvectype;
+  std::vector<TypeAttrs> funcvecattr;
   for (uint32 i = 0; i < arguments.size(); i++) {
     MapleString var(arguments[i].first, module_->mp_);
     MIRSymbol *argst = fn->symtab->CreateSymbol(SCOPE_LOCAL);
@@ -116,7 +116,7 @@ JSMIRFunction *JSMIRBuilder::GetOrCreateFunction(const char *name, MIRType *retu
     funcvectype.push_back(ty->_ty_idx);
     funcvecattr.push_back(TypeAttrs());
   }
-  funcst->SetTyIdx(GetOrCreateFunctionType(returnType->_ty_idx, funcvectype, funcvecattr, isvarg)->_ty_idx);
+  funcst->SetTyIdx(globaltable.GetOrCreateFunctionType(returnType->_ty_idx, funcvectype, funcvecattr, isvarg)->_ty_idx);
   funcst->SetFunction(fn);
   fn->body = fn->code_mp->New<BlockNode>();
 
