@@ -1,3 +1,19 @@
+if(GN_BUILD_TYPE =="DEBUG"){
+    cflags_c += [
+        "-DMIR_DEBUG=1",
+    ]
+    cflags_cc += [
+        "-DMIR_DEBUG=1",
+    ]
+}
+if(GN_BUILD_TYPE == "RELWITHDEBINFO"){
+    cflags_c += [
+        "-DDEBUG=0",
+    ]
+    cflags_cc += [
+        "-DDEBUG=0",
+    ]
+}
 MOZJS_ROOT = "${MAPLE_ROOT}/mozjs"
 MOZJS_SOURCE_DIR = "${MOZJS_ROOT}/mozjs-31.2.0"
 MOZJS_BUILD_DIR = "${MOZJS_ROOT}/mozjs-build"
