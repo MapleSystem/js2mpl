@@ -1644,8 +1644,8 @@ GotoNode *JSCompiler::CompileOpGosub(jsbytecode *pc) {
   return gosubnode;
 }
 
-TryNode *JSCompiler::CompileOpTry(jsbytecode *catchPc) {
-  TryNode *trynode = jsbuilder_->CreateStmtTry(OP_try, 0, 0);
+JsTryNode *JSCompiler::CompileOpTry(jsbytecode *catchPc) {
+  JsTryNode *trynode = jsbuilder_->CreateStmtTry(OP_jstry, 0, 0);
   trynode->srcpos.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(trynode);
 
@@ -2043,7 +2043,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
       // jump to finally for catch = pc
       eh = eh_->GetEHstruct(0, pc, 0, 0);
       if (eh) {
-        StmtNode *catchnode = module_->CurFuncCodeMp()->New<StmtNode>(OP_catch);
+        StmtNode *catchnode = module_->CurFuncCodeMp()->New<StmtNode>(OP_jscatch);
         catchnode->srcpos.SetLinenum(lineNo);
         jsbuilder_->AddStmtInCurrentFunctionBody(catchnode);
       }

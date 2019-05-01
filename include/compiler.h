@@ -173,7 +173,7 @@ class JSCompiler {
   SwitchNode *CompileOpTableSwitch(BaseNode *opnd, int32_t len, JSScript *script, jsbytecode *pc);
   GotoNode *CompileOpGoto(jsbytecode *pc, jsbytecode *jumptopc, MIRSymbol *tempvar);
   GotoNode *CompileOpGosub(jsbytecode *pc);
-  TryNode *CompileOpTry(jsbytecode *pc);
+  JsTryNode *CompileOpTry(jsbytecode *pc);
   BaseNode *CompileOpLoopHead(jsbytecode *pc);
   BaseNode *CheckConvertToJSValueType(BaseNode *node);
   BaseNode *CheckConvertToBoolean(BaseNode *node);
