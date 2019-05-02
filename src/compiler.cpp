@@ -1352,7 +1352,7 @@ int JSCompiler::ProcessAliasedVar(JSAtom *atom, MIRType *&envPtr, BaseNode *&env
   if (pfunc != jsmain_ && !idx) {
     depth = 1;
     DEBUGPRINTs3("recursively search in parent's alias lists");
-    envVar = func->_formals[ENV_POSITION_IN_ARGS];
+    envVar = func->formals[ENV_POSITION_IN_ARGS];
 
     envPtr = pfunc->envptr;
     envNode = jsbuilder_->CreateExprDread(pfunc->envptr, envVar);

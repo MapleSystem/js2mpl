@@ -99,7 +99,7 @@ JSMIRFunction *JSMIRBuilder::GetOrCreateFunction(const char *name, MIRType *retu
   fn->puidx = globaltable.functable.size();
   globaltable.functable.push_back(fn);
 
-  fn->_return_tyidx = returnType->_ty_idx;
+  fn->returnTyidx = returnType->_ty_idx;
 
   MapleVector<tyidx_t> funcvectype(module_->mp_allocator_.Adapter());
   MapleVector<TypeAttrs> funcvecattr(module_->mp_allocator_.Adapter());
@@ -157,7 +157,7 @@ NaryStmtNode *JSMIRBuilder::CreateStmtReturn(BaseNode *rval, bool adjType, unsig
 
 void JSMIRBuilder::UpdateFunction(JSMIRFunction *func, MIRType *returnType, ArgVector arguments) {
   if (returnType) {
-    func->_return_tyidx = returnType->_ty_idx;
+    func->returnTyidx = returnType->_ty_idx;
   }
 
   for (uint32 i = 0; i < arguments.size(); i++) {
