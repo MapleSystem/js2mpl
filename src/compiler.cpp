@@ -1645,7 +1645,7 @@ GotoNode *JSCompiler::CompileOpGosub(jsbytecode *pc) {
 }
 
 JsTryNode *JSCompiler::CompileOpTry(jsbytecode *catchPc) {
-  JsTryNode *trynode = jsbuilder_->CreateStmtTry(OP_jstry, 0, 0);
+  JsTryNode *trynode = jsbuilder_->CreateStmtJsTry(OP_jstry, 0, 0);
   trynode->srcpos.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(trynode);
 
