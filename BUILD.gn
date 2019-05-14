@@ -83,5 +83,9 @@ executable("js2mpl"){
         "-L${MOZJS_INSTALL_DIR}/lib",
         "-Wl,-rpath,${MOZJS_INSTALL_DIR}/lib",
         "-ljs_static",
+        "-Wl,-z,relro",
+        "-Wl,-z,now",
+        "-Wl,-z,noexecstack",
+        "-fPIE",
     ]
 }
