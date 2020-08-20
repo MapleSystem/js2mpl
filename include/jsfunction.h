@@ -1,7 +1,7 @@
 /// Copyright [year] <Copyright Owner>
 #ifndef JS2MPL_INCLUDE_JSFUNCTION_H_
 #define JS2MPL_INCLUDE_JSFUNCTION_H_
-#include "mapleir/include/mirfunction.h"
+#include "maple_ir/include/mir_function.h"
 namespace maple {
 
 class ScopeNode;
@@ -9,7 +9,7 @@ class JSClosure;
 
 class JSMIRFunction : public MIRFunction {
  public:
-  JSMIRFunction(MIRModule *mod, stidx_t stidx) : MIRFunction(mod, stidx) {}
+  JSMIRFunction(MIRModule *mod, StIdx stidx) : MIRFunction(mod, stidx) {}
 
  public:
   bool with_env_arg;
@@ -17,7 +17,7 @@ class JSMIRFunction : public MIRFunction {
 
   int argc;
 
-  std::list<gstridx_t> alias_vars;
+  std::list<GStrIdx> alias_vars;
   ScopeNode *scope;
 
   MIRType *envtype;
@@ -44,8 +44,8 @@ class JSMIRFunction : public MIRFunction {
     alias_vars.empty();
   }
 
-  void AddToAliasList(gstridx_t);
-  int GetAliasPosition(gstridx_t);
+  void AddToAliasList(GStrIdx);
+  int GetAliasPosition(GStrIdx);
 };
 }  // namespace maple
 #endif  // JS2MPL_INCLUDE_JSFUNCTION_H_

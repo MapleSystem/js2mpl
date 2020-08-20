@@ -23,32 +23,32 @@ void JSClosure::UpdateFuncMod(char *name) {
 
 // ??? Use scope chain.
 MIRSymbol *JSClosure::GetSymbolFromEnclosingScope(JSMIRFunction *func, const char *name) {
-  gstridx_t idx = jsbuilder_->GetStringIndex(name);
+  GStrIdx idx = jsbuilder_->GetStringIndex(name);
   if (idx == 0) {
     return NULL;
   }
 
-  MIRSymbol *st = func->symtab->GetSymbolFromStridx(idx);
+  MIRSymbol *st = func->symTab->GetSymbolFromStrIdx(idx);
   if (st) {
     return st;
   }
-  st = globaltable.GetSymbolFromStridx(idx);
+  st = GlobalTables::GetGsymTable().GetSymbolFromStrIdx(idx);
   if (st) {
     return st;
   }
   return NULL;
 }
 
-MIRSymbol *JSClosure::GetSymbolFromEnclosingScope(JSMIRFunction *func, stidx_t stidx) {
-  if (stidx.Fullidx() == 0) {
+MIRSymbol *JSClosure::GetSymbolFromEnclosingScope(JSMIRFunction *func, StIdx stidx) {
+  if (stidx.FullIdx() == 0) {
     return NULL;
   }
 
-  MIRSymbol *st = func->symtab->GetSymbolFromStidx(stidx.Idx());
+  MIRSymbol *st = func->symTab->GetSymbolFromStIdx(stidx.Idx());
   if (st) {
     return st;
   }
-  st = globaltable.GetSymbolFromStidx(stidx.Idx());
+  st = GlobalTables::GetGsymTable().GetSymbolFromStIdx(stidx.Idx());
   if (st) {
     return st;
   }
@@ -57,7 +57,7 @@ MIRSymbol *JSClosure::GetSymbolFromEnclosingScope(JSMIRFunction *func, stidx_t s
 
 MIRType *JSClosure::GetOrCreateEnvType(JSMIRFunction *func) {
   std::stringstream ss;
-  MIRSymbol *funcSt = globaltable.GetSymbolFromStidx(func->stidx.Idx());
+  MIRSymbol *funcSt = GlobalTables::GetGsymTable().GetSymbolFromStIdx(func->stIdx.Idx());
   ss << funcSt->GetName();
   std::string envName = ss.str() + "_env_type";
   DEBUGPRINT2(envName);
@@ -70,45 +70,45 @@ MIRType *JSClosure::GetOrCreateEnvType(JSMIRFunction *func) {
   FieldVector envFields;
   FieldVector prntFields;
 
-  gstridx_t argnums = jsbuilder_->GetOrCreateStringIndex("argnums");
-  envFields.push_back(FieldPair(argnums, TyidxFieldAttrPair(globaltable.GetUInt32()->_ty_idx, FieldAttrs())));
+  GStrIdx argnums = jsbuilder_->GetOrCreateStringIndex("argnums");
+  envFields.push_back(FieldPair(argnums, TyidxFieldAttrPair(GlobalTables::GetTypeTable().GetUInt32()->tyIdx, FieldAttrs())));
 
-  gstridx_t parentenv = jsbuilder_->GetOrCreateStringIndex("parentenv");
+  GStrIdx parentenv = jsbuilder_->GetOrCreateStringIndex("parentenv");
   if (func->scope->IsTopLevel()) {
-    envFields.push_back(FieldPair(parentenv, TyidxFieldAttrPair(globaltable.GetVoidPtr()->_ty_idx, FieldAttrs())));
+    envFields.push_back(FieldPair(parentenv, TyidxFieldAttrPair(GlobalTables::GetTypeTable().GetVoidPtr()->tyIdx, FieldAttrs())));
   } else {
     ScopeNode *sn = func->scope;
     JSMIRFunction *parent = sn->GetParentFunc();
     MIRType *parentenvType = parent->envtype;
     DEBUGPRINT3(parentenvType);
-    MIRType *envptr = globaltable.GetOrCreatePointerType(parentenvType);
+    MIRType *envptr = GlobalTables::GetTypeTable().GetOrCreatePointerType(parentenvType);
     DEBUGPRINT3(envptr);
     func->penvtype = parentenvType;
     func->penvptr = envptr;
-    envFields.push_back(FieldPair(parentenv, TyidxFieldAttrPair(envptr->_ty_idx, FieldAttrs())));
+    envFields.push_back(FieldPair(parentenv, TyidxFieldAttrPair(envptr->tyIdx, FieldAttrs())));
   }
 
-  MIRType *envType = globaltable.CreateStructType(envName.c_str(), envFields, prntFields, module_);
+  MIRType *envType = GlobalTables::GetTypeTable().CreateStructType(envName.c_str(), envFields, prntFields, mirModule);
   DEBUGPRINT2(envName);
   DEBUGPRINT2(envType);
   MIRStructType *stf = (MIRStructType *)(envType);
   DEBUGPRINT2(stf->GetElemType(0));
-  gstridx_t idxf = globaltable.GetSymbolFromStidx(func->stidx.Idx())->GetNameStridx();
-  DEBUGPRINT2(idxf.idx);
-  DEBUGPRINT2(func->stidx.Fullidx());
+  GStrIdx idxf = GlobalTables::GetGsymTable().GetSymbolFromStIdx(func->stIdx.Idx())->GetNameStridx();
+  DEBUGPRINT2(idxf.GetIdx());
+  DEBUGPRINT2(func->stIdx.FullIdx());
 
   func->envtype = envType;
-  func->envptr = globaltable.GetOrCreatePointerType(envType);
+  func->envptr = GlobalTables::GetTypeTable().GetOrCreatePointerType(envType);
 
   return envType;
 }
 
 void JSClosure::AddAliasToEnvType(MIRType *envType, char *name, MIRType *t) {
   DEBUGPRINTsv3("add env", name);
-  gstridx_t stridx = jsbuilder_->GetOrCreateStringIndex(name);
+  GStrIdx stridx = jsbuilder_->GetOrCreateStringIndex(name);
   MIRStructType *envStruct = static_cast<MIRStructType *>(envType);
 
-  envStruct->fields.push_back(FieldPair(stridx, TyidxFieldAttrPair(t->_ty_idx, FieldAttrs())));
+  envStruct->fields.push_back(FieldPair(stridx, TyidxFieldAttrPair(t->tyIdx, FieldAttrs())));
 }
 
 void JSClosure::AddFuncFormalsToEnvType(JSMIRFunction *func) {
@@ -130,7 +130,7 @@ void JSClosure::AddFuncFormalsToEnvType(JSMIRFunction *func) {
       funcname = (char *)Util::GetSequentialName0("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_);
     }
     DEBUGPRINT2(funcname);
-    MIRSymbol *funcSt = globaltable.GetSymbolFromStidx(func->stidx.Idx());
+    MIRSymbol *funcSt = GlobalTables::GetGsymTable().GetSymbolFromStIdx(func->stIdx.Idx());
     if (funcSt && strcmp(funcname, funcSt->GetName().c_str()) == 0) {
       std::vector<JSAtom *> args = (*i).second;
       std::vector<JSAtom *>::iterator ia;
@@ -153,10 +153,10 @@ void JSClosure::AddFuncFormalsToEnvType(JSMIRFunction *func) {
 
 JSMIRFunction *JSClosure::ProcessFunc(JSFunction *jsfun, char *funcname) {
   MIRType *retuenType = jsvalueType;
-  ArgVector arguments(module_->mp_allocator_.Adapter());
+  ArgVector arguments(mirModule->memPoolAllocator.Adapter());
 
   JSMIRFunction *func = jsbuilder_->GetOrCreateFunction(funcname, retuenType, arguments, false);
-  module_->AddFunction(func);
+  mirModule->AddFunction(func);
   SetJSMIRFunc(funcname, func);
   DEBUGPRINT2(funcname);
   DEBUGPRINT2(func);
@@ -165,7 +165,7 @@ JSMIRFunction *JSClosure::ProcessFunc(JSFunction *jsfun, char *funcname) {
   sn->SetFunc(func);
 
   func->initAliasList();
-  arguments.push_back(ArgPair("_this", globaltable.GetDynany()));
+  arguments.push_back(ArgPair("_this", GlobalTables::GetTypeTable().GetDynany()));
 
   DEBUGPRINT3((sn->IsWithEnv()));
   if (sn->IsWithEnv()) {
@@ -176,7 +176,7 @@ JSMIRFunction *JSClosure::ProcessFunc(JSFunction *jsfun, char *funcname) {
   if (!sn->IsTopLevel() && (sn->IsWithEnv() || sn->UseAliased())) {
     if (!func->with_env_arg) {
       JSMIRFunction *parent = sn->GetParentFunc();
-      arguments.push_back(ArgPair("_env", globaltable.GetDynany()));
+      arguments.push_back(ArgPair("_env", GlobalTables::GetTypeTable().GetDynany()));
       DEBUGPRINTsv3("_env", funcname);
       func->with_env_arg = true;
     }
@@ -194,8 +194,8 @@ JSMIRFunction *JSClosure::ProcessFunc(JSFunction *jsfun, char *funcname) {
       for (uint32 i = 0; i < jsfun->nargs(); i++) {
         char *name = Util::GetString(args[i], mp_, jscontext_);
         DEBUGPRINT3(name);
-        MapleString argname(name, module_->mp_);
-        arguments.push_back(ArgPair(argname.c_str(), globaltable.GetDynany()));
+        MapleString argname(name, mirModule->memPool);
+        arguments.push_back(ArgPair(argname.c_str(), GlobalTables::GetTypeTable().GetDynany()));
       }
       break;
     }
@@ -214,7 +214,7 @@ bool JSClosure::ProcessOpDefFun(jsbytecode *pc) {
   JSFunction *jsfun = currscr_->getFunction(GET_UINT32_INDEX(pc));
   JSScript *scr = jsfun->nonLazyScript();
   MIRType *retuenType = jsvalueType;
-  ArgVector arguments(module_->mp_allocator_.Adapter());
+  ArgVector arguments(mirModule->memPoolAllocator.Adapter());
   JSAtom *atom = jsfun->displayAtom();
   DEBUGPRINT2(atom);
   char *funcname = Util::GetString(atom, mp_, jscontext_);
@@ -268,7 +268,7 @@ bool JSClosure::IsLocalVar(JSMIRFunction *func, char *name) {
       funcname = (char *)Util::GetSequentialName0("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_);
     }
     DEBUGPRINT2(funcname);
-    MIRSymbol *funcSt = globaltable.GetSymbolFromStidx(func->stidx.Idx());
+    MIRSymbol *funcSt = GlobalTables::GetGsymTable().GetSymbolFromStIdx(func->stIdx.Idx());
     if (funcSt && strcmp(funcname, funcSt->GetName().c_str()) == 0) {
       std::vector<JSAtom *> vars = (*i).second;
       std::vector<JSAtom *>::iterator ia;
@@ -306,7 +306,7 @@ char *JSClosure::GetLocalVar(JSMIRFunction *func, uint32_t localNo) {
     }
     DEBUGPRINT2(funcname);
     // found the function
-    MIRSymbol *funcSt = globaltable.GetSymbolFromStidx(func->stidx.Idx());
+    MIRSymbol *funcSt = GlobalTables::GetGsymTable().GetSymbolFromStIdx(func->stIdx.Idx());
     if (funcSt && strcmp(funcname, funcSt->GetName().c_str()) == 0) {
       std::vector<JSAtom *> args = locals[i].second;
       if (localNo < args.size()) {
@@ -331,7 +331,7 @@ void JSClosure::ProcessAliasedVar(jsbytecode *pc) {
     return;
   }
   DEBUGPRINT3(name);
-  MIRSymbol *funcSt = globaltable.GetSymbolFromStidx(func->stidx.Idx());
+  MIRSymbol *funcSt = GlobalTables::GetGsymTable().GetSymbolFromStIdx(func->stIdx.Idx());
   const char *funcname = funcSt->GetName().c_str();
   ScopeNode *sn = scope_->GetOrCreateSN((char *)funcname);
   ScopeNode *psn = sn->GetParent();

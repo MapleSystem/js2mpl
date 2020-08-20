@@ -12,7 +12,7 @@ void OperandStack::ReplaceStackItemsWithTemps(JSCompiler *compiler, MIRSymbol *v
     if (cur == NULL) {
       continue;
     }
-    if (cur->HasSymbol(compiler->module_, var)) {
+    if (cur->HasSymbol(compiler->mirModule, var)) {
       stack_[i] = (void *)compiler->NodeFromSavingInATemp(cur);
     }
   }

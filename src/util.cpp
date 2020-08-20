@@ -6,7 +6,7 @@
 #include "js/src/jsatom.h"
 #include "js/src/jscntxt.h"
 #include "js/src/jsatominlines.h"
-#include "mapleir/include/mirnodes.h"
+#include "maple_ir/include/mir_nodes.h"
 #include "../include/jsfunction.h"
 #include "../include/util.h"
 

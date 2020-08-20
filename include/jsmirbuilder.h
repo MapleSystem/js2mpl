@@ -1,7 +1,7 @@
 /// Copyright [year] <Copyright Owner>
 #ifndef JS2MPL_INCLUDE_JSMIRBUILDER_H_
 #define JS2MPL_INCLUDE_JSMIRBUILDER_H_
-#include "mapleir/include/mirbuilder.h"
+#include "maple_ir/include/mir_builder.h"
 #include "jsfunction.h"
 #include "js2mpl.h"
 #include "util.h"
@@ -23,8 +23,8 @@ class JSMIRBuilder : public MIRBuilder {
   JSMIRFunction *GetFunction(const char *name);
   JSMIRFunction *GetOrCreateFunction(const char *name, MIRType *return_type, ArgVector arguments, bool isvarg);
   NaryStmtNode *CreateStmtReturn(BaseNode *rval, bool adj_type, unsigned linenum);
-  StmtNode *CreateStmtDassign(MIRSymbol *symbol, fldid_t field_id, BaseNode *src, unsigned linenum);
-  IntrinsiccallNode *CreateStmtIntrinsicCall1N(MIRIntrinsicId idx, BaseNode *arg0, MapleVector<BaseNode *> &args);
+  StmtNode *CreateStmtDassign(MIRSymbol *symbol, FieldID field_id, BaseNode *src, unsigned linenum);
+  IntrinsiccallNode *CreateStmtIntrinsicCall1N(MIRIntrinsicID idx, BaseNode *arg0, MapleVector<BaseNode *> &args);
 
   void UpdateFunction(JSMIRFunction *fn, MIRType *return_type, ArgVector arguments);
   // void SaveReturnValue(MIRSymbol *var);

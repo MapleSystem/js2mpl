@@ -6,15 +6,15 @@
 #include <utility>
 #include <vector>
 #include <map>
-#include "mapleir/include/opcodes.h"
-#include "mapleir/include/primtypes.h"
-#include "mapleir/include/mirtype.h"
-#include "mapleir/include/mirconst.h"
-#include "mapleir/include/mirsymbol.h"
-#include "mapleir/include/mirnodes.h"
-#include "mapleir/include/mirmodule.h"
-#include "mapleir/include/mirpreg.h"
-#include "mapleir/include/printing.h"
+#include "maple_ir/include/opcodes.h"
+#include "maple_ir/include/prim_types.h"
+#include "maple_ir/include/mir_type.h"
+#include "maple_ir/include/mir_const.h"
+#include "maple_ir/include/mir_symbol.h"
+#include "maple_ir/include/mir_nodes.h"
+#include "maple_ir/include/mir_module.h"
+#include "maple_ir/include/mir_preg.h"
+#include "maple_ir/include/printing.h"
 #include "../include/jsfunction.h"
 #include "../include/jsmirbuilder.h"
 #include "../include/scope.h"
@@ -28,7 +28,7 @@ class JSClosure {
   const char *filename_;
   JSContext *jscontext_;
   JSScript *jsscript_;
-  MIRModule *module_;
+  MIRModule *mirModule;
   MemPool *mp_;
   Scope *scope_;
   JSMIRBuilder *jsbuilder_;
@@ -42,8 +42,8 @@ class JSClosure {
     : filename_(filename),
       jscontext_(context),
       jsscript_(script),
-      module_(module),
-      mp_(module->mp_),
+      mirModule(module),
+      mp_(module->memPool),
       scope_(scope),
       jsbuilder_(jsbuilder),
       opstack_(opstack),
@@ -69,7 +69,7 @@ class JSClosure {
   void AddAliasToEnvType(MIRType *env_type, char *name, MIRType *T);
 
   MIRSymbol *GetSymbolFromEnclosingScope(JSMIRFunction *func, const char *name);
-  MIRSymbol *GetSymbolFromEnclosingScope(JSMIRFunction *func, stidx_t stidx);
+  MIRSymbol *GetSymbolFromEnclosingScope(JSMIRFunction *func, StIdx stidx);
 
   void ProcessAliasedVar(jsbytecode *pc);
   JSMIRFunction *ProcessFunc(JSFunction *jsfun, char *funcname);

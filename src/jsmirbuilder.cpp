@@ -6,19 +6,20 @@ namespace maple {
 // Create jsvalue_type as the JS::Value from mozjs-31.2.0/js/public/Value.h.
 // We only consider littel_endian and 32-bit architectures here.
 MIRType *JSMIRBuilder::CreateJSValueType() {
-  return globaltable.GetDynany();
+  return GlobalTables::GetTypeTable().GetDynany();
 }
 
 JSMIRFunction *JSMIRBuilder::CreateJSMain() {
-  ArgVector arguments(module_->mp_allocator_.Adapter());
+  ArgVector arguments(mirModule->memPoolAllocator.Adapter());
   JSMIRFunction *jsmain = NULL;
   if (IsPlugin()) {
-    jsmain = GetOrCreateFunction(GetWrapperName(), globaltable.GetDynany(), arguments, false);
+    jsmain = GetOrCreateFunction(GetWrapperName(), GlobalTables::GetTypeTable().GetDynany(), arguments, false);
     SetCurrentFunction(jsmain);
   } else {
-    jsmain = GetOrCreateFunction("main", globaltable.GetInt32(), arguments, false);
+    MapleVector<BaseNode *> argsVec(mirModule->memPoolAllocator.Adapter());
+    jsmain = GetOrCreateFunction("main", GlobalTables::GetTypeTable().GetInt32(), arguments, false);
     SetCurrentFunction(jsmain);
-    IntrinsiccallNode *stmt = CreateStmtIntrinsicCallAssigned0((MIRIntrinsicId)INTRN_JS_INIT_CONTEXT, NULL);
+    IntrinsiccallNode *stmt = CreateStmtIntrinsicCallAssigned((MIRIntrinsicID)INTRN_JS_INIT_CONTEXT, argsVec, NULL);
     AddStmtInCurrentFunctionBody(stmt);
   }
   return jsmain;
@@ -35,20 +36,20 @@ void JSMIRBuilder::InitBuiltinMethod() {
     if (!name[i]) {
       return;
     }
-    MIRSymbol *st = globaltable.CreateSymbol(SCOPE_GLOBAL);
+    MIRSymbol *st = GlobalTables::GetGsymTable().CreateSymbol(kScopeGlobal);
     st->SetNameStridx(GetOrCreateStringIndex(name[i]));
-    if (!globaltable.AddToStringSymbolMap(st)) {
+    if (!GlobalTables::GetGsymTable().AddToStringSymbolMap(st)) {
       return;
     }
-    st->sclass = kScText;
-    st->skind = kStFunc;
+    st->storageClass = kScText;
+    st->sKind = kStFunc;
     InsertGlobalName((char *)name[i]);
   }
 }
 
 void JSMIRBuilder::Init() {
   jsvalueType = CreateJSValueType();
-  jsvalue_ptr_ = globaltable.GetOrCreatePointerType(jsvalueType);
+  jsvalue_ptr_ = GlobalTables::GetTypeTable().GetOrCreatePointerType(jsvalueType);
 
   InitGlobalName();
   // InitBuiltinMethod();
@@ -79,46 +80,46 @@ JSMIRFunction *JSMIRBuilder::GetOrCreateFunction(const char *name, MIRType *retu
     return fn;
   }
 
-  MapleString fname(name, module_->mp_);
-  MIRSymbol *funcst = globaltable.CreateSymbol(SCOPE_GLOBAL);
-  gstridx_t stridx = GetOrCreateStringIndex(fname);
-  stidx_t stidx = globaltable.GetStidxFromStridx(stridx);
+  MapleString fname(name, mirModule->memPool);
+  MIRSymbol *funcst = GlobalTables::GetGsymTable().CreateSymbol(kScopeGlobal);
+  GStrIdx stridx = GetOrCreateStringIndex(fname);
+  StIdx stidx = GlobalTables::GetGsymTable().GetStIdxFromStrIdx(stridx);
   DEBUGPRINT3(fname);
-  DEBUGPRINT3(stridx.idx);
+  DEBUGPRINT3(stridx.GetIdx());
   DEBUGPRINT3(stidx.Idx());
 
   funcst->SetNameStridx(stridx);
-  if (!globaltable.AddToStringSymbolMap(funcst)) {
+  if (!GlobalTables::GetGsymTable().AddToStringSymbolMap(funcst)) {
     return NULL;
   }
-  funcst->sclass = kScText;
-  funcst->skind = kStFunc;
+  funcst->storageClass = kScText;
+  funcst->sKind = kStFunc;
 
-  fn = module_->mp_->New<JSMIRFunction>(module_, funcst->GetStIdx());
+  fn = mirModule->memPool->New<JSMIRFunction>(mirModule, funcst->GetStIdx());
   fn->Init();
-  fn->puidx = globaltable.functable.size();
-  globaltable.functable.push_back(fn);
+  fn->puIdx = GlobalTables::GetFunctionTable().funcTable.size();
+  GlobalTables::GetFunctionTable().funcTable.push_back(fn);
 
-  fn->returnTyidx = returnType->_ty_idx;
+  fn->inferredReturnTyIdx = returnType->tyIdx;
 
-  std::vector<tyidx_t> funcvectype;
+  std::vector<TyIdx> funcvectype;
   std::vector<TypeAttrs> funcvecattr;
   for (uint32 i = 0; i < arguments.size(); i++) {
-    MapleString var(arguments[i].first, module_->mp_);
-    MIRSymbol *argst = fn->symtab->CreateSymbol(SCOPE_LOCAL);
+    MapleString var(arguments[i].first, mirModule->memPool);
+    MIRSymbol *argst = fn->symTab->CreateSymbol(kScopeLocal);
     argst->SetNameStridx(GetOrCreateStringIndex(var));
     MIRType *ty = arguments[i].second;
-    argst->SetTyIdx(ty->_ty_idx);
-    argst->sclass = kScFormal;
-    argst->skind = kStVar;
-    fn->symtab->AddToStringSymbolMap(argst);
+    argst->SetTyIdx(ty->tyIdx);
+    argst->storageClass = kScFormal;
+    argst->sKind = kStVar;
+    fn->symTab->AddToStringSymbolMap(argst);
     fn->AddArgument(argst);
-    funcvectype.push_back(ty->_ty_idx);
+    funcvectype.push_back(ty->tyIdx);
     funcvecattr.push_back(TypeAttrs());
   }
-  funcst->SetTyIdx(globaltable.GetOrCreateFunctionType(returnType->_ty_idx, funcvectype, funcvecattr, isvarg)->_ty_idx);
+  funcst->SetTyIdx(GlobalTables::GetTypeTable().GetOrCreateFunctionType(mirModule, returnType->tyIdx, funcvectype, funcvecattr, isvarg)->tyIdx);
   funcst->SetFunction(fn);
-  fn->body = fn->code_mp->New<BlockNode>();
+  fn->body = fn->codeMemPool->New<BlockNode>();
 
   AddNameFunc(name, fn);
 
@@ -134,18 +135,18 @@ void JSMIRBuilder::AddStmtInCurrentFunctionBody(StmtNode *n) {
 
 NaryStmtNode *JSMIRBuilder::CreateStmtReturn(BaseNode *rval, bool adjType, unsigned linenum) {
   NaryStmtNode *stmt = MIRBuilder::CreateStmtReturn(rval);
-  stmt->srcpos.SetLinenum(linenum);
+  stmt->srcPosition.SetLinenum(linenum);
   AddStmtInCurrentFunctionBody(stmt);
 
   JSMIRFunction *func = GetCurrentFunction();
   if (adjType && !IsMain(func) && rval->op == OP_dread) {
     DEBUGPRINTsv2("modify _return_type", (rval->op));
     AddrofNode *dn = (AddrofNode *)rval;
-    stidx_t stidx = dn->stidx;
-    MIRSymbol *var = module_->CurFunction()->GetLocalOrGlobalSymbol(stidx);
+    StIdx stidx = dn->stIdx;
+    MIRSymbol *var = mirModule->CurFunction()->GetLocalOrGlobalSymbol(stidx);
     MIRType *type = var->GetType();
     DEBUGPRINT3(type);
-    int fid = dn->fieldid;
+    int fid = dn->fieldID;
     if (fid) {
       MIRStructType *stype = static_cast<MIRStructType *>(type);
       // fieldid in a structure starts from 1 while type vector starts from 0
@@ -157,18 +158,18 @@ NaryStmtNode *JSMIRBuilder::CreateStmtReturn(BaseNode *rval, bool adjType, unsig
 
 void JSMIRBuilder::UpdateFunction(JSMIRFunction *func, MIRType *returnType, ArgVector arguments) {
   if (returnType) {
-    func->returnTyidx = returnType->_ty_idx;
+    func->inferredReturnTyIdx = returnType->tyIdx;
   }
 
   for (uint32 i = 0; i < arguments.size(); i++) {
-    MapleString var(arguments[i].first, module_->mp_);
-    MIRSymbol *st = func->symtab->CreateSymbol(SCOPE_LOCAL);
+    MapleString var(arguments[i].first, mirModule->memPool);
+    MIRSymbol *st = func->symTab->CreateSymbol(kScopeLocal);
     st->SetNameStridx(GetOrCreateStringIndex(var));
     MIRType *ty = arguments[i].second;
-    st->SetTyIdx(ty->_ty_idx);
-    st->sclass = kScFormal;
-    st->skind = kStVar;
-    func->symtab->AddToStringSymbolMap(st);
+    st->SetTyIdx(ty->tyIdx);
+    st->storageClass = kScFormal;
+    st->sKind = kStVar;
+    func->symTab->AddToStringSymbolMap(st);
     func->AddArgument(st);
   }
 }
@@ -178,33 +179,33 @@ void JSMIRBuilder::SaveReturnValue(MIRSymbol *var)
 {
     DEBUGPRINT4("in SaveReturnValue")
 
-    BaseNode *bn = CreateExprRegread(globaltable.type_table_[var->GetTyIdx().idx]->GetPrimType(), -kSregRetval0);
+    BaseNode *bn = CreateExprRegread(GlobalTables::GetTypeTable().type_table_[var->GetTyIdx().idx]->GetPrimType(), -kSregRetval0);
     StmtNode *stmt = CreateStmtDassign(var, 0, bn);
-    stmt->srcpos.SetLinenum(lineNo);
+    stmt->srcPosition.SetLinenum(lineNo);
     MIRBuilder::AddStmtInCurrentFunctionBody(stmt);
 }
 
 #endif
 
-StmtNode *JSMIRBuilder::CreateStmtDassign(MIRSymbol *symbol, fldid_t fieldId, BaseNode *src, unsigned linenum) {
+StmtNode *JSMIRBuilder::CreateStmtDassign(MIRSymbol *symbol, FieldID fieldId, BaseNode *src, unsigned linenum) {
   DEBUGPRINT4("in CreateStmtDassign")
 
   StmtNode *stmt = MIRBuilder::CreateStmtDassign(symbol, fieldId, src);
-  stmt->srcpos.SetLinenum(linenum);
+  stmt->srcPosition.SetLinenum(linenum);
   AddStmtInCurrentFunctionBody(stmt);
   return stmt;
 }
 
-IntrinsiccallNode *JSMIRBuilder::CreateStmtIntrinsicCall1N(MIRIntrinsicId idx, BaseNode *arg0,
+IntrinsiccallNode *JSMIRBuilder::CreateStmtIntrinsicCall1N(MIRIntrinsicID idx, BaseNode *arg0,
                                                            MapleVector<BaseNode *> &args) {
-  IntrinsiccallNode *stmt = module_->CurFuncCodeMp()->New<IntrinsiccallNode>(module_, OP_intrinsiccall);
-  MapleVector<BaseNode *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
+  IntrinsiccallNode *stmt = mirModule->CurFuncCodeMemPool()->New<IntrinsiccallNode>(mirModule, OP_intrinsiccall);
+  MapleVector<BaseNode *> arguments(mirModule->CurFuncCodeMemPoolAllocator()->Adapter());
   arguments.push_back(arg0);
   for (int i = 0; i < args.size(); i++) {
     arguments.push_back(args[i]);
   }
   stmt->intrinsic = idx;
-  stmt->nopnd = arguments;
+  stmt->nOpnd = arguments;
   return stmt;
 }
 

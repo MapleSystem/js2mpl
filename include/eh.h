@@ -7,7 +7,7 @@
 #include "js/src/jsopcode.h"
 #include "js/src/jsfun.h"
 #include "js/src/jsatom.h"
-#include "mapleir/include/mirnodes.h"
+#include "maple_ir/include/mir_nodes.h"
 #include "../include/jsfunction.h"
 #include "../include/jsmirbuilder.h"
 #include "../include/scope.h"
@@ -21,7 +21,7 @@ struct EHstruct {
   jsbytecode *catchpc;
   jsbytecode *finallypc;
   jsbytecode *endtrypc;
-  labidx_t label;
+  LabelIdx label;
 };
 
 class EH {
@@ -41,7 +41,7 @@ class EH {
 
  public:
   EH(JSContext *context, JSScript *script, maple::MIRModule *module, JSMIRBuilder *jsbuilder, Scope *scope)
-    : mp_(module->mp_), ctx_(context), jsbuilder_(jsbuilder), scope_(scope), jsscript_(script) {}
+    : mp_(module->memPool), ctx_(context), jsbuilder_(jsbuilder), scope_(scope), jsscript_(script) {}
 
   bool Build(JSScript *script);
   bool BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcend);
@@ -51,7 +51,7 @@ class EH {
   // passing 0 to skip search fields
   EHstruct *GetEHstruct(jsbytecode *tryop, jsbytecode *catchop, jsbytecode *finallyop, jsbytecode *endtryop);
 
-  void SetEHLabel(EHstruct *eh, labidx_t lab) {
+  void SetEHLabel(EHstruct *eh, LabelIdx lab) {
     eh->label = lab;
   }
 

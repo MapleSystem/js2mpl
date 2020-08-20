@@ -3,7 +3,7 @@
 #define JS2MPL_INCLUDE_COMPILER_H_
 #include <list>
 
-#include "mapleir/include/mirbuilder.h"
+#include "maple_ir/include/mir_builder.h"
 #include "../include/jsvalue.h"
 #include "../include/jsmirbuilder.h"
 #include "../include/closure.h"
@@ -28,8 +28,8 @@ class JSCompiler {
   OperandStack *opstack_;
   std::stack<JSMIRFunction *> funcstack_;
   std::stack<BlockNode *> bodystack_;
-  std::map<jsbytecode *, labidx_t> label_map_;
-  std::map<labidx_t, MIRSymbol *> label_tempvar_map_;
+  std::map<jsbytecode *, LabelIdx> label_map_;
+  std::map<LabelIdx, MIRSymbol *> label_tempvar_map_;
 
   std::map<const jschar *, BaseNode *> jsstring_map_;
 
@@ -38,7 +38,7 @@ class JSCompiler {
   MemPool *mp_;
 
  public:
-  maple::MIRModule *module_;
+  maple::MIRModule *mirModule;
 
  private:
   BaseNode *dummyNode;
@@ -61,8 +61,8 @@ class JSCompiler {
       linenum_(0),
       jscontext_(context),
       jsscript_(script),
-      module_(module),
-      mp_(module->mp_),
+      mirModule(module),
+      mp_(module->memPool),
       temp_var_no_(1),
       jsbuilder_(jsbuilder),
       scope_(scope),
@@ -166,8 +166,8 @@ class JSCompiler {
   BaseNode *CompileOpName(JSAtom *atom, jsbytecode *pc);
   StmtNode *CompileOpIfJump(JSOp op, BaseNode *cond, jsbytecode *pcend);
 
-  labidx_t CreateLabel(char *pref = NULL);
-  labidx_t GetorCreateLabelofPc(jsbytecode *pc, char *pref = NULL);
+  LabelIdx CreateLabel(char *pref = NULL);
+  LabelIdx GetorCreateLabelofPc(jsbytecode *pc, char *pref = NULL);
   int64_t GetIntValue(jsbytecode *pc);
   SwitchNode *CompileOpCondSwitch(BaseNode *opnd, JSScript *script, jsbytecode *pcstart, jsbytecode *pcend);
   SwitchNode *CompileOpTableSwitch(BaseNode *opnd, int32_t len, JSScript *script, jsbytecode *pc);

@@ -7,7 +7,7 @@
 #include "js/src/jsopcode.h"
 #include "js/src/jsfun.h"
 #include "js/src/jsatom.h"
-#include "mapleir/include/mirnodes.h"
+#include "maple_ir/include/mir_nodes.h"
 #include "../include/jsfunction.h"
 #include "../include/jsmirbuilder.h"
 #include "../include/util.h"
@@ -135,7 +135,7 @@ class Scope {
 
  public:
   Scope(JSContext *context, JSScript *script, maple::MIRModule *module, JSMIRBuilder *jsbuilder)
-    : mp_(module->mp_), anon_func_no_(0), stackDepth(0), ctx_(context), jsbuilder_(jsbuilder), jsscript_(script) {}
+    : mp_(module->memPool), anon_func_no_(0), stackDepth(0), ctx_(context), jsbuilder_(jsbuilder), jsscript_(script) {}
 
   void Init();
   bool Build(JSScript *script);

@@ -33,7 +33,7 @@ executable("js2mpl"){
     ]
 
     include_dirs = [
-        "${MAPLEALL_ROOT}",
+        "${MAPLE_ROOT}/mapleall",
         "${MOZJS_INSTALL_DIR}/include",
         "${MOZJS_INSTALL_DIR}/system_wrappers",
         "${MOZJS_SOURCE_DIR}",
@@ -42,14 +42,16 @@ executable("js2mpl"){
         "${MOZJS_SOURCE_DIR}/intl/icu/source/common",
         "${MOZJS_SOURCE_DIR}/intl/icu/source/i18n",
         "${MOZJS_SOURCE_DIR}/js/public",
-        "${MAPLEALL_ROOT}/mapleutil/include",
+        "${MAPLE_ROOT}/mapleall/maple_util/include",
+        "${MAPLE_ROOT}/mapleall/mempool/include",
+        "${MAPLE_ROOT}/zeiss/huawei_secure_c/include",
     ]
 
     deps = [
-        "${MAPLEALL_ROOT}/mapleir:libmplir",
-        "${MAPLEALL_ROOT}/mapleutil:libmplutil",
-        "${MAPLEALL_ROOT}/Mempool:libmempool",
-        "${MAPLEALL_ROOT}/HuaweiSecureC:libHWSecureC",
+        "${MAPLE_ROOT}/mapleall/maple_ir:libmplir",
+        "${MAPLE_ROOT}/mapleall/maple_util:libmplutil",
+        "${MAPLE_ROOT}/mapleall/mempool:libmempool",
+        "${MAPLE_ROOT}/zeiss/huawei_secure_c:libHWSecureC",
     ]
 
     cflags_cc +=[

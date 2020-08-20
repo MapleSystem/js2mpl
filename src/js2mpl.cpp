@@ -14,7 +14,7 @@
 using namespace maple;
 using namespace std;
 
-GlobalTables maple::globaltable;
+// GlobalTables maple::GlobalTables::GetTypeTable();
 
 // extract base name and plugin name from input js file name with path
 static void ProcessSrcInfo(string infile, string &basename, string &pluginname) {
@@ -142,26 +142,26 @@ int main(int argc, const char *argv[]) {
   JSMIRContext jsmirctx(isplugin, name, withMain, jsopOnly, simpCall);
 
   MIRModule themodule(fn);
-  themodule.srclang_ = maple::kSrcLangJs;
+  themodule.srcLang = maple::kSrcLangJs;
   if (!maple::js2mpldriver(fn, &themodule, jsmirctx)) {
     exit(1);
   }
 
   // set entryfuncname_ in MIRModule
   if (!isplugin) {
-    themodule.entryfuncname_ = "main";
+    themodule.entryFuncName = "main";
   } else {  // entryfunc_ is the last function generated
-    themodule.entryfuncname_ = globaltable.GetSymbolFromStidx(themodule._function_list.back()->stidx.Idx())->GetName();
+    themodule.entryFuncName = GlobalTables::GetGsymTable().GetSymbolFromStIdx(themodule.functionList.back()->stIdx.Idx())->GetName();
   }
   // set numfuncs_ in MIRModule
-  themodule.num_funcs = themodule._function_list.size();
+  themodule.numFuncs = themodule.functionList.size();
 
   if (js2mplDebug > 0) {
     themodule.Dump();
   }
 
-  themodule.flavor_ = maple::kFeProduced;
-  themodule.OutputAsciiMpl("");
+  themodule.flavor = maple::kFeProduced;
+  themodule.OutputAsciiMpl("","test.js2mpl");
   return 0;
 }
 
@@ -259,7 +259,7 @@ bool js2mpldriver(const char *fn, maple::MIRModule *module, JSMIRContext &jsmirc
     maple::JSMIRBuilder jsbuilder(module, jsmirctx);
     jsbuilder.Init();
 
-    maple::OperandStack *opstack = module->mp_->New<maple::OperandStack>(50);
+    maple::OperandStack *opstack = module->memPool->New<maple::OperandStack>(50);
 
     ///////////////////////////////////////////////
     // Pass To Set Up Scope Chain

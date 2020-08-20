@@ -64,7 +64,7 @@
     if (js2mplDebug > 1) {                              \
       PrintIndentation(js2mplDebugIndent);              \
       std::cout << "  >> node: ";                       \
-      static_cast<StmtNode *>(node)->Print(module_, 0); \
+      static_cast<StmtNode *>(node)->Dump(mirModule, 0); \
       DEBUGPRINT0;                                      \
     }                                                   \
   } while (0);

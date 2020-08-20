@@ -13,7 +13,7 @@
 #include "js/src/vm/ScopeObject.h"
 #include "../include/compiler.h"
 
-const maple::OpcodeTable maple::kOpcodeInfo;
+// const maple::OpcodeTable maple::kOpcodeInfo;
 
 namespace maple {
 
@@ -46,7 +46,7 @@ void JSCompiler::Init() {
 
 void JSCompiler::Finish() {
   if (jsbuilder_->WithMain()) {
-    module_->AddFunction(jsmain_);  // add jsmain_ in the end
+    mirModule->AddFunction(jsmain_);  // add jsmain_ in the end
   }
 
   // more forgiving about stack integrety
@@ -107,31 +107,31 @@ uint32_t JSCompiler::GetFieldidFromTag(uint32_t tag) {
 }
 
 MIRType *JSCompiler::DetermineTypeFromNode(BaseNode *node) {
-  tyidx_t tyidx;
+  TyIdx tyidx;
   if (kOpcodeInfo.IsCompare(node->op)) {
-    return globaltable.GetTypeFromTyIdx((tyidx_t)PTY_u1);
+    return GlobalTables::GetTypeTable().GetTypeFromTyIdx((TyIdx)PTY_u1);
   }
   if (node->op == OP_intrinsicop) {
     // TODO: look up intrinsic table
-    MIRIntrinsicId intrnid = static_cast<IntrinsicopNode *>(node)->intrinsic;
+    MIRIntrinsicID intrnid = static_cast<IntrinsicopNode *>(node)->intrinsic;
     IntrinDesc *intrndesc = &IntrinDesc::intrintable[intrnid];
     return intrndesc->GetTypeFromArgTy(intrndesc->argtypes_[0]);
   }
   if (node->op == OP_dread) {
     AddrofNode *dread = static_cast<AddrofNode *>(node);
-    MIRSymbol *st = module_->CurFunction()->GetLocalOrGlobalSymbol(dread->stidx);
+    MIRSymbol *st = mirModule->CurFunction()->GetLocalOrGlobalSymbol(dread->stIdx);
     tyidx = st->GetTyIdx();
   } else if (node->op == OP_iread) {
     IreadNode *iread = static_cast<IreadNode *>(node);
-    tyidx = iread->tyidx;
+    tyidx = iread->tyIdx;
   } else {
-    tyidx = node->ptyp;
+    tyidx = (TyIdx)node->primType;
   }
-  if (tyidx == jsvalueType->_ty_idx) {
+  if (tyidx == jsvalueType->tyIdx) {
     return jsvalueType;
   }
 
-  return globaltable.GetTypeFromTyIdx(tyidx);
+  return GlobalTables::GetTypeTable().GetTypeFromTyIdx(tyidx);
 }
 
 // create a new temporary, store expr to the temporary and return the temporary
@@ -141,7 +141,7 @@ MIRSymbol *JSCompiler::SymbolFromSavingInATemp(BaseNode *expr, bool jsvalueP) {
     exprty = jsvalueType;
     expr = CheckConvertToJSValueType(expr);
   } else {
-    exprty = globaltable.GetPrimType(expr->ptyp);
+    exprty = GlobalTables::GetTypeTable().GetPrimType(expr->primType);
   }
   MIRSymbol *tempVar = CreateTempVar(exprty);
   jsbuilder_->CreateStmtDassign(tempVar, 0, expr, linenum_);
@@ -215,71 +215,71 @@ uint32_t JSCompiler::FindIntrinsicForOp(JSOp opcode) {
 // JSOP_STRICTNE 73
 BaseNode *JSCompiler::CompileOpBinary(JSOp opcode, BaseNode *op0, BaseNode *op1) {
   Opcode mop = (Opcode)0;
-  MIRType *restype = globaltable.GetDynany();
+  MIRType *restype = GlobalTables::GetTypeTable().GetDynany();
   switch (opcode) {
     case JSOP_BITOR:
       mop = OP_bior;
-      restype = globaltable.GetInt32();
+      restype = GlobalTables::GetTypeTable().GetInt32();
       break;
     case JSOP_BITXOR:
       mop = OP_bxor;
-      restype = globaltable.GetInt32();
+      restype = GlobalTables::GetTypeTable().GetInt32();
       break;
     case JSOP_BITAND:
       mop = OP_band;
-      restype = globaltable.GetInt32();
+      restype = GlobalTables::GetTypeTable().GetInt32();
       break;
     case JSOP_EQ:
       mop = OP_eq;
-      restype = globaltable.GetUInt1();
+      restype = GlobalTables::GetTypeTable().GetUInt1();
       break;
     case JSOP_NE:
       mop = OP_ne;
-      restype = globaltable.GetUInt1();
+      restype = GlobalTables::GetTypeTable().GetUInt1();
       break;
     case JSOP_LT:
       mop = OP_lt;
-      restype = globaltable.GetUInt1();
+      restype = GlobalTables::GetTypeTable().GetUInt1();
       break;
     case JSOP_LE:
       mop = OP_le;
-      restype = globaltable.GetUInt1();
+      restype = GlobalTables::GetTypeTable().GetUInt1();
       break;
     case JSOP_GT:
       mop = OP_gt;
-      restype = globaltable.GetUInt1();
+      restype = GlobalTables::GetTypeTable().GetUInt1();
       break;
     case JSOP_GE:
       mop = OP_ge;
-      restype = globaltable.GetUInt1();
+      restype = GlobalTables::GetTypeTable().GetUInt1();
       break;
     case JSOP_LSH:
       mop = OP_shl;
-      restype = globaltable.GetInt32();
+      restype = GlobalTables::GetTypeTable().GetInt32();
       break;
     case JSOP_RSH:
       mop = OP_ashr;
-      restype = globaltable.GetInt32();
+      restype = GlobalTables::GetTypeTable().GetInt32();
       break;
     case JSOP_URSH:
       mop = OP_lshr;
-      restype = globaltable.GetUInt32();
+      restype = GlobalTables::GetTypeTable().GetUInt32();
       break;
     case JSOP_SUB:
       mop = OP_sub;
-      restype = globaltable.GetInt32();
+      restype = GlobalTables::GetTypeTable().GetInt32();
       break;
     case JSOP_MUL:
       mop = OP_mul;
-      restype = globaltable.GetInt32();
+      restype = GlobalTables::GetTypeTable().GetInt32();
       break;
     case JSOP_DIV:
       mop = OP_div;
-      restype = globaltable.GetInt32();
+      restype = GlobalTables::GetTypeTable().GetInt32();
       break;
     case JSOP_MOD:
       mop = OP_rem;
-      restype = globaltable.GetInt32();
+      restype = GlobalTables::GetTypeTable().GetInt32();
       break;
     case JSOP_ADD:
       return CompileGeneric2(INTRN_JSOP_ADD, CheckConvertToJSValueType(op0), CheckConvertToJSValueType(op1), true);
@@ -287,15 +287,15 @@ BaseNode *JSCompiler::CompileOpBinary(JSOp opcode, BaseNode *op0, BaseNode *op1)
       break;
   }
   if (mop != 0) {
-    if (op0->ptyp == PTY_i32 && op1->ptyp == PTY_i32) {
+    if (op0->primType == PTY_i32 && op1->primType == PTY_i32) {
       if (kOpcodeInfo.IsCompare(mop)) {
-        return jsbuilder_->CreateExprCompare(mop, restype, globaltable.GetInt32(), op0, op1);
+        return jsbuilder_->CreateExprCompare(mop, restype, GlobalTables::GetTypeTable().GetInt32(), op0, op1);
       }
-      return jsbuilder_->CreateExprBinary(mop, globaltable.GetInt32(), op0, op1);
+      return jsbuilder_->CreateExprBinary(mop, GlobalTables::GetTypeTable().GetInt32(), op0, op1);
     }
 
     if (kOpcodeInfo.IsCompare(mop)) {
-      return jsbuilder_->CreateExprCompare(mop, restype, globaltable.GetDynany(), CheckConvertToJSValueType(op0),
+      return jsbuilder_->CreateExprCompare(mop, restype, GlobalTables::GetTypeTable().GetDynany(), CheckConvertToJSValueType(op0),
                                            CheckConvertToJSValueType(op1));
     } else if (restype->GetPrimType() == PTY_u32) {
       return jsbuilder_->CreateExprBinary(mop, restype, CheckConvertToUInt32(op0), CheckConvertToUInt32(op1));
@@ -307,30 +307,33 @@ BaseNode *JSCompiler::CompileOpBinary(JSOp opcode, BaseNode *op0, BaseNode *op1)
     }
   }
 
-  MIRIntrinsicId idx = (MIRIntrinsicId)FindIntrinsicForOp(opcode);
+  MIRIntrinsicID idx = (MIRIntrinsicID)FindIntrinsicForOp(opcode);
   IntrinDesc *intrindesc = &IntrinDesc::intrintable[idx];
   MIRType *retty = intrindesc->GetReturnType();
-  return jsbuilder_->CreateExprIntrinsicop2(idx, retty, CheckConvertToJSValueType(op0), CheckConvertToJSValueType(op1));
+  MapleVector<BaseNode *> opsVec(mirModule->memPoolAllocator.Adapter());
+  opsVec.push_back(op0);
+  opsVec.push_back(op1);
+  return jsbuilder_->CreateExprIntrinsicop(idx, retty, opsVec);
 }
 
 // JSOP_NOT JSOP_BITNOT JSOP_NEG JSOP_POS 32~35
 BaseNode *JSCompiler::CompileOpUnary(JSOp opcode, BaseNode *val) {
   Opcode mop = (Opcode)0;
-  MIRType *restype = globaltable.GetDynany();
+  MIRType *restype = GlobalTables::GetTypeTable().GetDynany();
   switch (opcode) {
     case JSOP_NOT:
       mop = OP_lnot;
-      restype = globaltable.GetUInt1();
+      restype = GlobalTables::GetTypeTable().GetUInt1();
       val = CheckConvertToBoolean(val);
       break;
     case JSOP_BITNOT:
       mop = OP_bnot;
-      restype = globaltable.GetInt32();
+      restype = GlobalTables::GetTypeTable().GetInt32();
       val = CheckConvertToInt32(val);
       break;
     case JSOP_NEG:
       mop = OP_neg;
-      restype = globaltable.GetInt32();
+      restype = GlobalTables::GetTypeTable().GetInt32();
       val = CheckConvertToInt32(val);
       break;
     default:
@@ -343,11 +346,11 @@ BaseNode *JSCompiler::CompileOpUnary(JSOp opcode, BaseNode *val) {
   if (opcode == JSOP_POS) {
     PrimType pty;
     if (val->op == OP_constval) {
-      pty = val->ptyp;
+      pty = val->primType;
     }
     if (val->op == OP_dread) {
       AddrofNode *node = static_cast<AddrofNode *>(val);
-      MIRSymbol *st = module_->CurFunction()->GetLocalOrGlobalSymbol(node->stidx);
+      MIRSymbol *st = mirModule->CurFunction()->GetLocalOrGlobalSymbol(node->stIdx);
       MIRType *type = st->GetType();
       pty = type->GetPrimType();
     }
@@ -357,10 +360,12 @@ BaseNode *JSCompiler::CompileOpUnary(JSOp opcode, BaseNode *val) {
     }
   }
 
-  MIRIntrinsicId idx = (MIRIntrinsicId)FindIntrinsicForOp(opcode);
+  MIRIntrinsicID idx = (MIRIntrinsicID)FindIntrinsicForOp(opcode);
   IntrinDesc *intrindesc = &IntrinDesc::intrintable[idx];
   MIRType *retty = intrindesc->GetReturnType();
-  return jsbuilder_->CreateExprIntrinsicop1(idx, retty, CheckConvertToJSValueType(val));
+  MapleVector<BaseNode *> valOp(mirModule->memPoolAllocator.Adapter());
+  valOp.push_back(CheckConvertToJSValueType(val));
+  return jsbuilder_->CreateExprIntrinsicop(idx, retty, valOp);
 }
 
 int32_t JSCompiler::GetBuiltinMethod(uint32_t argc, bool *needThis) {
@@ -369,8 +374,8 @@ int32_t JSCompiler::GetBuiltinMethod(uint32_t argc, bool *needThis) {
     IntrinsicopNode *ion = static_cast<IntrinsicopNode *>(bn);
     if (ion->intrinsic == INTRN_JS_GET_BIOBJECT) {
       ConstvalNode *cval = static_cast<ConstvalNode *>(ion->Opnd(0));
-      MIRIntConst *intconst = static_cast<MIRIntConst *>(cval->constval);
-      switch (intconst->value_) {
+      MIRIntConst *intconst = static_cast<MIRIntConst *>(cval->constVal);
+      switch (intconst->value) {
         case JS_BUILTIN_OBJECT:
           if (argc == 0) {
             return INTRN_JS_NEW_OBJECT_0;
@@ -403,8 +408,8 @@ int32_t JSCompiler::GetBuiltinMethod(uint32_t argc, bool *needThis) {
   }
   AddrofNode *drn = static_cast<AddrofNode *>(bn);
   assert(drn);
-  // MIRSymbol *var = module_->symtab->GetSymbolFromStidx(drn->stidx.Idx());
-  MIRSymbol *var = module_->CurFunction()->GetLocalOrGlobalSymbol(drn->stidx);
+  // MIRSymbol *var = mirModule->symtab->GetSymbolFromStidx(drn->stidx.Idx());
+  MIRSymbol *var = mirModule->CurFunction()->GetLocalOrGlobalSymbol(drn->stIdx);
   std::string name = var->GetName();
   DEBUGPRINT3(name);
 
@@ -433,7 +438,7 @@ int32_t JSCompiler::GetBuiltinMethod(uint32_t argc, bool *needThis) {
 BaseNode *JSCompiler::CompileBuiltinMethod(int32_t idx, int argNum, bool needThis) {
   // Reverse the order of args.
   std::stack<BaseNode *> tmpStack;
-  if (argNum == 0 && (MIRIntrinsicId)idx == INTRN_JS_BOOLEAN) {
+  if (argNum == 0 && (MIRIntrinsicID)idx == INTRN_JS_BOOLEAN) {
     Pop();
     Pop();
     return CompileOpConstValue(JSTYPE_BOOLEAN, 0);
@@ -450,38 +455,38 @@ BaseNode *JSCompiler::CompileBuiltinMethod(int32_t idx, int argNum, bool needThi
   }
   Pop();
 
-  if ((MIRIntrinsicId)idx == INTRN_JS_NEW_ARR_ELEMS) {
-    MapleVector<BaseNode *> args(module_->CurFuncCodeMpAllocator()->Adapter());
+  if ((MIRIntrinsicID)idx == INTRN_JS_NEW_ARR_ELEMS) {
+    MapleVector<BaseNode *> args(mirModule->memPoolAllocator.Adapter());
     MIRSymbol *arguments = NULL;
-    arguments = jsbuilder_->GetCurrentFunction()->symtab->CreateSymbol(SCOPE_LOCAL);
+    arguments = jsbuilder_->GetCurrentFunction()->symTab->CreateSymbol(kScopeLocal);
     const char *tempName = Util::GetSequentialName("js_arguments_", temp_var_no_, mp_);
     std::string argname(tempName);
-    arguments->SetNameStridx(globaltable.GetOrCreateGstridxFromName(argname));
-    jsbuilder_->GetCurrentFunction()->symtab->AddToStringSymbolMap(arguments);
-    arguments->sclass = kScAuto;
-    arguments->skind = kStVar;
+    arguments->SetNameStridx(GlobalTables::GetStrTable().GetOrCreateStrIdxFromName(argname));
+    jsbuilder_->GetCurrentFunction()->symTab->AddToStringSymbolMap(arguments);
+    arguments->storageClass = kScAuto;
+    arguments->sKind = kStVar;
 
     uint32_t sizeArray[1];
     sizeArray[0] = argNum;
-    MIRType *arrayType = globaltable.GetOrCreateArrayType(jsvalueType, 1, sizeArray);
-    MIRType *arrayPtrType = globaltable.GetOrCreatePointerType(arrayType);
-    tyidx_t tyidx = arrayType->_ty_idx;
+    MIRType *arrayType = GlobalTables::GetTypeTable().GetOrCreateArrayType(jsvalueType, 1, sizeArray);
+    MIRType *arrayPtrType = GlobalTables::GetTypeTable().GetOrCreatePointerType(arrayType);
+    TyIdx tyidx = arrayType->tyIdx;
     arguments->SetTyIdx(tyidx);
     BaseNode *bn;
-    MIRType *pargtype = globaltable.GetOrCreatePointerType(arguments->GetType());
+    MIRType *pargtype = GlobalTables::GetTypeTable().GetOrCreatePointerType(arguments->GetType());
     BaseNode *addrBase = jsbuilder_->CreateExprAddrof(0, arguments);
 
     for (uint32_t i = 0; i < argNum; i++) {
       bn = CheckConvertToJSValueType(tmpStack.top());
       DEBUGPRINT3(bn->op);
       tmpStack.pop();
-      MapleVector<BaseNode *> opnds(module_->CurFuncCodeMpAllocator()->Adapter());
+      MapleVector<BaseNode *> opnds(mirModule->memPoolAllocator.Adapter());
       opnds.push_back(static_cast<BaseNode *>(addrBase));
       BaseNode *addrOffset = jsbuilder_->GetConstInt(i);
       opnds.push_back(static_cast<BaseNode *>(addrOffset));
       BaseNode *arrayExpr = jsbuilder_->CreateExprArray(arrayType, opnds);
       StmtNode *stmt = jsbuilder_->CreateStmtIassign(arrayPtrType, 0, arrayExpr, bn);
-      stmt->srcpos.SetLinenum(linenum_);
+      stmt->srcPosition.SetLinenum(linenum_);
       jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
     }
 
@@ -498,13 +503,13 @@ BaseNode *JSCompiler::CompileBuiltinMethod(int32_t idx, int argNum, bool needThi
     IntrinDesc *intrindesc = &IntrinDesc::intrintable[idx];
     MIRType *retty = intrindesc->GetReturnType();
     MIRSymbol *temp = CreateTempVar(retty);
-    StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssignedN((MIRIntrinsicId)idx, args, temp);
-    stmt->srcpos.SetLinenum(linenum_);
+    StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned((MIRIntrinsicID)idx, args, temp);
+    stmt->srcPosition.SetLinenum(linenum_);
     jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
     return jsbuilder_->CreateExprDread(retty, temp);
   }
 
-  if ((MIRIntrinsicId)idx == INTRN_JS_NUMBER || (MIRIntrinsicId)idx == INTRN_JS_STRING) {
+  if ((MIRIntrinsicID)idx == INTRN_JS_NUMBER || (MIRIntrinsicID)idx == INTRN_JS_STRING) {
     BaseNode *argument;
     if (argNum == 0) {
       argument = CompileOpConstValue(JSTYPE_NONE, 0);
@@ -515,14 +520,16 @@ BaseNode *JSCompiler::CompileBuiltinMethod(int32_t idx, int argNum, bool needThi
     IntrinDesc *intrindesc = &IntrinDesc::intrintable[idx];
     MIRType *retty = intrindesc->GetReturnType();
     MIRSymbol *temp = CreateTempVar(retty);
-    StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned1((MIRIntrinsicId)idx, argument, temp);
-    stmt->srcpos.SetLinenum(linenum_);
+    MapleVector<BaseNode *> argsVec(mirModule->memPoolAllocator.Adapter());
+    argsVec.push_back(argument);
+    StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned((MIRIntrinsicID)idx, argsVec, temp);
+    stmt->srcPosition.SetLinenum(linenum_);
     jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
     return jsbuilder_->CreateExprDread(retty, temp);
   }
 
   IntrinDesc *intrindesc = &IntrinDesc::intrintable[idx];
-  MapleVector<BaseNode *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
+  MapleVector<BaseNode *> arguments(mirModule->memPoolAllocator.Adapter());
   // Push args into arguments.
   for (uint32_t i = 0; i < argNum; i++) {
     BaseNode *bn = tmpStack.top();
@@ -532,8 +539,8 @@ BaseNode *JSCompiler::CompileBuiltinMethod(int32_t idx, int argNum, bool needThi
 
   MIRType *retty = intrindesc->GetReturnType();
   MIRSymbol *temp = CreateTempVar(retty);
-  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssignedN((MIRIntrinsicId)idx, arguments, temp);
-  stmt->srcpos.SetLinenum(linenum_);
+  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned((MIRIntrinsicID)idx, arguments, temp);
+  stmt->srcPosition.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
 
   return jsbuilder_->CreateExprDread(retty, temp);
@@ -565,17 +572,17 @@ BaseNode *JSCompiler::CompileOpCall(uint32_t argc) {
   MIRSymbol *symbol;
   char *name;
   if (js2mplDebug > 2) {
-    static_cast<BaseNode *>(funcnode)->Dump(module_);
+    static_cast<BaseNode *>(funcnode)->Dump(mirModule);
   }
 
-  MapleVector<BaseNode *> args(module_->CurFuncCodeMpAllocator()->Adapter());
+  MapleVector<BaseNode *> args(mirModule->memPoolAllocator.Adapter());
   bool useSimpleCall = false;
   char *funcname = NULL;
-  puidx_t puidx;
+  PUIdx puidx;
 
   if (funcnode->op == OP_dread) {
     AddrofNode *dread = static_cast<AddrofNode *>(funcnode);
-    MIRSymbol *funcobj = module_->CurFunction()->GetLocalOrGlobalSymbol(dread->stidx, true);
+    MIRSymbol *funcobj = mirModule->CurFunction()->GetLocalOrGlobalSymbol(dread->stIdx, true);
     // the function might not be a global one, embeded in obj
     if (funcobj) {
       std::string funcobjname = funcobj->GetName();
@@ -586,7 +593,7 @@ BaseNode *JSCompiler::CompileOpCall(uint32_t argc) {
         DEBUGPRINT3(funcname);
         JSMIRFunction *func = closure_->GetJSMIRFunc(funcname);
         if (func) {
-          puidx = func->puidx;
+          puidx = func->puIdx;
           useSimpleCall = UseSimpleCall(funcname);
         }
       } else if (IsCCall(funcobjname.c_str()) || IsXcCall(funcobjname.c_str())) {
@@ -623,12 +630,12 @@ BaseNode *JSCompiler::CompileOpCall(uint32_t argc) {
       args.push_back(argsvec[i]);
     }
 
-    stmt = jsbuilder_->CreateStmtIntrinsicCallAssignedN(INTRN_JSOP_CCALL, args, returnVar);
+    stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_CCALL, args, returnVar);
   } else if (funcname && IsXcCall(funcname)) {
     for (int32_t i = argc - 1; i >= 0; i--) {
       args.push_back(argsvec[i]);
     }
-    stmt = jsbuilder_->CreateStmtXintrinsicCallAssignedN((MIRIntrinsicId)0, args, returnVar);
+    stmt = jsbuilder_->CreateStmtXintrinsicCallAssigned((MIRIntrinsicID)0, args, returnVar);
   } else {
     args.push_back(funcnode);
     args.push_back(impnode);
@@ -636,11 +643,11 @@ BaseNode *JSCompiler::CompileOpCall(uint32_t argc) {
       args.push_back(argsvec[i]);
     }
 
-    stmt = jsbuilder_->CreateStmtIntrinsicCallAssignedN(INTRN_JSOP_CALL, args, returnVar);
+    stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_CALL, args, returnVar);
   }
 
   if (stmt) {
-    stmt->srcpos.SetLinenum(linenum_);
+    stmt->srcPosition.SetLinenum(linenum_);
   }
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
 
@@ -659,15 +666,15 @@ BaseNode *JSCompiler::CompileOpNew(uint32_t argc) {
   BaseNode *impnode = Pop();
   BaseNode *funcnode = CheckConvertToJSValueType(Pop());
 
-  MapleVector<BaseNode *> args(module_->CurFuncCodeMpAllocator()->Adapter());
+  MapleVector<BaseNode *> args(mirModule->memPoolAllocator.Adapter());
   args.push_back(funcnode);
   args.push_back(impnode);
   for (int32_t i = argc - 1; i >= 0; i--) {
     args.push_back(argsvec[i]);
   }
   MIRSymbol *returnVar = CreateTempVar(jsvalueType);
-  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssignedN(INTRN_JSOP_NEW, args, returnVar);
-  stmt->srcpos.SetLinenum(linenum_);
+  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_NEW, args, returnVar);
+  stmt->srcPosition.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return jsbuilder_->CreateExprDread(jsvalueType, 0, returnVar);
 }
@@ -772,9 +779,9 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc) {
   MIRSymbol *var;
   bool created;
   if (jsbuilder_->IsGlobalName(name) || IsCCall(name) || IsXcCall(name)) {
-    var = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalueType, created);
+    var = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalueType);
   } else {
-    var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalueType, created);
+    var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalueType);
   }
 
   // print is a builtin function.
@@ -785,14 +792,14 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc) {
 
   InitWithUndefined(created, var);
 
-  stidx_t stidx = var->GetStIdx();
+  StIdx stidx = var->GetStIdx();
   DEBUGPRINT3(stidx.Idx());
 
   bn = jsbuilder_->CreateExprDread(jsvalueType, var);
 
   if (created && eh_->IsInEHrange(pc)) {
     StmtNode *throwstmt = jsbuilder_->CreateStmtThrow(bn);
-    throwstmt->srcpos.SetLinenum(linenum_);
+    throwstmt->srcPosition.SetLinenum(linenum_);
     jsbuilder_->AddStmtInCurrentFunctionBody(throwstmt);
   }
 
@@ -847,7 +854,7 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
     return jsstring_map_[chars];
   }
   if (id != -1) {
-    BaseNode *expr = CompileGeneric1((MIRIntrinsicId)INTRN_JS_GET_BISTRING, jsbuilder_->GetConstUInt32(id), false);
+    BaseNode *expr = CompileGeneric1((MIRIntrinsicID)INTRN_JS_GET_BISTRING, jsbuilder_->GetConstUInt32(id), false);
     jsstring_map_[chars] = expr;
     return expr;
   }
@@ -855,15 +862,15 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
   if (length >= pow(2, 16)) {
     assert(false && "Not Support too long string now");
   }
-  MIRType *unitType = IsAsciiChars(chars, length) ? globaltable.GetUInt8() : globaltable.GetUInt16();
+  MIRType *unitType = IsAsciiChars(chars, length) ? GlobalTables::GetTypeTable().GetUInt8() : GlobalTables::GetTypeTable().GetUInt16();
   uint32_t pad = IsAsciiChars(chars, length) ? 4 : 2;
   uint32_t stringClass = IsAsciiChars(chars, length) ? 0 : JSSTRING_UNICODE;
 
   size_t paddingLength = length + pad;
-  MIRType *type = globaltable.GetOrCreateArrayType(unitType, 1, &(paddingLength));
+  MIRType *type = GlobalTables::GetTypeTable().GetOrCreateArrayType(unitType, 1, &(paddingLength));
   const char *tempName = Util::GetSequentialName("const_chars_", temp_var_no_, mp_);
   MIRSymbol *var = jsbuilder_->GetOrCreateGlobalDecl(tempName, type);
-  MIRAggConst *init = module_->mp_->New<MIRAggConst>(module_, type);
+  MIRAggConst *init = mirModule->memPool->New<MIRAggConst>(mirModule, type);
 
   uint8_t cl[4];
   cl[0] = stringClass;
@@ -874,67 +881,74 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
   if ((stringClass & JSSTRING_UNICODE) == 0) {
     uint64_t val = (uint64_t)(cl[0]);
     MIRIntConst *intConst = mp_->New<MIRIntConst>(val, unitType);
-    init->const_vec.push_back(intConst);
+    init->constVec.push_back(intConst);
     val = (uint64_t)(cl[1]);
     intConst = mp_->New<MIRIntConst>(val, unitType);
-    init->const_vec.push_back(intConst);
+    init->constVec.push_back(intConst);
 
     val = (uint64_t)(cl[2]);
     intConst = mp_->New<MIRIntConst>(val, unitType);
-    init->const_vec.push_back(intConst);
+    init->constVec.push_back(intConst);
     val = (uint64_t)(cl[3]);
     intConst = mp_->New<MIRIntConst>(val, unitType);
-    init->const_vec.push_back(intConst);
+    init->constVec.push_back(intConst);
   } else {
     uint16_t *tmp = (uint16_t *)cl;
     uint64_t val = (uint64_t)(cl[0]);
     MIRIntConst *intConst = mp_->New<MIRIntConst>(val, unitType);
-    init->const_vec.push_back(intConst);
+    init->constVec.push_back(intConst);
     val = (uint64_t)(tmp[1]);
     intConst = mp_->New<MIRIntConst>(val, unitType);
-    init->const_vec.push_back(intConst);
+    init->constVec.push_back(intConst);
   }
 
   for (uint32_t i = 0; i < length; i++) {
     uint64_t val = chars[i];
     MIRIntConst *intConst = mp_->New<MIRIntConst>(val, unitType);
-    init->const_vec.push_back(intConst);
+    init->constVec.push_back(intConst);
   }
-  var->value_.const_ = init;
+  var->value.konst = init;
   BaseNode *expr = jsbuilder_->CreateExprAddrof(0, var);
-  expr->ptyp = PTY_simplestr;
+  expr->primType = PTY_simplestr;
   jsstring_map_[chars] = expr;
   return expr;
 }
 
 // JSOP_ITER 75
 BaseNode *JSCompiler::CompileOpNewIterator(BaseNode *bn, uint8_t flags) {
-  MIRType *retty = globaltable.GetOrCreatePointerType(globaltable.GetVoid());
+  MIRType *retty = GlobalTables::GetTypeTable().GetOrCreatePointerType(GlobalTables::GetTypeTable().GetVoid());
   MIRSymbol *retsy = CreateTempVar(retty);
+  MapleVector<BaseNode *> argsVec(mirModule->memPoolAllocator.Adapter());
+  argsVec.push_back(bn);
+  argsVec.push_back(jsbuilder_->GetConstUInt32(flags));
 
-  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned2((MIRIntrinsicId)INTRN_JSOP_NEW_ITERATOR, bn,
-                                                                jsbuilder_->GetConstUInt32(flags), retsy);
-  stmt->srcpos.SetLinenum(linenum_);
+  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned((MIRIntrinsicID)INTRN_JSOP_NEW_ITERATOR, argsVec,
+                                                                 retsy);
+  stmt->srcPosition.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return jsbuilder_->CreateExprDread(retty, 0, retsy);
 }
 
 BaseNode *JSCompiler::CompileOpMoreIterator(BaseNode *iterator) {
-  MIRSymbol *retsy = CreateTempVar(globaltable.GetUInt32());
+  MIRSymbol *retsy = CreateTempVar(GlobalTables::GetTypeTable().GetUInt32());
+  MapleVector<BaseNode *> argsVec(mirModule->memPoolAllocator.Adapter());
+  argsVec.push_back(iterator);
   StmtNode *stmt =
-    jsbuilder_->CreateStmtIntrinsicCallAssigned1((MIRIntrinsicId)INTRN_JSOP_MORE_ITERATOR, iterator, retsy);
-  stmt->srcpos.SetLinenum(linenum_);
+    jsbuilder_->CreateStmtIntrinsicCallAssigned((MIRIntrinsicID)INTRN_JSOP_MORE_ITERATOR, argsVec, retsy);
+  stmt->srcPosition.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
 
-  return jsbuilder_->CreateExprDread(globaltable.GetUInt32(), retsy);
+  return jsbuilder_->CreateExprDread(GlobalTables::GetTypeTable().GetUInt32(), retsy);
 }
 
 // JSOP_ITERNEXT 77
 BaseNode *JSCompiler::CompileOpIterNext(BaseNode *iterator) {
   MIRSymbol *var = CreateTempJSValueTypeVar();
+  MapleVector<BaseNode *> argsVec(mirModule->memPoolAllocator.Adapter());
+  argsVec.push_back(iterator);
   StmtNode *stmt =
-    jsbuilder_->CreateStmtIntrinsicCallAssigned1((MIRIntrinsicId)INTRN_JSOP_NEXT_ITERATOR, iterator, var);
-  stmt->srcpos.SetLinenum(linenum_);
+    jsbuilder_->CreateStmtIntrinsicCallAssigned((MIRIntrinsicID)INTRN_JSOP_NEXT_ITERATOR, argsVec, var);
+  stmt->srcPosition.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
 
   return jsbuilder_->CreateExprDread(jsvalueType, var);
@@ -946,7 +960,7 @@ BaseNode *JSCompiler::CompileOpGetArg(uint32_t i) {
   JSMIRFunction *fun = jsbuilder_->GetCurrentFunction();
   int start = (fun->with_env_arg) ? 2 : 1;
   MIRSymbol *arg = jsbuilder_->GetFunctionArgument(fun, i + start);
-  BaseNode *irn = jsbuilder_->CreateExprDread(globaltable.GetDynany(), arg);
+  BaseNode *irn = jsbuilder_->CreateExprDread(GlobalTables::GetTypeTable().GetDynany(), arg);
   return irn;
 }
 
@@ -979,10 +993,10 @@ BaseNode *JSCompiler::CompileOpGetLocal(uint32_t localNo) {
     }
     name = objname;
   }
-  var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalueType, created);
+  var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalueType);
   InitWithUndefined(created, var);
   if (!created) {
-    MIRType *type = globaltable.GetTypeFromTyIdx(var->GetTyIdx());
+    MIRType *type = GlobalTables::GetTypeTable().GetTypeFromTyIdx(var->GetTyIdx());
     return jsbuilder_->CreateExprDread(type, var);
   }
 
@@ -1030,36 +1044,36 @@ BaseNode *JSCompiler::CompileGenericN(int32_t intrinId, MapleVector<BaseNode *> 
   MIRType *retty = intrindesc->GetReturnType();
   if (isCall) {
     MIRSymbol *var = CreateTempVar(retty);
-    StmtNode *call = jsbuilder_->CreateStmtIntrinsicCallAssignedN((MIRIntrinsicId)intrinId, arguments, var);
-    call->srcpos.SetLinenum(linenum_);
+    StmtNode *call = jsbuilder_->CreateStmtIntrinsicCallAssigned((MIRIntrinsicID)intrinId, arguments, var);
+    call->srcPosition.SetLinenum(linenum_);
     jsbuilder_->AddStmtInCurrentFunctionBody(call);
     //  TODO: if retty is void, return NULL
     return jsbuilder_->CreateExprDread(retty, var);
   } else {
-    return jsbuilder_->CreateExprIntrinsicopN((MIRIntrinsicId)intrinId, retty, arguments);
+    return jsbuilder_->CreateExprIntrinsicop((MIRIntrinsicID)intrinId, retty, arguments);
   }
 }
 
 BaseNode *JSCompiler::CompileGeneric0(int32_t intrinId, bool isCall) {
-  MapleVector<BaseNode *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
+  MapleVector<BaseNode *> arguments(mirModule->memPoolAllocator.Adapter());
   return CompileGenericN(intrinId, arguments, isCall);
 }
 
 BaseNode *JSCompiler::CompileGeneric1(int32_t intrinId, BaseNode *arg, bool isCall) {
-  MapleVector<BaseNode *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
+  MapleVector<BaseNode *> arguments(mirModule->memPoolAllocator.Adapter());
   arguments.push_back(arg);
   return CompileGenericN(intrinId, arguments, isCall);
 }
 
 BaseNode *JSCompiler::CompileGeneric2(int32_t intrinId, BaseNode *arg1, BaseNode *arg2, bool isCall) {
-  MapleVector<BaseNode *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
+  MapleVector<BaseNode *> arguments(mirModule->memPoolAllocator.Adapter());
   arguments.push_back(arg1);
   arguments.push_back(arg2);
   return CompileGenericN(intrinId, arguments, isCall);
 }
 
 BaseNode *JSCompiler::CompileGeneric3(int32_t intrinId, BaseNode *arg1, BaseNode *arg2, BaseNode *arg3, bool isCall) {
-  MapleVector<BaseNode *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
+  MapleVector<BaseNode *> arguments(mirModule->memPoolAllocator.Adapter());
   arguments.push_back(arg1);
   arguments.push_back(arg2);
   arguments.push_back(arg3);
@@ -1068,7 +1082,7 @@ BaseNode *JSCompiler::CompileGeneric3(int32_t intrinId, BaseNode *arg1, BaseNode
 
 BaseNode *JSCompiler::CompileGeneric4(int32_t intrinId, BaseNode *arg1, BaseNode *arg2, BaseNode *arg3, BaseNode *arg4,
                                       bool isCall) {
-  MapleVector<BaseNode *> arguments(module_->CurFuncCodeMpAllocator()->Adapter());
+  MapleVector<BaseNode *> arguments(mirModule->memPoolAllocator.Adapter());
   arguments.push_back(arg1);
   arguments.push_back(arg2);
   arguments.push_back(arg3);
@@ -1078,41 +1092,61 @@ BaseNode *JSCompiler::CompileGeneric4(int32_t intrinId, BaseNode *arg1, BaseNode
 
 bool JSCompiler::CompileOpSetElem(BaseNode *obj, BaseNode *index, BaseNode *val) {
   index = CheckConvertToJSValueType(index);
+  MapleVector<BaseNode *> arguments(mirModule->memPoolAllocator.Adapter());
+  arguments.push_back(obj);
+  arguments.push_back(index);
+  arguments.push_back(CheckConvertToJSValueType(val));
   StmtNode *stmt =
-    jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_SETPROP, obj, index, CheckConvertToJSValueType(val), NULL);
-  stmt->srcpos.SetLinenum(linenum_);
+    jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_SETPROP, arguments, NULL);
+  stmt->srcPosition.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return true;
 }
 
 bool JSCompiler::CompileOpInitPropGetter(BaseNode *obj, JSString *str, BaseNode *val) {
   BaseNode *name = CheckConvertToJSValueType(CompileOpString(str));
-  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_INITPROP_GETTER, obj, name, val, NULL);
-  stmt->srcpos.SetLinenum(linenum_);
+  MapleVector<BaseNode *> arguments(mirModule->memPoolAllocator.Adapter());
+  arguments.push_back(obj);
+  arguments.push_back(name);
+  arguments.push_back(val);
+  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_INITPROP_GETTER, arguments, NULL);
+  stmt->srcPosition.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return true;
 }
 
 bool JSCompiler::CompileOpInitPropSetter(BaseNode *obj, JSString *str, BaseNode *val) {
   BaseNode *name = CheckConvertToJSValueType(CompileOpString(str));
-  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_INITPROP_SETTER, obj, name, val, NULL);
-  stmt->srcpos.SetLinenum(linenum_);
+  MapleVector<BaseNode *> arguments(mirModule->memPoolAllocator.Adapter());
+  arguments.push_back(obj);
+  arguments.push_back(name);
+  arguments.push_back(val);
+  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_INITPROP_SETTER, arguments, NULL);
+  stmt->srcPosition.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return true;
 }
 
 bool JSCompiler::CompileOpInitElemGetter(BaseNode *obj, BaseNode *index, BaseNode *val) {
   index = CheckConvertToJSValueType(index);
-  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_INITPROP_GETTER, obj, index, val, NULL);
-  stmt->srcpos.SetLinenum(linenum_);
+  MapleVector<BaseNode *> arguments(mirModule->memPoolAllocator.Adapter());
+  arguments.push_back(obj);
+  arguments.push_back(index);
+  arguments.push_back(val);
+  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_INITPROP_GETTER, arguments, NULL);
+  stmt->srcPosition.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return true;
 }
 
 bool JSCompiler::CompileOpInitElemSetter(BaseNode *obj, BaseNode *index, BaseNode *val) {
   index = CheckConvertToJSValueType(index);
-  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_INITPROP_SETTER, obj, index, val, NULL);
-  stmt->srcpos.SetLinenum(linenum_);
+  MapleVector<BaseNode *> arguments(mirModule->memPoolAllocator.Adapter());
+  arguments.push_back(obj);
+  arguments.push_back(index);
+  arguments.push_back(val);
+  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_INITPROP_SETTER, arguments, NULL);
+  stmt->srcPosition.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return true;
 }
@@ -1120,9 +1154,12 @@ bool JSCompiler::CompileOpInitElemSetter(BaseNode *obj, BaseNode *index, BaseNod
 // JSOP_SETPROP 54
 bool JSCompiler::CompileOpSetProp(BaseNode *obj, JSString *str, BaseNode *val) {
   BaseNode *name = CompileOpString(str);
-  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_SETPROP_BY_NAME, obj, name,
-                                                                CheckConvertToJSValueType(val), NULL);
-  stmt->srcpos.SetLinenum(linenum_);
+  MapleVector<BaseNode *> arguments(mirModule->memPoolAllocator.Adapter());
+  arguments.push_back(obj);
+  arguments.push_back(name);
+  arguments.push_back(CheckConvertToJSValueType(val));
+  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_SETPROP_BY_NAME, arguments, NULL);
+  stmt->srcPosition.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return true;
 }
@@ -1142,14 +1179,15 @@ BaseNode *JSCompiler::CompileOpBindName(JSAtom *atom) {
   // search the scope chain
   while (func) {
     if (closure_->IsLocalVar(func, name)) {
-      var = jsbuilder_->GetOrCreateDeclInFunc(name, jsvalueType, func, created);
+      // var = jsbuilder_->GetOrCreateDeclInFunc(name, jsvalueType, func, created);
+      var = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalueType);
       InitWithUndefined(created, var);
       break;
     }
 
     // function introduced a global var
     if (func == jsmain_) {
-      var = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalueType, created);
+      var = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalueType);
       InitWithUndefined(created, var);
       jsbuilder_->InsertGlobalName(name);
       break;
@@ -1198,11 +1236,11 @@ bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
   mfun->SetUserFunc();
 
   MIRSymbol *funcSt = jsbuilder_->GetOrCreateGlobalDecl(funcname, jsvalueType);
-  BaseNode *ptr = jsbuilder_->CreateExprAddroffunc(funcSt->value_.func_->puidx);
+  BaseNode *ptr = jsbuilder_->CreateExprAddroffunc(funcSt->value.mirFunc->puIdx);
   assert(jsfun && "not a jsfunction");
 
   char *name = Util::GetNameWithSuffix(funcname, "_obj_", mp_);
-  if (jsbuilder_->GetStringIndex(name).idx == 0) {
+  if (jsbuilder_->GetStringIndex(name).GetIdx() == 0) {
     DEBUGPRINT2(name);
     uint32_t vargP = 0;
     uint32_t nargs = (uint32_t)(uint8_t)jsfun->nargs();
@@ -1221,7 +1259,7 @@ bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
     }
 
     StmtNode *stmt = jsbuilder_->CreateStmtDassign(funcObj, 0, funcNode, linenum_);
-    stmt->srcpos.SetLinenum(linenum_);
+    stmt->srcPosition.SetLinenum(linenum_);
     jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   }
 
@@ -1241,7 +1279,7 @@ bool JSCompiler::CompileOpDefVar(JSAtom *atom) {
   DEBUGPRINT2((fun == funcstack_.top()));
   DEBUGPRINT2(fun);
   bool created;
-  MIRSymbol *var = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalueType, created);
+  MIRSymbol *var = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalueType);
   InitWithUndefined(created, var);
   if (fun == jsmain_) {
     jsbuilder_->InsertGlobalName(name);
@@ -1274,14 +1312,14 @@ BaseNode *JSCompiler::CompileOpLambda(jsbytecode *pc, JSFunction *jsfun) {
   JSMIRFunction *parentFunc = funcstack_.top();
 
   MIRSymbol *funcsymbol = jsbuilder_->GetOrCreateGlobalDecl(funcname, jsvalueType);
-  BaseNode *ptr = jsbuilder_->CreateExprAddroffunc(funcsymbol->value_.func_->puidx);
+  BaseNode *ptr = jsbuilder_->CreateExprAddroffunc(funcsymbol->value.mirFunc->puIdx);
   MIRSymbol *envVar = NULL;
   BaseNode *node;
   DEBUGPRINT2((lambda->scope->GetName()));
   DEBUGPRINT2((lambda->scope->IsTopLevel()));
   if (parentFunc->scope->IsWithEnv()) {
-    envVar = jsbuilder_->GetOrCreateLocalDecl("environment", globaltable.GetDynany());
-    node = jsbuilder_->CreateExprDread(globaltable.GetDynany(), envVar);
+    envVar = jsbuilder_->GetOrCreateLocalDecl("environment", GlobalTables::GetTypeTable().GetDynany());
+    node = jsbuilder_->CreateExprDread(GlobalTables::GetTypeTable().GetDynany(), envVar);
     lambda->penvtype = parentFunc->envptr;
   } else {
     node = jsbuilder_->GetConstInt(0);
@@ -1313,7 +1351,7 @@ int JSCompiler::ProcessAliasedVar(JSAtom *atom, MIRType *&envPtr, BaseNode *&env
   DEBUGPRINT3(func);
   char *name = Util::GetString(atom, mp_, jscontext_);
   JS_ASSERT(!name && "empty name");
-  MIRSymbol *funcSt = globaltable.GetSymbolFromStidx(func->stidx.Idx());
+  MIRSymbol *funcSt = GlobalTables::GetGsymTable().GetSymbolFromStIdx(func->stIdx.Idx());
   const char *funcname = funcSt->GetName().c_str();
   ScopeNode *sn = scope_->GetOrCreateSN((char *)funcname);
   ScopeNode *psn = sn->GetParent();
@@ -1352,7 +1390,7 @@ int JSCompiler::ProcessAliasedVar(JSAtom *atom, MIRType *&envPtr, BaseNode *&env
   if (pfunc != jsmain_ && !idx) {
     depth = 1;
     DEBUGPRINTs3("recursively search in parent's alias lists");
-    envVar = func->formals[ENV_POSITION_IN_ARGS];
+    envVar = func->formalDefVec[ENV_POSITION_IN_ARGS].formalSym;
 
     envPtr = pfunc->envptr;
     envNode = jsbuilder_->CreateExprDread(pfunc->envptr, envVar);
@@ -1437,7 +1475,7 @@ BaseNode *JSCompiler::CompileOpSetAliasedVar(JSAtom *atom, BaseNode *val) {
     MIRSymbol *var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalueType);
     bn = jsbuilder_->CreateStmtDassign(var, 0, val, linenum_);
   }
-  bn->srcpos.SetLinenum(linenum_);
+  bn->srcPosition.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(bn);
 
   return bn;
@@ -1455,7 +1493,7 @@ void JSCompiler::CloseFuncBookKeeping() {
     JSMIRFunction *lambda = scriptstack_.top().second;
     jsbuilder_->SetCurrentFunction(lambda);
     DEBUGPRINT0;
-    MIRSymbol *lambdaSt = globaltable.GetSymbolFromStidx(lambda->stidx.Idx());
+    MIRSymbol *lambdaSt = GlobalTables::GetGsymTable().GetSymbolFromStIdx(lambda->stIdx.Idx());
     DEBUGPRINTfunc((lambdaSt->GetName().c_str()));
     funcstack_.push(lambda);
     scriptstack_.pop();
@@ -1475,10 +1513,10 @@ void JSCompiler::CloseFuncBookKeeping() {
 }
 
 StmtNode *JSCompiler::CompileOpIfJump(JSOp op, BaseNode *cond, jsbytecode *pcend) {
-  labidx_t labidx = GetorCreateLabelofPc(pcend);
+  LabelIdx labidx = GetorCreateLabelofPc(pcend);
   StmtNode *gotonode =
     jsbuilder_->CreateStmtCondGoto(cond, (op == JSOP_IFEQ || op == JSOP_AND) ? OP_brfalse : OP_brtrue, labidx);
-  gotonode->srcpos.SetLinenum(linenum_);
+  gotonode->srcPosition.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(gotonode);
   return gotonode;
 }
@@ -1520,9 +1558,9 @@ SwitchNode *JSCompiler::CompileOpCondSwitch(BaseNode *opnd, JSScript *script, js
   jsbytecode *pcjump;
   jsbytecode *pctemp1 = pcstart;
   jsbytecode *pctemp2 = js::GetNextPc(pcend);
-  labidx_t mirlabel;
-  CaseVector switchtable(module_->CurFuncCodeMpAllocator()->Adapter());
-  labidx_t defaultlabel;
+  LabelIdx mirlabel;
+  CaseVector switchtable(mirModule->memPoolAllocator.Adapter());
+  LabelIdx defaultlabel;
 
   while (pctemp1 < pctemp2) {
     JSOp op = JSOp(*pctemp1);
@@ -1549,7 +1587,7 @@ SwitchNode *JSCompiler::CompileOpCondSwitch(BaseNode *opnd, JSScript *script, js
   mirlabel = GetorCreateLabelofPc(pcjump);
   defaultlabel = mirlabel;
   SwitchNode *switchnode = jsbuilder_->CreateStmtSwitch(opnd, defaultlabel, switchtable);
-  switchnode->srcpos.SetLinenum(linenum_);
+  switchnode->srcPosition.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(switchnode);
   return switchnode;
 }
@@ -1557,9 +1595,9 @@ SwitchNode *JSCompiler::CompileOpCondSwitch(BaseNode *opnd, JSScript *script, js
 SwitchNode *JSCompiler::CompileOpTableSwitch(BaseNode *opnd, int32_t len, JSScript *script, jsbytecode *pc) {
   int offset, i;
   jsbytecode *pcjump, *pctemp1, *pctemp2;
-  labidx_t mirlabel;
-  CaseVector switchtable(module_->CurFuncCodeMpAllocator()->Adapter());
-  labidx_t defaultlabel;
+  LabelIdx mirlabel;
+  CaseVector switchtable(mirModule->memPoolAllocator.Adapter());
+  LabelIdx defaultlabel;
 
   pctemp1 = pc;
   pctemp1 += JUMP_OFFSET_LEN;
@@ -1585,19 +1623,19 @@ SwitchNode *JSCompiler::CompileOpTableSwitch(BaseNode *opnd, int32_t len, JSScri
   BaseNode *cond = CheckConvertToInt32(opnd);
 
   SwitchNode *stmt = jsbuilder_->CreateStmtSwitch(cond, defaultlabel, switchtable);
-  stmt->srcpos.SetLinenum(linenum_);
+  stmt->srcPosition.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return stmt;
 }
 
-labidx_t JSCompiler::CreateLabel(char *pref) {
+LabelIdx JSCompiler::CreateLabel(char *pref) {
   const char *tempName = Util::GetSequentialName(pref ? pref : "label", temp_var_no_, mp_);
-  labidx_t labidx = jsbuilder_->GetorCreateMIRLabel(tempName);
+  LabelIdx labidx = jsbuilder_->GetorCreateMIRLabel(tempName);
   return labidx;
 }
 
-labidx_t JSCompiler::GetorCreateLabelofPc(jsbytecode *pc, char *pref) {
-  labidx_t labidx;
+LabelIdx JSCompiler::GetorCreateLabelofPc(jsbytecode *pc, char *pref) {
+  LabelIdx labidx;
   if (label_map_[pc] != 0) {
     labidx = label_map_[pc];
   } else {
@@ -1613,14 +1651,14 @@ GotoNode *JSCompiler::CompileOpGoto(jsbytecode *pc, jsbytecode *jumptopc, MIRSym
   EHstruct *ehjump = eh_->GetEHstruct(jumptopc);
   if (eh && eh != ehjump) {
     DEBUGPRINTs("creating cleanuptry");
-    StmtNode *cleanuptrynode = module_->CurFuncCodeMp()->New<StmtNode>(OP_cleanuptry);
-    cleanuptrynode->srcpos.SetLinenum(linenum_);
+    StmtNode *cleanuptrynode = mirModule->memPool->New<StmtNode>(OP_cleanuptry);
+    cleanuptrynode->srcPosition.SetLinenum(linenum_);
     jsbuilder_->AddStmtInCurrentFunctionBody(cleanuptrynode);
   }
 
   // use special endtry label for goto within the try range
   // to simplify interpreting endtry
-  labidx_t labidx;
+  LabelIdx labidx;
   if (eh && jumptopc == eh->endtrypc) {
     labidx = eh->label;
   } else {
@@ -1628,7 +1666,7 @@ GotoNode *JSCompiler::CompileOpGoto(jsbytecode *pc, jsbytecode *jumptopc, MIRSym
   }
 
   GotoNode *gotonode = jsbuilder_->CreateStmtGoto(OP_goto, labidx);
-  gotonode->srcpos.SetLinenum(linenum_);
+  gotonode->srcPosition.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(gotonode);
   if (tempvar) {  // the label will be the merge point of a conditional expression
     label_tempvar_map_[labidx] = tempvar;
@@ -1637,20 +1675,20 @@ GotoNode *JSCompiler::CompileOpGoto(jsbytecode *pc, jsbytecode *jumptopc, MIRSym
 }
 
 GotoNode *JSCompiler::CompileOpGosub(jsbytecode *pc) {
-  labidx_t mirlabel = GetorCreateLabelofPc(pc, "f@");
+  LabelIdx mirlabel = GetorCreateLabelofPc(pc, "f@");
   GotoNode *gosubnode = jsbuilder_->CreateStmtGoto(OP_gosub, mirlabel);
-  gosubnode->srcpos.SetLinenum(linenum_);
+  gosubnode->srcPosition.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(gosubnode);
   return gosubnode;
 }
 
 JsTryNode *JSCompiler::CompileOpTry(jsbytecode *catchPc) {
   JsTryNode *trynode = jsbuilder_->CreateStmtJsTry(OP_jstry, 0, 0);
-  trynode->srcpos.SetLinenum(linenum_);
+  trynode->srcPosition.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(trynode);
 
   // set up label for endtry
-  labidx_t mirlabel = CreateLabel();
+  LabelIdx mirlabel = CreateLabel();
   DEBUGPRINT3(mirlabel);
   // passed in is the catchpc which could also be finallypc in case there is no catch
   EHstruct *eh = eh_->GetEHstruct(0, catchPc, catchPc, 0);
@@ -1660,20 +1698,20 @@ JsTryNode *JSCompiler::CompileOpTry(jsbytecode *catchPc) {
   // set catch label in the try statement
   if (eh->catchpc) {
     mirlabel = GetorCreateLabelofPc(eh->catchpc, "h@");
-    trynode->catch_offset = (uint16)mirlabel;
+    trynode->catchOffset = (uint16)mirlabel;
   }
 
   // set finally label in the try statement
   if (eh->finallypc) {
     mirlabel = GetorCreateLabelofPc(eh->finallypc, "f@");
-    trynode->finally_offset = (uint16)mirlabel;
+    trynode->finallyOffset = (uint16)mirlabel;
   }
 
   return trynode;
 }
 
 BaseNode *JSCompiler::CompileOpLoopHead(jsbytecode *pc) {
-  labidx_t mirlabel = NULL;
+  LabelIdx mirlabel = NULL;
   if (label_map_[pc] != 0) {
     mirlabel = label_map_[pc];
   } else {
@@ -1682,101 +1720,110 @@ BaseNode *JSCompiler::CompileOpLoopHead(jsbytecode *pc) {
     label_map_[pc] = mirlabel;
   }
   StmtNode *stmt = jsbuilder_->CreateStmtLabel(label_map_[pc]);
-  stmt->srcpos.SetLinenum(linenum_);
+  stmt->srcPosition.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return stmt;
 }
 
 BaseNode *JSCompiler::CheckConvertToJSValueType(BaseNode *data) {
   MIRType *toType = NULL;
-  if (IsPrimitiveDynType(data->ptyp)) {
+  if (IsPrimitiveDynType(data->primType)) {
     return data;
   }
-  switch (data->ptyp) {
+  switch (data->primType) {
     case PTY_ptr:
       return data;
     case PTY_u1:
-      toType = globaltable.GetDynbool();
+      toType = GlobalTables::GetTypeTable().GetDynbool();
       break;
     case PTY_i32:
     case PTY_u32:
-      toType = globaltable.GetDyni32();
+      toType = GlobalTables::GetTypeTable().GetDyni32();
       if (data->op == OP_constval) {
         ConstvalNode *cv = static_cast<ConstvalNode *>(data);
         if (cv) {
-          cv->ptyp = PTY_dyni32;
-          MIRIntConst *ic = static_cast<MIRIntConst *>(cv->constval);
-          ic->value_ = (int64_t)((uint64_t)JSTYPE_NUMBER << 32 | (ic->value_ & 0xffffffff));
-          cv->constval = ic;
+          cv->primType = PTY_dyni32;
+          MIRIntConst *ic = static_cast<MIRIntConst *>(cv->constVal);
+          ic->value = (int64_t)((uint64_t)JSTYPE_NUMBER << 32 | (ic->value & 0xffffffff));
+          cv->constVal = ic;
           return cv;
         }
       }
       break;
     case PTY_simplestr:
-      toType = globaltable.GetDynstr();
+      toType = GlobalTables::GetTypeTable().GetDynstr();
       break;
     case PTY_simpleobj:
-      toType = globaltable.GetDynobj();
+      toType = GlobalTables::GetTypeTable().GetDynobj();
       break;
     default:
       assert("NIY");
       break;
   }
-  return jsbuilder_->CreateExprTypeCvt(OP_cvt, toType, globaltable.GetPrimType(data->ptyp), data);
+  return jsbuilder_->CreateExprTypeCvt(OP_cvt, toType, GlobalTables::GetTypeTable().GetPrimType(data->primType), data);
 }
 
 // Pops the top two values on the stack as rval and lval, compare them with ===,
 // if the result is true, jumps to a 32-bit offset from the current bytecode,
 // re-pushes lval onto the stack if false.
 void JSCompiler::CompileOpCase(jsbytecode *pc, int offset, BaseNode *rval, BaseNode *lval) {
-  MIRIntrinsicId idx = (MIRIntrinsicId)FindIntrinsicForOp(JSOP_STRICTEQ);
+  MIRIntrinsicID idx = (MIRIntrinsicID)FindIntrinsicForOp(JSOP_STRICTEQ);
   IntrinDesc *intrindesc = &IntrinDesc::intrintable[idx];
   MIRType *retty = intrindesc->GetReturnType();
+  MapleVector<BaseNode *> sizeVec(mirModule->memPoolAllocator.Adapter());
+  sizeVec.push_back(CheckConvertToJSValueType(rval));
+  sizeVec.push_back(CheckConvertToJSValueType(lval));
   BaseNode *expr =
-    jsbuilder_->CreateExprIntrinsicop2(idx, retty, CheckConvertToJSValueType(rval), CheckConvertToJSValueType(lval));
+    jsbuilder_->CreateExprIntrinsicop(idx, retty, sizeVec);
   BaseNode *cond = CheckConvertToBoolean(expr);
 
-  labidx_t mirlabel = GetorCreateLabelofPc(pc + offset);
+  LabelIdx mirlabel = GetorCreateLabelofPc(pc + offset);
   CondGotoNode *gotonode = jsbuilder_->CreateStmtCondGoto(cond, OP_brtrue, mirlabel);
-  gotonode->srcpos.SetLinenum(linenum_);
+  gotonode->srcPosition.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(gotonode);
   Push(lval);
   return;
 }
 
 BaseNode *JSCompiler::CheckConvertToBoolean(BaseNode *node) {
-  if (IsPrimitiveInteger(node->ptyp)) {
-    if (node->ptyp == PTY_u1) {
+  if (IsPrimitiveInteger(node->primType)) {
+    if (node->primType == PTY_u1) {
       return node;
     }
-    return jsbuilder_->CreateExprTypeCvt(OP_cvt, globaltable.GetUInt1(), globaltable.GetPrimType(node->ptyp), node);
+    return jsbuilder_->CreateExprTypeCvt(OP_cvt, GlobalTables::GetTypeTable().GetUInt1(), GlobalTables::GetTypeTable().GetPrimType(node->primType), node);
   }
-  return jsbuilder_->CreateExprIntrinsicop1(INTRN_JS_BOOLEAN, globaltable.GetUInt1(), node);
+  MapleVector<BaseNode *> sizeVec(mirModule->memPoolAllocator.Adapter());
+  sizeVec.push_back(node);
+  return jsbuilder_->CreateExprIntrinsicop(INTRN_JS_BOOLEAN, GlobalTables::GetTypeTable().GetUInt1(), sizeVec);
 }
 
 BaseNode *JSCompiler::CheckConvertToInt32(BaseNode *node) {
-  if (IsPrimitiveInteger(node->ptyp)) {
+  if (IsPrimitiveInteger(node->primType)) {
     return node;
   }
 #ifdef DYNAMICLANG
-  return jsbuilder_->CreateExprTypeCvt(OP_cvt, globaltable.GetInt32(), globaltable.GetPrimType(node->ptyp), node);
+  return jsbuilder_->CreateExprTypeCvt(OP_cvt, GlobalTables::GetTypeTable().GetInt32(), GlobalTables::GetTypeTable().GetPrimType(node->primType), node);
 #else
-  BaseNode *expr = jsbuilder_->CreateExprIntrinsicop1(INTRN_JS_INT32, globaltable.GetInt32(), node);
-  MIRSymbol *var = CreateTempVar(globaltable.GetInt32());
-  return jsbuilder_->CreateExprDread(globaltable.GetInt32(), var);
+  MapleVector<BaseNode *> sizeVec(mirModule->memPoolAllocator.Adapter());
+  sizeVec.push_back(node);
+  BaseNode *expr = jsbuilder_->CreateExprIntrinsicop(INTRN_JS_INT32, GlobalTables::GetTypeTable().GetInt32(), sizeVec);
+  MIRSymbol *var = CreateTempVar(GlobalTables::GetTypeTable().GetInt32());
+  return jsbuilder_->CreateExprDread(GlobalTables::GetTypeTable().GetInt32(), var);
 #endif
 }
 
 BaseNode *JSCompiler::CheckConvertToUInt32(BaseNode *node) {
-  if (IsPrimitiveInteger(node->ptyp)) {
+  if (IsPrimitiveInteger(node->primType)) {
     return node;
   }
 #ifdef DYNAMICLANG
-  return jsbuilder_->CreateExprTypeCvt(OP_cvt, globaltable.GetUInt32(), globaltable.GetPrimType(node->ptyp), node);
+  return jsbuilder_->CreateExprTypeCvt(OP_cvt, GlobalTables::GetTypeTable().GetUInt32(), GlobalTables::GetTypeTable().GetPrimType(node->primType), node);
 #else
-  BaseNode *expr = jsbuilder_->CreateExprIntrinsicop1(INTRN_JS_INT32, globaltable.GetInt32(), node);
-  MIRSymbol *var = CreateTempVar(globaltable.GetInt32());
-  return jsbuilder_->CreateExprDread(globaltable.GetInt32(), var);
+  MapleVector<BaseNode *> sizeVec(mirModule->memPoolAllocator.Adapter());
+  sizeVec.push_back(node);
+  BaseNode *expr = jsbuilder_->CreateExprIntrinsicop(INTRN_JS_INT32, GlobalTables::GetTypeTable().GetInt32(), sizeVec);
+  MIRSymbol *var = CreateTempVar(GlobalTables::GetTypeTable().GetInt32());
+  return jsbuilder_->CreateExprDread(GlobalTables::GetTypeTable().GetInt32(), var);
 #endif
 }
 
@@ -1784,7 +1831,7 @@ BaseNode *JSCompiler::CheckConvertToRespectiveType(BaseNode *node, MIRType *ty) 
   if (ty == NULL || ty == jsvalueType) {
     return CheckConvertToJSValueType(node);
   }
-  if (ty == globaltable.GetPrimType(PTY_u1)) {
+  if (ty == GlobalTables::GetTypeTable().GetPrimType(PTY_u1)) {
     return CheckConvertToBoolean(node);
   }
   return CheckConvertToInt32(node);
@@ -1824,12 +1871,14 @@ void JSCompiler::EnvInit(JSMIRFunction *func) {
 
   MIRType *envType = func->envtype;
   MIRType *envPtr = func->envptr;
-  MIRSymbol *envVar = jsbuilder_->GetOrCreateLocalDecl("environment", globaltable.GetDynany());
+  MIRSymbol *envVar = jsbuilder_->GetOrCreateLocalDecl("environment", GlobalTables::GetTypeTable().GetDynany());
   DEBUGPRINTsv3("environment", envPtr);
 
   BaseNode *size = jsbuilder_->CreateExprSizeoftype(envType);
-  stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned1(INTRN_JS_NEW, size, envVar);
-  stmt->srcpos.SetLinenum(linenum_);
+  MapleVector<BaseNode *> sizeVec(mirModule->memPoolAllocator.Adapter());
+  sizeVec.push_back(size);
+  stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JS_NEW, sizeVec, envVar);
+  stmt->srcPosition.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   func->env_setup = true;
 
@@ -1838,7 +1887,7 @@ void JSCompiler::EnvInit(JSMIRFunction *func) {
   bn = jsbuilder_->GetConstInt(envStruct->fields.size() - 2);
   int idx = jsbuilder_->GetStructFieldIdFromFieldName(envType, "argnums");
   stmt = jsbuilder_->CreateStmtIassign(envPtr, idx, env, bn);
-  stmt->srcpos.SetLinenum(linenum_);
+  stmt->srcPosition.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
 
   // set up parentenv in env
@@ -1847,7 +1896,7 @@ void JSCompiler::EnvInit(JSMIRFunction *func) {
     bn = jsbuilder_->CreateExprDread(envPtr, envArg);
     idx = jsbuilder_->GetStructFieldIdFromFieldName(envType, "parentenv");
     StmtNode *stmt = jsbuilder_->CreateStmtIassign(envPtr, idx, env, bn);
-    stmt->srcpos.SetLinenum(linenum_);
+    stmt->srcPosition.SetLinenum(linenum_);
     jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   }
 
@@ -1864,7 +1913,7 @@ void JSCompiler::EnvInit(JSMIRFunction *func) {
         bn = jsbuilder_->CreateExprDread(arg->GetType(), 0, arg);
         uint32_t id = jsbuilder_->GetStructFieldIdFromFieldName(envType, *in);
         stmt = jsbuilder_->CreateStmtIassign(envPtr, id, env, bn);
-        stmt->srcpos.SetLinenum(linenum_);
+        stmt->srcPosition.SetLinenum(linenum_);
         jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
       }
       break;
@@ -1887,13 +1936,13 @@ void JSCompiler::EnvInit(JSMIRFunction *func) {
       std::vector<char *>::iterator IN;
       for (IN = (*I).second.begin(); IN != (*I).second.end(); IN++, i++) {
         if (i) {
-          offset = jsbuilder_->CreateExprBinary(OP_mul, globaltable.GetVoidPtr(), jsbuilder_->GetConstInt(i), size);
-          addr = jsbuilder_->CreateExprBinary(OP_add, globaltable.GetVoidPtr(), base, offset);
+          offset = jsbuilder_->CreateExprBinary(OP_mul, GlobalTables::GetTypeTable().GetVoidPtr(), jsbuilder_->GetConstInt(i), size);
+          addr = jsbuilder_->CreateExprBinary(OP_add, GlobalTables::GetTypeTable().GetVoidPtr(), base, offset);
         }
         bn = jsbuilder_->CreateExprIread(jsvalueType, jsvalue_ptr_, 0, addr);
         uint32_t id = jsbuilder_->GetStructFieldIdFromFieldName(env_type, *IN);
         stmt = jsbuilder_->CreateStmtIassign(env_ptr, id, env, bn);
-        stmt->srcpos.SetLinenum(linenum_);
+        stmt->srcPosition.SetLinenum(linenum_);
         jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
       }
       break;
@@ -1923,7 +1972,7 @@ bool JSCompiler::MarkLabels(JSScript *script, jsbytecode *pcstart, jsbytecode *p
       if (js2mplDebug > 0) {
         printf("      0x%x jump target: 0x%x\n", pc, target);
       }
-      labidx_t mirlabel;
+      LabelIdx mirlabel;
       if (op == JSOP_GOSUB || op == JSOP_FINALLY) {
         mirlabel = GetorCreateLabelofPc(target, "f@");
       } else {
@@ -1978,7 +2027,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
     if (js2mplDebug > 0) {
       printf("  %4d %-25s pc = 0x%x\n", lineNo, Util::getOpcodeName[op], pc);
     }
-    if (lastLineNo != lineNo && module_->CurFunction() != NULL) {
+    if (lastLineNo != lineNo && mirModule->CurFunction() != NULL) {
       sprintf(linenoText, "LINE %d: ", lineNo);
 
       srcText[0] = 0;
@@ -1993,7 +2042,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
       }
       // Create Comments node, line no text and src text
       StmtNode *cmntstmt = jsbuilder_->CreateStmtComment(strcat(linenoText, srcText));
-      cmntstmt->srcpos.SetLinenum(lineNo);
+      cmntstmt->srcPosition.SetLinenum(lineNo);
       jsbuilder_->AddStmtInCurrentFunctionBody(cmntstmt);
       lastLineNo = lineNo;
     }
@@ -2002,18 +2051,18 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
     // add endtry node
     EHstruct *eh = eh_->GetEHstruct(0, 0, 0, pc);
     if (eh) {
-      labidx_t labidx;
+      LabelIdx labidx;
       labidx = eh->label;
       StmtNode *stmt = jsbuilder_->CreateStmtLabel(labidx);
-      stmt->srcpos.SetLinenum(lineNo);
+      stmt->srcPosition.SetLinenum(lineNo);
       jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
-      StmtNode *endtrynode = module_->CurFuncCodeMp()->New<StmtNode>(OP_endtry);
-      endtrynode->srcpos.SetLinenum(lineNo);
+      StmtNode *endtrynode = mirModule->memPool->New<StmtNode>(OP_endtry);
+      endtrynode->srcPosition.SetLinenum(lineNo);
       jsbuilder_->AddStmtInCurrentFunctionBody(endtrynode);
     }
 
     if (label_map_[pc] != 0) {
-      labidx_t labidx = label_map_[pc];
+      LabelIdx labidx = label_map_[pc];
       if (label_tempvar_map_[labidx] != 0) {
         // handle the else part of the conditional expression by storing to
         // the same temp
@@ -2024,8 +2073,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
           jsbuilder_->CreateStmtDassign(tempvar, 0, expr, linenum_);
           if (!opstack_->Empty()) {
             BaseNode *topValue = Top();
-            if (!(topValue->op == OP_dread && static_cast<AddrofNode *>(topValue)->stidx.Islocal() &&
-                  ((AddrofNode *)topValue)->stidx == tempvar->GetStIdx())) {
+            if (!(topValue->op == OP_dread && static_cast<AddrofNode *>(topValue)->stIdx.Islocal() &&
+                  ((AddrofNode *)topValue)->stIdx == tempvar->GetStIdx())) {
               Push(jsbuilder_->CreateExprDread(tempvar->GetType(), tempvar));
             } else {
               scope_->DecDepth();
@@ -2037,14 +2086,14 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         label_tempvar_map_[labidx] = 0;  // re-initialize to 0
       }
       StmtNode *stmt = jsbuilder_->CreateStmtLabel(labidx);
-      stmt->srcpos.SetLinenum(lineNo);
+      stmt->srcPosition.SetLinenum(lineNo);
       jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
 
       // jump to finally for catch = pc
       eh = eh_->GetEHstruct(0, pc, 0, 0);
       if (eh) {
-        StmtNode *catchnode = module_->CurFuncCodeMp()->New<StmtNode>(OP_jscatch);
-        catchnode->srcpos.SetLinenum(lineNo);
+        StmtNode *catchnode = mirModule->memPool->New<StmtNode>(OP_jscatch);
+        catchnode->srcPosition.SetLinenum(lineNo);
         jsbuilder_->AddStmtInCurrentFunctionBody(catchnode);
       }
     }
@@ -2520,10 +2569,10 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         BaseNode *opnd0 = CheckConvertToJSValueType(Pop());  // Pop IFEQ stmt
         BaseNode *cond0 = CheckConvertToBoolean(opnd0);
         MIRSymbol *tempVar = SymbolFromSavingInATemp(opnd0, true);
-        opnd0 = jsbuilder_->CreateExprDread(globaltable.GetUInt1(), tempVar);
+        opnd0 = jsbuilder_->CreateExprDread(GlobalTables::GetTypeTable().GetUInt1(), tempVar);
         Push(opnd0);
 
-        labidx_t mirlabel = GetorCreateLabelofPc(pc + offset);
+        LabelIdx mirlabel = GetorCreateLabelofPc(pc + offset);
         CondGotoNode *gotonode =
           jsbuilder_->CreateStmtCondGoto(cond0, (op == JSOP_AND) ? OP_brfalse : OP_brtrue, mirlabel);
         jsbuilder_->AddStmtInCurrentFunctionBody(gotonode);
@@ -2567,7 +2616,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
       case JSOP_DUP: { /*12, 1, 1, 2*/
         BaseNode *bn = Pop();
         Push(bn);
-        Push(static_cast<BaseNode *>(bn->CloneTree(module_)));
+        Push(static_cast<BaseNode *>(bn->CloneTree(mirModule)));
         break;
       }
       case JSOP_DUP2: { /*13, 1, 2, 4*/
@@ -2575,8 +2624,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         BaseNode *bn2 = Pop();
         Push(bn2);
         Push(bn1);
-        Push(static_cast<BaseNode *>(bn2->CloneTree(module_)));
-        Push(static_cast<BaseNode *>(bn1->CloneTree(module_)));
+        Push(static_cast<BaseNode *>(bn2->CloneTree(mirModule)));
+        Push(static_cast<BaseNode *>(bn1->CloneTree(mirModule)));
         break;
       }
       case JSOP_SWAP: { /*10, 1, 2, 2*/
@@ -2756,9 +2805,12 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         BaseNode *index = Pop();
         BaseNode *obj = CheckConvertToJSValueType(Pop());
         index = CheckConvertToJSValueType(index);
-        StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_SETPROP, obj, index,
-                                                                      CheckConvertToJSValueType(val), NULL);
-        stmt->srcpos.SetLinenum(lineNo);
+        MapleVector<BaseNode *> arguments(mirModule->memPoolAllocator.Adapter());
+        arguments.push_back(obj);
+        arguments.push_back(index);
+        arguments.push_back(CheckConvertToJSValueType(val));
+        StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_SETPROP, arguments, NULL);
+        stmt->srcPosition.SetLinenum(lineNo);
         jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
         Push(obj);
         break;
@@ -2992,26 +3044,26 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         arguments = jsbuilder_->GetCurrentFunction()->symtab->CreateSymbol();
         const char *temp_name = Util::GetSequentialName("js_arguments_", temp_var_no_, mp_);
         std::string argname(temp_name, mp_);
-        arguments->SetNameStridx(module_->stringtable.GetOrCreateStridxFromName(argname));
+        arguments->SetNameStridx(mirModule->stringtable.GetOrCreateStridxFromName(argname));
         jsbuilder_->GetCurrentFunction()->symtab->AddToStringSymbolMap(arguments);
         arguments->sclass = kScAuto;
         arguments->skind = kStVar;
 
         uint32_t size_array[1];
         size_array[0] = length;
-        MIRType *array_type = globaltable.GetOrCreateArrayType(jsvalueType, 1, size_array);
-        MIRType *array_ptr_type = globaltable.GetOrCreatePointerType(array_type);
-        tyidx_t tyidx = array_type->_ty_idx;
+        MIRType *array_type = GlobalTables::GetTypeTable().GetOrCreateArrayType(jsvalueType, 1, size_array);
+        MIRType *array_ptr_type = GlobalTables::GetTypeTable().GetOrCreatePointerType(array_type);
+        tyidx_t tyidx = array_type->tyIdx;
         arguments->SetTyIdx(tyidx);
         BaseNode *bn;
-        MIRType *pargtype = globaltable.GetOrCreatePointerType(arguments->GetType());
+        MIRType *pargtype = GlobalTables::GetTypeTable().GetOrCreatePointerType(arguments->GetType());
         BaseNode *addr_base = jsbuilder_->CreateExprAddrof(0, arguments);
 
         for (uint32_t i = 0; i < length; i++) {
           bn = CheckConvertToJSValueType(tmp_stack.top());
           DEBUGPRINT3(bn->op);
           tmp_stack.pop();
-          MapleVector<BaseNode *> opnds(module_.CurFuncCodeMpAllocator()->Adapter());
+          MapleVector<BaseNode *> opnds(mirModule.memPoolAllocator.Adapter());
           opnds.push_back(addr_base);
           BaseNode *addr_offset = jsbuilder_->GetConstInt(length - i - 1);
           opnds.push_back(addr_offset);
@@ -3137,9 +3189,12 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         BaseNode *val = Pop();
         BaseNode *obj = CheckConvertToJSValueType(Pop());
         BaseNode *name = CompileOpString(str);
-        StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned3(INTRN_JSOP_INITPROP_BY_NAME, obj, name,
-                                                                      CheckConvertToJSValueType(val), NULL);
-        stmt->srcpos.SetLinenum(lineNo);
+        MapleVector<BaseNode *> arguments(mirModule->memPoolAllocator.Adapter());
+        arguments.push_back(obj);
+        arguments.push_back(name);
+        arguments.push_back(CheckConvertToJSValueType(val));
+        StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_INITPROP_BY_NAME, arguments, NULL);
+        stmt->srcPosition.SetLinenum(lineNo);
         jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
         Push(obj);
         break;
@@ -3170,8 +3225,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
       case JSOP_RETSUB: { /*117, 1, 2, 0*/
         BaseNode *lval = Pop();
         BaseNode *rval = Pop();
-        StmtNode *retsub = module_->CurFuncCodeMp()->New<StmtNode>(OP_retsub);
-        retsub->srcpos.SetLinenum(lineNo);
+        StmtNode *retsub = mirModule->memPool->New<StmtNode>(OP_retsub);
+        retsub->srcPosition.SetLinenum(lineNo);
         jsbuilder_->AddStmtInCurrentFunctionBody(retsub);
         break;
       }
@@ -3181,8 +3236,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         break;
       }
       case JSOP_FINALLY: { /*135, 1, 0, 2*/
-        StmtNode *finally = module_->CurFuncCodeMp()->New<StmtNode>(OP_finally);
-        finally->srcpos.SetLinenum(lineNo);
+        StmtNode *finally = mirModule->memPool->New<StmtNode>(OP_finally);
+        finally->srcPosition.SetLinenum(lineNo);
         jsbuilder_->AddStmtInCurrentFunctionBody(finally);
         // TODO: need to Push two entries onto stack.  false, (next bytecode's PC)
         BaseNode *bval = CompileOpConstValue(JSTYPE_BOOLEAN, 0);
@@ -3198,7 +3253,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
       case JSOP_THROW: { /*112, 1, 1, 0*/
         BaseNode *rval = Pop();
         StmtNode *throwstmt = jsbuilder_->CreateStmtThrow(CheckConvertToJSValueType(rval));
-        throwstmt->srcpos.SetLinenum(lineNo);
+        throwstmt->srcPosition.SetLinenum(lineNo);
         jsbuilder_->AddStmtInCurrentFunctionBody(throwstmt);
         break;
       }
