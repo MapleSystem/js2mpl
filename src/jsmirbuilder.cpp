@@ -105,21 +105,21 @@ JSMIRFunction *JSMIRBuilder::GetOrCreateFunction(const char *name, MIRType *retu
   std::vector<TyIdx> funcvectype;
   std::vector<TypeAttrs> funcvecattr;
   for (uint32 i = 0; i < arguments.size(); i++) {
-    MapleString var(arguments[i].first, mirModule->memPool);
-    MIRSymbol *argst = fn->symTab->CreateSymbol(kScopeLocal);
-    argst->SetNameStridx(GetOrCreateStringIndex(var));
     MIRType *ty = arguments[i].second;
-    argst->SetTyIdx(ty->tyIdx);
-    argst->storageClass = kScFormal;
-    argst->sKind = kStVar;
-    fn->symTab->AddToStringSymbolMap(argst);
-    fn->AddArgument(argst);
+    FormalDef formalDef(GetOrCreateStringIndex(arguments[i].first.c_str()), nullptr, ty->tyIdx, TypeAttrs());
+    fn->formalDefVec.push_back(formalDef);
     funcvectype.push_back(ty->tyIdx);
     funcvecattr.push_back(TypeAttrs());
   }
   funcst->SetTyIdx(GlobalTables::GetTypeTable().GetOrCreateFunctionType(mirModule, returnType->tyIdx, funcvectype, funcvecattr, isvarg)->tyIdx);
   funcst->SetFunction(fn);
+  // create symTab and etc
+  fn->symTab = fn->dataMemPool->New<MIRSymbolTable>(&fn->dataMPAllocator);
+  fn->pregTab = fn->dataMemPool->New<MIRPregTable>(&fn->dataMPAllocator);
+  fn->typeNameTab = fn->dataMemPool->New<MIRTypeNameTable>(&fn->dataMPAllocator);
+  fn->labelTab = fn->dataMemPool->New<MIRLabelTable>(&fn->dataMPAllocator);
   fn->body = fn->codeMemPool->New<BlockNode>();
+  fn->funcType = dynamic_cast<MIRFuncType *>(funcst->GetType());
 
   AddNameFunc(name, fn);
 
