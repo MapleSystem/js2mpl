@@ -160,8 +160,9 @@ int main(int argc, const char *argv[]) {
     themodule.Dump();
   }
 
+
   themodule.flavor = maple::kFeProduced;
-  themodule.OutputAsciiMpl("","test.js2mpl");
+  themodule.OutputAsciiMpl(".mpl", "");
   return 0;
 }
 
