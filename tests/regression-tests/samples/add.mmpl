@@ -1,0 +1,55 @@
+flavor 4
+srclang 2
+id 65535
+globalmemsize 72
+globalmemmap = [ 0x0 0x0 0x0 0x0 0xb0000 0x64646120 0x6170203a 0xa7373 0x74001f00 0x20747365 0x6c696166 0x76206465 0x78652031 0x74636570 0x62203320 0x67207475 0x7465 0xa0001 ]
+globalwordstypetagged = [ 0x5 ]
+globalwordsrefcounted = [ 0x0 ]
+numfuncs 2
+entryfunc &main
+func &Add {
+  upformalsize 24
+  formalwordstypetagged = [ 0x15 ]
+  formalwordsrefcounted = [ 0x0 ]
+  framesize 24
+  localwordstypetagged = [ 0x28 ]
+  localwordsrefcounted = [ 0x0 ]
+  intrinsiccall JSOP_ADD (
+    ireadfpoff dynany 8,
+    ireadfpoff dynany 16)
+  iassignfpoff dynany -24 (regread dynany %%retval0)
+  iassignfpoff dynany -16 (ireadfpoff dynany -24)
+  regassign dynany %%retval0 (ireadfpoff dynany -16)
+  return ()
+  regassign i32 %%retval0 (constval i32 0x0)
+  return ()
+}
+func &main {
+  framesize 56
+  localwordstypetagged = [ 0x2aa8 ]
+  localwordsrefcounted = [ 0x0 ]
+  intrinsiccall JS_INIT_CONTEXT ()
+  intrinsiccall JS_NEW_FUNCTION (addroffunc a32 &Add, constval i32 0x0, constval u32 0x20204)
+  iassignfpoff dynany -16 (regread dynany %%retval0)
+  iassignoff dynany 0 (
+    regread a32 %%GP,
+    ireadfpoff dynany -16)
+  call &Add (constval dynundef 0x0, constval dyni32 0x400000001, constval dyni32 0x400000002)
+  iassignfpoff dynany -24 (regread dynany %%retval0)
+  iassignoff dynany 8 (
+    regread a32 %%GP,
+    ireadfpoff dynany -24)
+  brfalse @label1 (eq u1 dynany (
+    ireadoff dynany 8 (regread a32 %%GP),
+    constval dyni32 0x400000003))
+  intrinsiccall JS_PRINT (cvt dynstr simplestr (add a32 (regread a32 %%GP, constval i32 0x10)))
+  iassignfpoff dynany -40 (regread dynany %%retval0)
+  goto @label2
+@label1   intrinsiccall JS_ERROR (
+    cvt dynstr simplestr (add a32 (regread a32 %%GP, constval i32 0x1f)),
+    ireadoff dynany 8 (regread a32 %%GP),
+    cvt dynstr simplestr (add a32 (regread a32 %%GP, constval i32 0x42)))
+  iassignfpoff dynany -56 (regread dynany %%retval0)
+@label2   regassign i32 %%retval0 (constval i32 0x0)
+  return ()
+}

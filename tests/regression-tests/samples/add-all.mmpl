@@ -1,0 +1,6 @@
+flavor 4
+id 65535
+globalmemmap = [ ]
+globalwordstypetagged = [ ]
+globalwordsrefcounted = [ ]
+numfuncs 0

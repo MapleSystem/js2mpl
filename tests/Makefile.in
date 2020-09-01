@@ -1,0 +1,36 @@
+#========================MAKEFILE.in=====================================
+#MAPLEROOT := $(shell echo $(CURDIR) | sed "s/.js2mpl.*//g")
+#CLANGXX = $(ANDROID)/prebuilts/clang/linux-x86/host/3.6/bin/clang++
+#CLANG = $(ANDROID)/prebuilts/clang/linux-x86/host/3.6/bin/clang
+#LOCALAR = $(ANDROID)/prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.15-4.8/bin/x86_64-linux-ar
+CLANGXX = $(MAPLE_ROOT)/zeiss/prebuilt/sdk/llvm/clang_llvm-8.0.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang++
+CLANG = $(MAPLE_ROOT)/zeiss/prebuilt/sdk/llvm/clang_llvm-8.0.0-x86_64-linux-gnu-ubuntu-16.04/bin/clang
+LOCALAR = $(MAPLE_ROOT)/android/android-8.0.0_r4/prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.15-4.8/bin/x86_64-linux-ar
+
+ifeq ($(USECLANG), 1)
+  CXX = $(CLANGXX)
+  CC = $(CLANG)
+  AR = $(LOCALAR) rcs
+  FLAVOR = clang
+  LD = g++
+else
+  CXX = g++
+  CC = gcc
+  AR = ar rcs
+  FLAVOR = gnu
+  LD = g++
+endif
+
+DYNAMICFLAG = -DDYNAMICLANG -DMIR_FEATURE_FULL=1 -m32
+
+# Compile time flags
+ifeq ($(DEBUG),1)
+  CXXFLAGS = -O0 -g3 -Wall -DDEBUG  $(DYNAMICFLAG)
+else
+  CXXFLAGS = -O0 -g3 -Wall  $(DYNAMICFLAG)
+endif
+
+# Library paths in addition to /usr/lib
+LFLAGS=-std=c++11
+
+MKDIR_P = mkdir -p
