@@ -311,8 +311,8 @@ BaseNode *JSCompiler::CompileOpBinary(JSOp opcode, BaseNode *op0, BaseNode *op1)
   IntrinDesc *intrindesc = &IntrinDesc::intrintable[idx];
   MIRType *retty = intrindesc->GetReturnType();
   MapleVector<BaseNode *> opsVec(mirModule->memPoolAllocator.Adapter());
-  opsVec.push_back(op0);
-  opsVec.push_back(op1);
+  opsVec.push_back(CheckConvertToJSValueType(op0));
+  opsVec.push_back(CheckConvertToJSValueType(op1));
   return jsbuilder_->CreateExprIntrinsicop(idx, retty, opsVec);
 }
 
