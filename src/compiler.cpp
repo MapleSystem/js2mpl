@@ -776,12 +776,20 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc) {
   }
 
   // ??? Generate a dread node to pass the name.
-  MIRSymbol *var;
-  bool created;
+  MIRSymbol *var = NULL;
+  bool created = false;
   if (jsbuilder_->IsGlobalName(name) || IsCCall(name) || IsXcCall(name)) {
-    var = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalueType);
+    var = jsbuilder_->GetGlobalDecl(name);
+    if (!var) {
+      var = jsbuilder_->CreateGlobalDecl(name, jsvalueType, kScGlobal);
+      created = true;
+    }
   } else {
-    var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalueType);
+    var = jsbuilder_->GetLocalDecl(name);
+    if (!var) {
+      var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalueType);
+      created = true;
+    }
   }
 
   // print is a builtin function.
