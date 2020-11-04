@@ -32,7 +32,7 @@ void JSCompiler::Init() {
   // push main() on funcstack_
   char *name = "main";
   if (jsbuilder_->IsPlugin()) {
-    name = jsbuilder_->GetWrapperName();
+    // name = jsbuilder_->GetWrapperName();
   }
   scope_->GetOrCreateSN(name)->SetFunc(jsmain_);
   funcstack_.push(jsmain_);

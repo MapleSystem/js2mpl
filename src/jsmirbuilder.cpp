@@ -13,7 +13,8 @@ JSMIRFunction *JSMIRBuilder::CreateJSMain() {
   ArgVector arguments(mirModule->memPoolAllocator.Adapter());
   JSMIRFunction *jsmain = NULL;
   if (IsPlugin()) {
-    jsmain = GetOrCreateFunction(GetWrapperName(), GlobalTables::GetTypeTable().GetDynany(), arguments, false);
+    // jsmain = GetOrCreateFunction(GetWrapperName(), GlobalTables::GetTypeTable().GetDynany(), arguments, false);
+    jsmain = GetOrCreateFunction("main", GlobalTables::GetTypeTable().GetDynany(), arguments, false);
     SetCurrentFunction(jsmain);
   } else {
     MapleVector<BaseNode *> argsVec(mirModule->memPoolAllocator.Adapter());
@@ -58,7 +59,7 @@ void JSMIRBuilder::Init() {
   jsmain_ = CreateJSMain();
   char *name = "main";
   if (IsPlugin()) {
-    name = GetWrapperName();
+   // name = GetWrapperName();
   }
   InsertGlobalName(name);
 }

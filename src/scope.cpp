@@ -199,7 +199,7 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
     if (script == jsscript_) {
       char *name = "main";
       if (jsbuilder_->IsPlugin()) {
-        name = jsbuilder_->GetWrapperName();
+        // name = jsbuilder_->GetWrapperName();
       }
       funcstack_.push(name);
       if (js2mplDebug > 0) {
