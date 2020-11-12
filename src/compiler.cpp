@@ -2904,7 +2904,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
       }
       case JSOP_DOUBLE: { /*60, 5, 0, 1*/
         double dval = script->getConst(GET_UINT32_INDEX(pc)).toDouble();
-        assert(false && "Can not support double.");
+        //assert(false && "Can not support double.");
         SIMULATESTACK(0, 1);
         break;
       }
