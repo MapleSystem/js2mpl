@@ -719,6 +719,7 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc) {
   char *name = Util::GetString(atom, mp_, jscontext_);
   JS_ASSERT(!name && "empty name");
 
+#if 0
   // Report error when use unspported name.
   if (!strcmp(name, "NaN")) {
     assert(false && "Can not support NaN.");
@@ -750,6 +751,7 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc) {
   if (!strcmp(name, "encodeURIComponent")) {
     assert(false && "Can not support encodeURIComponent.");
   }
+#endif
 
   // Null or undefined.
   if (!strcmp(name, "null")) {
