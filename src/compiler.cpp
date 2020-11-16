@@ -610,7 +610,8 @@ BaseNode *JSCompiler::CompileOpCall(uint32_t argc) {
     // This value.
     args.push_back(undefined);
     // Discard redundant arguments.
-    int32_t last = argc > func->argc ? argc - func->argc : 0;
+    // int32_t last = argc > func->argc ? argc - func->argc : 0;
+    int32_t last = 0;
     for (int32_t i = argc - 1; i >= last; i--) {
       args.push_back(argsvec[i]);
     }
@@ -2956,7 +2957,9 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         break;
       }
       case JSOP_ARGUMENTS: { /*9, 1, 0, 1*/
-        SIMULATESTACK(0, 1);
+        // Pop();
+        BaseNode *elem = CompileGeneric0(INTRN_JS_GET_ARGUMENTOBJECT, false);
+        Push(elem);
         break;
       }
       case JSOP_RUNONCE: { /*71, 1, 0, 0*/
