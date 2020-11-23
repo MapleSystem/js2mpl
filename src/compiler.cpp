@@ -79,12 +79,10 @@ MIRSymbol *JSCompiler::CreateTempJSValueTypeVar() {
 }
 
 void JSCompiler::InitWithUndefined(bool doit, MIRSymbol *var) {
-#if 0
-    if (doit) {
-        BaseNode *undefined = CompileOpConstValue(JSTYPE_UNDEFINED, 0);
-        BaseNode *stmt = jsbuilder_->CreateStmtDassign(var, 0, undefined);
-    }
-#endif
+  if (doit) {
+    BaseNode *undefined = CompileOpConstValue(JSTYPE_UNDEFINED, 0);
+    BaseNode *stmt = jsbuilder_->CreateStmtDassign(var, 0, undefined, linenum_);
+  }
 }
 
 uint32_t JSCompiler::GetFieldidFromTag(uint32_t tag) {
@@ -992,7 +990,6 @@ void JSCompiler::CompileOpSetArg(uint32_t i, BaseNode *val) {
 BaseNode *JSCompiler::CompileOpGetLocal(uint32_t localNo) {
   JSMIRFunction *func = jsbuilder_->GetCurrentFunction();
   char *name = closure_->GetLocalVar(func, localNo);
-  bool created;
   MIRSymbol *var;
 
   // for function name, use suffix _obj_
@@ -1004,13 +1001,12 @@ BaseNode *JSCompiler::CompileOpGetLocal(uint32_t localNo) {
     }
     name = objname;
   }
-  var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalueType);
-  InitWithUndefined(created, var);
-  if (!created) {
-    MIRType *type = GlobalTables::GetTypeTable().GetTypeFromTyIdx(var->GetTyIdx());
-    return jsbuilder_->CreateExprDread(type, var);
+  // var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalueType);
+  var = jsbuilder_->GetLocalDecl(name);
+  if (!var) {
+    var = jsbuilder_->CreateLocalDecl(name, jsvalueType);
+    InitWithUndefined(true, var);
   }
-
   return jsbuilder_->CreateExprDread(jsvalueType, var);
 }
 
@@ -1289,9 +1285,8 @@ bool JSCompiler::CompileOpDefVar(JSAtom *atom) {
   JSMIRFunction *fun = jsbuilder_->GetCurrentFunction();
   DEBUGPRINT2((fun == funcstack_.top()));
   DEBUGPRINT2(fun);
-  bool created;
   MIRSymbol *var = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalueType);
-  InitWithUndefined(created, var);
+  InitWithUndefined(true, var);
   if (fun == jsmain_) {
     jsbuilder_->InsertGlobalName(name);
   }

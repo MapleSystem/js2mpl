@@ -5,7 +5,7 @@
 #define JSFUNCPROP_USERFUNC ((uint8_t)0x04)
 namespace maple {
 enum __jstype {
-  JSTYPE_UNDEFINED = 0,
+  JSTYPE_NONE = 0,
   JSTYPE_NULL,
   JSTYPE_BOOLEAN,
   JSTYPE_STRING,
@@ -13,7 +13,7 @@ enum __jstype {
   JSTYPE_OBJECT,
   JSTYPE_ENV,
   JSTYPE_UNKNOWN,
-  JSTYPE_NONE,
+  JSTYPE_UNDEFINED,
 };
 
 // Bit is set for 16-bit code units
