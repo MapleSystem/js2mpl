@@ -163,7 +163,7 @@ class JSCompiler {
   BaseNode *CompileOpBindName(JSAtom *atom);
   BaseNode *CompileOpCall(uint32_t argc);
   BaseNode *CompileOpNew(uint32_t argc);
-  BaseNode *CompileOpName(JSAtom *atom, jsbytecode *pc);
+  BaseNode *CompileOpName(JSAtom *atom, jsbytecode *pc, bool isRealJsopName = false);
   StmtNode *CompileOpIfJump(JSOp op, BaseNode *cond, jsbytecode *pcend);
 
   LabelIdx CreateLabel(char *pref = NULL);
@@ -185,7 +185,7 @@ class JSCompiler {
   bool CompileOpDefFun(JSFunction *jsfun);
   bool CompileOpDefVar(JSAtom *atom);
   bool CompileScript(JSScript *script);
-  bool CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, jsbytecode *pcend, jsbytecode **newpc);
+  bool CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, jsbytecode *pcend, jsbytecode **newpc, jsbytecode * &prePc);
   bool MarkLabels(JSScript *s, jsbytecode *pc0, jsbytecode *pc1);
   bool CollectInfo(JSScript *script, jsbytecode *pcstart, jsbytecode *pcend);
   // Finish job.

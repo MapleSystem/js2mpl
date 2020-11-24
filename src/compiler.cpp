@@ -699,6 +699,8 @@ js_builtin_id JSCompiler::EcmaNameToId(char *name) {
     return JS_BUILTIN_MATH;
   } else if (!strcmp(name, "JSON")) {
     return JS_BUILTIN_JSON;
+  } else if (!strcmp(name, "ReferenceError")) {
+    return JS_BUILTIN_REFERENCEERROR_OBJECT;
   } else {
     return JS_BUILTIN_COUNT;
   }
@@ -714,7 +716,7 @@ BaseNode *JSCompiler::CompileBuiltinObject(char *name) {
 }
 
 // JSOP_NAME 59
-BaseNode *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc) {
+BaseNode *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc, bool isRealJsopName) {
   char *name = Util::GetString(atom, mp_, jscontext_);
   JS_ASSERT(!name && "empty name");
 
@@ -798,15 +800,15 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc) {
       IsXcCall(name)) {
     created = false;
   }
-
-  InitWithUndefined(created, var);
+  if (!isRealJsopName)
+    InitWithUndefined(created, var);
 
   StIdx stidx = var->GetStIdx();
   DEBUGPRINT3(stidx.Idx());
 
   bn = jsbuilder_->CreateExprDread(jsvalueType, var);
 
-  if (created && eh_->IsInEHrange(pc)) {
+  if (!isRealJsopName && created && eh_->IsInEHrange(pc)) {
     StmtNode *throwstmt = jsbuilder_->CreateStmtThrow(bn);
     throwstmt->srcPosition.SetLinenum(linenum_);
     jsbuilder_->AddStmtInCurrentFunctionBody(throwstmt);
@@ -2009,13 +2011,14 @@ bool JSCompiler::CompileScript(JSScript *script) {
 
   // mark labels to avoid issue of missing labeled target for back edges
   MarkLabels(script, start, end);
+  jsbytecode *prePc = NULL;
 
-  bool ret = CompileScriptBytecodes(script, start, end, NULL);
+  bool ret = CompileScriptBytecodes(script, start, end, NULL, prePc);
 
   return ret;
 }
 
-bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, jsbytecode *pcend, jsbytecode **newpc) {
+bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, jsbytecode *pcend, jsbytecode **newpc, jsbytecode * &prePc) {
   jsbytecode *pc = pcstart;
   unsigned lastLineNo = 0;
   unsigned lastLinePrinted = 0;
@@ -2431,6 +2434,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         break;
       }
       case JSOP_CONDSWITCH: { /*120, 1, 0, 0*/
+        prePc = pc;
         pc = js::GetNextPc(pc);
         continue;
       }
@@ -2468,7 +2472,16 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         break;
       }
       case JSOP_POP: { /*81, 1, 1, 0*/
-        Pop();
+        BaseNode *bn = Pop();
+        assert(prePc && "pre pc is not supposed to be null");
+        JSOp preOp = JSOp(*prePc);  // Convert *pc to JSOP
+        if (preOp == JSOP_NAME) {
+          // JSOP_NAME
+          // followed by
+          // JSOP_POP
+          // should be a stmtment
+          CompileGeneric1(INTRN_JSOP_ASSERTVALUE, bn, true);
+        }
         opstack_->flag_after_throwing = false;
         break;
       }
@@ -2487,6 +2500,14 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
       case JSOP_SETRVAL: { /*152, 1, 1, 0*/
         opstack_->flag_has_rval = true;
         BaseNode *rval = Pop();
+        JSOp preOp = JSOp(*prePc);  // Convert *pc to JSOP
+        if (preOp == JSOP_NAME) {
+          // JSOP_NAME
+          // followed by
+          // JSOP_SETRVAL
+          // should be a stmtment
+          CompileGeneric1(INTRN_JSOP_ASSERTVALUE, rval, true);
+        }
         opstack_->rval = rval;
         break;
       }
@@ -2584,10 +2605,11 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         jsbuilder_->AddStmtInCurrentFunctionBody(gotonode);
 
         jsbytecode *start = js::GetNextPc(pc);
+        prePc = pc;
         pc = pc + offset;
         // Pop(); comment out because CompileScriptBytecodes() has a Pop() which is not listed on command
         // list
-        CompileScriptBytecodes(script, start, pc, NULL);
+        CompileScriptBytecodes(script, start, pc, NULL, prePc);
         BaseNode *opnd1 = CheckConvertToJSValueType(Pop());
         jsbuilder_->CreateStmtDassign(tempVar, 0, opnd1, linenum_);
         opnd0 = jsbuilder_->CreateExprDread(tempVar->GetType(), tempVar);
@@ -2861,10 +2883,15 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         Push(bn);
         break;
       }
-      case JSOP_GETGNAME: /*154, 5, 0, 1*/
-      case JSOP_NAME: {   /*59, 5, 0, 1*/
+      case JSOP_GETGNAME: {   /*154, 5, 0, 1*/
         JSAtom *atom = script->getAtom(GET_UINT32_INDEX(pc));
         BaseNode *bn = CompileOpName(atom, pc);
+        Push(bn);
+        break;
+      }
+      case JSOP_NAME: {   /*59, 5, 0, 1*/
+        JSAtom *atom = script->getAtom(GET_UINT32_INDEX(pc));
+        BaseNode *bn = CompileOpName(atom, pc, true);
         Push(bn);
         break;
       }
@@ -3299,6 +3326,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
     }  // End switch (op)
 
     lastOp = op;
+    prePc = pc;
     pc = js::GetNextPc(pc);
   }  // End while (pc < script->codeEnd())
 
