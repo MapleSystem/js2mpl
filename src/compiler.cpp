@@ -2475,7 +2475,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         BaseNode *bn = Pop();
         assert(prePc && "pre pc is not supposed to be null");
         JSOp preOp = JSOp(*prePc);  // Convert *pc to JSOP
-        if (preOp == JSOP_NAME) {
+        if (preOp == JSOP_NAME && IsPrimitiveDynType(bn->primType)) {
           // JSOP_NAME
           // followed by
           // JSOP_POP
@@ -2501,7 +2501,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         opstack_->flag_has_rval = true;
         BaseNode *rval = Pop();
         JSOp preOp = JSOp(*prePc);  // Convert *pc to JSOP
-        if (preOp == JSOP_NAME) {
+        if (preOp != JSOP_CALL && preOp != JSOP_FUNAPPLY
+          && preOp != JSOP_SETELEM && preOp != JSOP_SETNAME) {
           // JSOP_NAME
           // followed by
           // JSOP_SETRVAL
