@@ -2568,7 +2568,10 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
       }
       case JSOP_GOTO: { /*6, 5, 0, 0*/
         int offset = GET_JUMP_OFFSET(pc);
-        if (!opstack_->flag_has_iter && !opstack_->Empty() && !opstack_->flag_after_throwing) {
+        JSOp preOp = JSOp(*prePc);  // Convert *pc to JSOP
+        if (!opstack_->flag_has_iter && !opstack_->Empty() &&
+            !opstack_->flag_after_throwing &&
+            preOp != JSOP_GOSUB && preOp != JSOP_THROW) {
           // in middle of conditional expression; save in a temp and associate
           // the temp with the goto label
           // TODO should not pop from opstack_
