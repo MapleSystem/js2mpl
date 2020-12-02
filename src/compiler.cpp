@@ -2037,7 +2037,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
       printf("  %4d %-25s pc = 0x%x\n", lineNo, Util::getOpcodeName[op], pc);
     }
     if (lastLineNo != lineNo && mirModule->CurFunction() != NULL) {
-      sprintf(linenoText, "LINE %d: ", lineNo);
+      sprintf(linenoText, "LINE %s : %d: ", this->filename_, lineNo);
 
       srcText[0] = 0;
       if (lineNo > lastLinePrinted && srcfileptr != NULL) {
@@ -2050,11 +2050,14 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         lastLinePrinted = lineNo;
       }
       // Create Comments node, line no text and src text
-      StmtNode *cmntstmt = jsbuilder_->CreateStmtComment(strcat(linenoText, srcText));
+      StmtNode *cmntstmt = jsbuilder_->CreateStmtComment(strncat(linenoText, srcText, sizeof(linenoText)-strlen(linenoText)-1));
       cmntstmt->srcPosition.SetLinenum(lineNo);
       jsbuilder_->AddStmtInCurrentFunctionBody(cmntstmt);
       lastLineNo = lineNo;
     }
+    sprintf(linenoText, "LINE %s : %d: %s", this->filename_, lineNo, Util::getOpcodeName[op]);
+    StmtNode *cmntstmt = jsbuilder_->CreateStmtComment(linenoText);
+    jsbuilder_->AddStmtInCurrentFunctionBody(cmntstmt);
     Util::SetIndent(4);
 
     // add endtry node
