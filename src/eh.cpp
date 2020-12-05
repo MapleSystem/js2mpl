@@ -168,7 +168,12 @@ bool EH::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcend) 
       scriptstack_.pop();
       funcstack_.push(name);
       if (js2mplDebug > 0) {
-        cout << name << " {" << endl;
+        if (name) {
+          std::cout << name << " {" << std::endl;
+        } else {
+          // passing nullptr to cout will put it into an error state and stops output
+          std::cout << "{" << std::endl;
+        }
       }
       Build(scr);
     }
