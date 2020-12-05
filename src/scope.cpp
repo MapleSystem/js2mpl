@@ -182,7 +182,9 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
     while (pc < pcend) {
       JSOp op = JSOp(*pc);
       JSScript *scr;
+      unsigned lineNo = js::PCToLineNumber(script, pc);
 
+      cout << right << setw(5) << lineNo << " " << Util::getOpcodeName[op] << endl;
       switch (op) {
         case JSOP_DEFFUN:   /*127, 5, 0, 0*/
         case JSOP_LAMBDA: { /*130, 5, 0, 1*/
@@ -191,7 +193,6 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
           Build(scr);
         }
       }
-      cout << Util::getOpcodeName[op] << endl;
       pc = js::GetNextPc(pc);
     }
 
