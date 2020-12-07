@@ -77,6 +77,7 @@ JSMIRFunction *JSMIRBuilder::GetOrCreateFunction(const char *name, MIRType *retu
   DEBUGPRINTsv2("GetOrCreateFunction", name);
   JSMIRFunction *fn = GetFunc(name);
   if (fn) {
+    fn->dup_name = true;
     DEBUGPRINTsv2("function is alread created: ", name);
     return fn;
   }
@@ -132,6 +133,11 @@ JSMIRFunction *JSMIRBuilder::GetOrCreateFunction(const char *name, MIRType *retu
 void JSMIRBuilder::AddStmtInCurrentFunctionBody(StmtNode *n) {
   MIRBuilder::AddStmtInCurrentFunctionBody(n);
   DEBUGPRINTnode(n);
+}
+
+void JSMIRBuilder::ClearStmtsInCurrentFunctionBody(void) {
+  JSMIRFunction *func = GetCurrentFunction();
+  func->body->ResetBlock();
 }
 
 NaryStmtNode *JSMIRBuilder::CreateStmtReturn(BaseNode *rval, bool adjType, unsigned linenum) {

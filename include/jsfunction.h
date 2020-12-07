@@ -14,7 +14,7 @@ class JSMIRFunction : public MIRFunction {
  public:
   bool with_env_arg;
   bool env_setup;
-
+  bool dup_name;
   int argc;
 
   std::list<GStrIdx> alias_vars;
@@ -31,6 +31,7 @@ class JSMIRFunction : public MIRFunction {
   void Init() {
     with_env_arg = false;
     env_setup = false;
+    dup_name = false;
     alias_vars.empty();
     scope = NULL;
     envtype = NULL;

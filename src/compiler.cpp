@@ -1275,7 +1275,9 @@ bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
   funcstack_.push(mfun);
   jsbuilder_->SetCurrentFunction(mfun);
   DEBUGPRINTfunc(funcname);
-
+  if (mfun->dup_name) {
+    jsbuilder_->ClearStmtsInCurrentFunctionBody();
+  }
   CompileScript(scr);
   return true;
 }

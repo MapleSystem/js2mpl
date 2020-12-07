@@ -29,6 +29,7 @@ class JSMIRBuilder : public MIRBuilder {
   void UpdateFunction(JSMIRFunction *fn, MIRType *return_type, ArgVector arguments);
   // void SaveReturnValue(MIRSymbol *var);
   void AddStmtInCurrentFunctionBody(StmtNode *n);
+  void ClearStmtsInCurrentFunctionBody(void);
 
   std::vector<std::pair<const char *, JSMIRFunction *>> name_func_vec_;
 

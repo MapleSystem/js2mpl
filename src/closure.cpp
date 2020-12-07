@@ -156,6 +156,9 @@ JSMIRFunction *JSClosure::ProcessFunc(JSFunction *jsfun, char *funcname) {
   ArgVector arguments(mirModule->memPoolAllocator.Adapter());
 
   JSMIRFunction *func = jsbuilder_->GetOrCreateFunction(funcname, retuenType, arguments, false);
+  if (func->dup_name) {
+    return func;
+  }
   mirModule->AddFunction(func);
   SetJSMIRFunc(funcname, func);
   DEBUGPRINT2(funcname);
