@@ -216,4 +216,13 @@ IntrinsiccallNode *JSMIRBuilder::CreateStmtIntrinsicCall1N(MIRIntrinsicID idx, B
   return stmt;
 }
 
+ConstvalNode* JSMIRBuilder::CreateDynf64Const(double val) {
+  ConstvalNode *constvalNode = GetCurrentFuncCodeMp()->New<ConstvalNode>();
+  MIRDoubleConst *dblConst = GetCurrentFunction()->dataMemPool->New<MIRDoubleConst>(val,
+                                               GlobalTables::GetTypeTable().GetPrimType(PTY_dynf64));
+  constvalNode->primType = PTY_dynf64;
+  constvalNode->constVal = dblConst;
+  return constvalNode;
+}
+
 }  // namespace maple

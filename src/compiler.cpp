@@ -2938,8 +2938,10 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
       }
       case JSOP_DOUBLE: { /*60, 5, 0, 1*/
         double dval = script->getConst(GET_UINT32_INDEX(pc)).toDouble();
+        BaseNode *bn = jsbuilder_->CreateDynf64Const(dval);
+        DEBUGPRINT2(dval);
+        Push(bn);
         //assert(false && "Can not support double.");
-        SIMULATESTACK(0, 1);
         break;
       }
       case JSOP_STRING: { /*61, 5, 0, 1*/

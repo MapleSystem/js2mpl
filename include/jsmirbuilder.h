@@ -129,6 +129,7 @@ class JSMIRBuilder : public MIRBuilder {
   bool JSOPOnly() {
     return jsmir_context_.jsop_only_;
   }
+  ConstvalNode* CreateDynf64Const(double val);
 };
 }  // namespace maple
 #endif  // JS2MPL_INCLUDE_JSMIRBUILDER_H_
