@@ -66,9 +66,6 @@ executable("js2mpl"){
 
     libs = [
         "${MOZJS_INSTALL_DIR}/lib/libjs_static.a",
-        "z",
-        "pthread",
-        "dl",
     ]
 
     ldflags = [
