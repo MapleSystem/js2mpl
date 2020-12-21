@@ -877,7 +877,7 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
   uint32_t pad = IsAsciiChars(chars, length) ? 4 : 2;
   uint32_t stringClass = IsAsciiChars(chars, length) ? 0 : JSSTRING_UNICODE;
 
-  size_t paddingLength = length + pad;
+  uint32 paddingLength = length + pad;
   MIRType *type = GlobalTables::GetTypeTable().GetOrCreateArrayType(unitType, 1, &(paddingLength));
   const char *tempName = Util::GetSequentialName("const_chars_", temp_var_no_, mp_);
   MIRSymbol *var = jsbuilder_->GetOrCreateGlobalDecl(tempName, type);
@@ -1106,7 +1106,7 @@ bool JSCompiler::CompileOpSetElem(BaseNode *obj, BaseNode *index, BaseNode *val)
   arguments.push_back(index);
   arguments.push_back(CheckConvertToJSValueType(val));
   StmtNode *stmt =
-    jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_SETPROP, arguments, NULL);
+    jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_SETPROP, arguments, (const MIRSymbol *)NULL);
   stmt->srcPosition.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return true;
@@ -1118,7 +1118,7 @@ bool JSCompiler::CompileOpInitPropGetter(BaseNode *obj, JSString *str, BaseNode 
   arguments.push_back(obj);
   arguments.push_back(name);
   arguments.push_back(val);
-  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_INITPROP_GETTER, arguments, NULL);
+  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_INITPROP_GETTER, arguments, (const MIRSymbol *)NULL);
   stmt->srcPosition.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return true;
@@ -1130,7 +1130,7 @@ bool JSCompiler::CompileOpInitPropSetter(BaseNode *obj, JSString *str, BaseNode 
   arguments.push_back(obj);
   arguments.push_back(name);
   arguments.push_back(val);
-  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_INITPROP_SETTER, arguments, NULL);
+  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_INITPROP_SETTER, arguments, (const MIRSymbol *)NULL);
   stmt->srcPosition.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return true;
@@ -1142,7 +1142,7 @@ bool JSCompiler::CompileOpInitElemGetter(BaseNode *obj, BaseNode *index, BaseNod
   arguments.push_back(obj);
   arguments.push_back(index);
   arguments.push_back(val);
-  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_INITPROP_GETTER, arguments, NULL);
+  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_INITPROP_GETTER, arguments, (const MIRSymbol *)NULL);
   stmt->srcPosition.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return true;
@@ -1154,7 +1154,7 @@ bool JSCompiler::CompileOpInitElemSetter(BaseNode *obj, BaseNode *index, BaseNod
   arguments.push_back(obj);
   arguments.push_back(index);
   arguments.push_back(val);
-  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_INITPROP_SETTER, arguments, NULL);
+  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_INITPROP_SETTER, arguments, (const MIRSymbol *)NULL);
   stmt->srcPosition.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return true;
@@ -1167,7 +1167,7 @@ bool JSCompiler::CompileOpSetProp(BaseNode *obj, JSString *str, BaseNode *val) {
   arguments.push_back(obj);
   arguments.push_back(name);
   arguments.push_back(CheckConvertToJSValueType(val));
-  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_SETPROP_BY_NAME, arguments, NULL);
+  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_SETPROP_BY_NAME, arguments, (const MIRSymbol *)NULL);
   stmt->srcPosition.SetLinenum(linenum_);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return true;
@@ -2846,7 +2846,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         arguments.push_back(obj);
         arguments.push_back(index);
         arguments.push_back(CheckConvertToJSValueType(val));
-        StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_SETPROP, arguments, NULL);
+        StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_SETPROP, arguments, (const MIRSymbol *)NULL);
         stmt->srcPosition.SetLinenum(lineNo);
         jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
         Push(obj);
@@ -3239,7 +3239,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         arguments.push_back(obj);
         arguments.push_back(name);
         arguments.push_back(CheckConvertToJSValueType(val));
-        StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_INITPROP_BY_NAME, arguments, NULL);
+        StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_INITPROP_BY_NAME, arguments, (const MIRSymbol *)NULL);
         stmt->srcPosition.SetLinenum(lineNo);
         jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
         Push(obj);

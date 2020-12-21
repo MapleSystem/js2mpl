@@ -20,7 +20,7 @@ JSMIRFunction *JSMIRBuilder::CreateJSMain() {
     MapleVector<BaseNode *> argsVec(mirModule->memPoolAllocator.Adapter());
     jsmain = GetOrCreateFunction("main", GlobalTables::GetTypeTable().GetInt32(), arguments, false);
     SetCurrentFunction(jsmain);
-    IntrinsiccallNode *stmt = CreateStmtIntrinsicCallAssigned((MIRIntrinsicID)INTRN_JS_INIT_CONTEXT, argsVec, NULL);
+    IntrinsiccallNode *stmt = CreateStmtIntrinsicCallAssigned((MIRIntrinsicID)INTRN_JS_INIT_CONTEXT, argsVec, (const MIRSymbol *)NULL);
     AddStmtInCurrentFunctionBody(stmt);
   }
   return jsmain;
