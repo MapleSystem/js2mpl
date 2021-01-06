@@ -177,6 +177,9 @@ BaseNode *JSCompiler::CompileOpConstValue(uint32_t jsvalueTag, int32_t payload) 
     case JSTYPE_NONE:
       pty = PTY_dynnone;
       break;
+    case JSTYPE_NAN:
+      pty = PTY_dynf64;
+      break;
     default:
       assert(false && "NIY");
       break;
@@ -720,11 +723,11 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc, bool isRealJso
   char *name = Util::GetString(atom, mp_, jscontext_);
   JS_ASSERT(!name && "empty name");
 
-#if 0
   // Report error when use unspported name.
   if (!strcmp(name, "NaN")) {
-    assert(false && "Can not support NaN.");
+    return CompileOpConstValue(JSTYPE_NAN, 0);
   }
+#if 0
   if (!strcmp(name, "Infinity")) {
     assert(false && "Can not support Infinity.");
   }

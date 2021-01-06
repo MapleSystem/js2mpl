@@ -14,6 +14,8 @@ enum __jstype {
   JSTYPE_ENV,
   JSTYPE_UNKNOWN,
   JSTYPE_UNDEFINED,
+  JSTYPE_DOUBLE,
+  JSTYPE_NAN,
 };
 
 // Bit is set for 16-bit code units
