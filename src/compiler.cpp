@@ -180,6 +180,9 @@ BaseNode *JSCompiler::CompileOpConstValue(uint32_t jsvalueTag, int32_t payload) 
     case JSTYPE_NAN:
       pty = PTY_dynf64;
       break;
+    case JSTYPE_INFINITY:
+      pty = PTY_dynany;
+      break;
     default:
       assert(false && "NIY");
       break;
@@ -332,11 +335,22 @@ BaseNode *JSCompiler::CompileOpUnary(JSOp opcode, BaseNode *val) {
       restype = GlobalTables::GetTypeTable().GetInt32();
       val = CheckConvertToInt32(val);
       break;
-    case JSOP_NEG:
+    case JSOP_NEG: {
+      if (val->op == OP_constval) {
+        ConstvalNode *cval = static_cast<ConstvalNode *>(val);
+        MIRIntConst *intconst = static_cast<MIRIntConst *>(cval->constVal);
+        if(((uint64)intconst->value) >> 32 == JSTYPE_INFINITY) {
+          // -infinity to be represented by 0xb00000001
+          //  infinity to be represented by 0xb00000000
+          intconst->value = (int64_t)((uint64_t)(uint32_t)JSTYPE_INFINITY << 32 | 1);
+          return val;
+        }
+      }
       mop = OP_neg;
       restype = GlobalTables::GetTypeTable().GetInt32();
       val = CheckConvertToInt32(val);
       break;
+    }
     default:
       break;
   }
@@ -727,10 +741,10 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc, bool isRealJso
   if (!strcmp(name, "NaN")) {
     return CompileOpConstValue(JSTYPE_NAN, 0);
   }
-#if 0
   if (!strcmp(name, "Infinity")) {
-    assert(false && "Can not support Infinity.");
+    return CompileOpConstValue(JSTYPE_INFINITY, 0);
   }
+#if 0
   if (!strcmp(name, "parseInt")) {
     assert(false && "Can not support parseInt.");
   }
