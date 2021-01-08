@@ -2803,7 +2803,52 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         Push(bn);
         break;
       }
-      case JSOP_GETPROP:    /*53, 5, 1, 1*/
+      case JSOP_GETPROP:{    /*53, 5, 1, 1*/
+        // some prop can be known at compile time such as
+        // Number.NEGATIVE_INFINITY
+        // Number.INFINITY
+        JSString *str = script->getAtom(pc);
+        BaseNode *origObj = Pop();
+        bool isValuedGetProp = false;
+        if (origObj->op == OP_intrinsicop) {
+          IntrinsicopNode *intrinNode = static_cast<IntrinsicopNode *>(origObj);
+          MIRIntrinsicID intrnId = intrinNode->intrinsic;
+          if (intrnId == INTRN_JS_GET_BIOBJECT) {
+            BaseNode *opnd0 = intrinNode->nOpnd[0];
+            if (opnd0->op == OP_constval) {
+              ConstvalNode * convalNode = static_cast<ConstvalNode *>(opnd0);
+              MIRIntConst *intConst = static_cast<MIRIntConst *>(convalNode->constVal);
+              if (JS_BUILTIN_NUMBER == intConst->value) {
+                size_t length = 0;
+                const jschar *chars = JS_GetInternedStringCharsAndLength(str, &length);
+                int32_t id = GetBuiltinStringId(chars, length);
+                switch (id) {
+                  case JSBUILTIN_STRING_POSITIVE_INFINITY_U: {
+                    Push(CompileOpConstValue(JSTYPE_INFINITY, 0));
+                    isValuedGetProp = true;
+                    break;
+                  }
+                  case JSBUILTIN_STRING_NEGATIVE_INFINITY_U: {
+                    Push(CompileOpConstValue(JSTYPE_INFINITY, 1)); // 1 means negtive infinity
+                    isValuedGetProp = true;
+                    break;
+                  }
+                  default:
+                    break;
+                }
+              }
+            }
+          }
+        }
+        if (isValuedGetProp) {
+          break;
+        }
+        BaseNode *obj = CheckConvertToJSValueType(origObj);
+        BaseNode *name = CompileOpString(str);
+        BaseNode *val = CompileGeneric2(INTRN_JSOP_GETPROP_BY_NAME, obj, name, true);
+        Push(val);
+        break;
+      }
       case JSOP_CALLPROP: { /*184, 5, 1, 1*/
         JSString *str = script->getAtom(pc);
         BaseNode *obj = CheckConvertToJSValueType(Pop());
