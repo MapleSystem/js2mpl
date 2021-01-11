@@ -362,6 +362,13 @@ BaseNode *JSCompiler::CompileOpUnary(JSOp opcode, BaseNode *val) {
     PrimType pty;
     if (val->op == OP_constval) {
       pty = val->primType;
+      if (pty == PTY_dynany) {
+        ConstvalNode *cval = static_cast<ConstvalNode *>(val);
+        MIRIntConst *intconst = static_cast<MIRIntConst *>(cval->constVal);
+        if (((uint64_t)intconst->value >> 32) == JSTYPE_INFINITY) {
+          return val;
+        }
+      }
     }
     if (val->op == OP_dread) {
       AddrofNode *node = static_cast<AddrofNode *>(val);
