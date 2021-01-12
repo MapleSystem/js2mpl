@@ -3011,7 +3011,14 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
       }
       case JSOP_DOUBLE: { /*60, 5, 0, 1*/
         double dval = script->getConst(GET_UINT32_INDEX(pc)).toDouble();
-        BaseNode *bn = jsbuilder_->CreateDynf64Const(dval);
+        BaseNode *bn = NULL;
+        if (isinf(dval)) {
+          bn = CompileOpConstValue(JSTYPE_INFINITY, 0);
+        } else if (isnan(dval)) {
+          bn = CompileOpConstValue(JSTYPE_NAN, 0);
+        } else {
+          bn = jsbuilder_->CreateDynf64Const(dval);
+        }
         DEBUGPRINT2(dval);
         Push(bn);
         //assert(false && "Can not support double.");
