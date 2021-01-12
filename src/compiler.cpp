@@ -2840,6 +2840,10 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
                     isValuedGetProp = true;
                     break;
                   }
+                  case JSBUILTIN_STRING_NAN: {
+                    Push(CompileOpConstValue(JSTYPE_NAN, 0));
+                    isValuedGetProp = true;
+                  }
                   default:
                     break;
                 }
