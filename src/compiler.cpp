@@ -275,7 +275,6 @@ BaseNode *JSCompiler::CompileOpBinary(JSOp opcode, BaseNode *op0, BaseNode *op1)
       break;
     case JSOP_MUL:
       mop = OP_mul;
-      restype = GlobalTables::GetTypeTable().GetInt32();
       break;
     case JSOP_DIV:
       mop = OP_div;
