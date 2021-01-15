@@ -820,7 +820,7 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc, bool isRealJso
 
   // print is a builtin function.
   if (!strcmp(name, "print") || !strcmp(name, "$ERROR") || !strcmp(name, "SetCycleHeader") || IsCCall(name) ||
-      IsXcCall(name)) {
+      IsXcCall(name) || strcmp(name, "isNaN")) {
     created = false;
   }
   if (!isRealJsopName)
