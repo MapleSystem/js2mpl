@@ -3012,7 +3012,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         double dval = script->getConst(GET_UINT32_INDEX(pc)).toDouble();
         BaseNode *bn = NULL;
         if (isinf(dval)) {
-          bn = CompileOpConstValue(JSTYPE_INFINITY, 0);
+          bn = CompileOpConstValue(JSTYPE_INFINITY, dval == (-1.0/0.0) ? 1 : 0);
         } else if (isnan(dval)) {
           bn = CompileOpConstValue(JSTYPE_NAN, 0);
         } else {
