@@ -217,9 +217,15 @@ IntrinsiccallNode *JSMIRBuilder::CreateStmtIntrinsicCall1N(MIRIntrinsicID idx, B
 }
 
 ConstvalNode* JSMIRBuilder::CreateDynf64Const(double val) {
+  union {
+    double x;
+    int64_t y;
+  }xx;
+  xx.x = val;
   ConstvalNode *constvalNode = GetCurrentFuncCodeMp()->New<ConstvalNode>();
-  MIRDoubleConst *dblConst = GetCurrentFunction()->dataMemPool->New<MIRDoubleConst>(val,
-                                               GlobalTables::GetTypeTable().GetPrimType(PTY_dynf64));
+  //MIRDoubleConst *dblConst = GetCurrentFunction()->dataMemPool->New<MIRDoubleConst>(val,
+  //                                             GlobalTables::GetTypeTable().GetPrimType(PTY_dynf64));
+  MIRIntConst *dblConst = GetCurrentFunction()->dataMemPool->New<MIRIntConst>(xx.y, GlobalTables::GetTypeTable().GetPrimType(PTY_dynf64));
   constvalNode->primType = PTY_dynf64;
   constvalNode->constVal = dblConst;
   return constvalNode;

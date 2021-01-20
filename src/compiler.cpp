@@ -178,7 +178,7 @@ BaseNode *JSCompiler::CompileOpConstValue(uint32_t jsvalueTag, int32_t payload) 
       pty = PTY_dynnone;
       break;
     case JSTYPE_NAN:
-      pty = PTY_dynf64;
+      pty = PTY_dynany;
       break;
     case JSTYPE_INFINITY:
       pty = PTY_dynany;
