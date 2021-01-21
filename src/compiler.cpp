@@ -789,6 +789,24 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc, bool isRealJso
     return builtinObject;
   }
 
+  // Generate unique name with suffix if not builtin function
+  if (strcmp(name, "print") && 
+      strcmp(name, "$ERROR") && 
+      strcmp(name, "SetCycleHeader") &&
+      !IsCCall(name) &&
+      !IsXcCall(name)) {
+    JSMIRFunction *curFunc = jsbuilder_->GetCurrentFunction();
+    ScopeNode *sn = curFunc->scope;
+    while (sn) {
+      char *tmpName = Util::GetNameWithScopeSuffix(name, (uint32_t)sn, mp_);
+      if (scope_->IsFunction(tmpName)) {
+        name = tmpName;
+        break;
+      }
+      sn = sn->GetParent();
+    }
+  }
+  
   BaseNode *bn = NULL;
   if (scope_->IsFunction(name)) {
     DEBUGPRINT2(name);
@@ -1258,11 +1276,14 @@ bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
   JSScript *scr = jsfun->getOrCreateScript(jscontext_);
   JSAtom *atom = jsfun->displayAtom();
   DEBUGPRINT2(atom);
-  char *funcname = Util::GetString(atom, mp_, jscontext_);
-  if (!funcname) {
+  char *fname = Util::GetString(atom, mp_, jscontext_);
+  if (!fname) {
     return false;
   }
 
+  JSMIRFunction *curFunc = jsbuilder_->GetCurrentFunction();
+  ScopeNode *snp = curFunc->scope;
+  char *funcname = Util::GetNameWithScopeSuffix(fname, (uint32_t)snp, mp_);
   JSMIRFunction *mfun = jsbuilder_->GetFunction(funcname);
   mfun->SetUserFunc();
 
@@ -1331,7 +1352,10 @@ BaseNode *JSCompiler::CompileOpLambda(jsbytecode *pc, JSFunction *jsfun) {
   char *funcname = NULL;
   bool hasName = false;
   if (atom && !jsfun->hasGuessedAtom()) {
-    funcname = Util::GetString(atom, mp_, jscontext_);
+    char *name = Util::GetString(atom, mp_, jscontext_);
+    JSMIRFunction *curFunc = jsbuilder_->GetCurrentFunction();
+    ScopeNode *snp = curFunc->scope;
+    funcname = Util::GetNameWithScopeSuffix(name, (uint32_t)snp, mp_);
     hasName = true;
   } else {
     funcname = scope_->GetAnonyFunctionName(pc);

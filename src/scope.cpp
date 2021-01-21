@@ -232,7 +232,10 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
           scr = jsfun->nonLazyScript();
           JSAtom *atom = jsfun->displayAtom();
           if (atom && !jsfun->hasGuessedAtom()) {
-            name = Util::GetString(atom, mp_, ctx_);
+            char *funcName = Util::GetString(atom, mp_, ctx_);
+            parent = funcstack_.top();
+            ScopeNode *snp = GetOrCreateSN(parent);
+            name = Util::GetNameWithScopeSuffix(funcName, (uint32_t)snp, mp_);
           } else {
             name = (char *)Util::GetSequentialName0("anonymous_func_", GetAnonyidx(jsfun), mp_);
             pair<jsbytecode *, char *> p(pc, name);

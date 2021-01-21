@@ -123,11 +123,15 @@ void JSClosure::AddFuncFormalsToEnvType(JSMIRFunction *func) {
   std::vector<char *> nameVec;
   for (i = formals.begin(); i != formals.end(); i++) {
     jsfun = (*i).first;
-    funcname = Util::GetString(jsfun->name(), mp_, jscontext_);
+    char *fname = Util::GetString(jsfun->name(), mp_, jscontext_);
     DEBUGPRINT2(jsfun);
     // anonymous function.
-    if (!funcname) {
+    if (!fname) {
       funcname = (char *)Util::GetSequentialName0("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_);
+    } else {
+      JSMIRFunction *curFunc = jsbuilder_->GetCurrentFunction();
+      ScopeNode *snp = curFunc->scope;
+      funcname = (char *)Util::GetNameWithScopeSuffix(fname, (uint32_t)snp, mp_);
     }
     DEBUGPRINT2(funcname);
     MIRSymbol *funcSt = GlobalTables::GetGsymTable().GetSymbolFromStIdx(func->stIdx.Idx());
@@ -220,11 +224,14 @@ bool JSClosure::ProcessOpDefFun(jsbytecode *pc) {
   ArgVector arguments(mirModule->memPoolAllocator.Adapter());
   JSAtom *atom = jsfun->displayAtom();
   DEBUGPRINT2(atom);
-  char *funcname = Util::GetString(atom, mp_, jscontext_);
-  if (!funcname) {
+  char *name = Util::GetString(atom, mp_, jscontext_);
+  if (!name) {
     return false;
   }
 
+  JSMIRFunction *curFunc = jsbuilder_->GetCurrentFunction();
+  ScopeNode *snp = curFunc->scope;
+  char *funcname = Util::GetNameWithScopeSuffix(name, (uint32_t)snp, mp_);
   JSMIRFunction *func = ProcessFunc(jsfun, funcname);
 
   funcstack_.push(func);
@@ -244,7 +251,10 @@ void JSClosure::ProcessOpLambda(jsbytecode *pc) {
   // if((jsfun->isNamedLambda()))
   char *funcname;
   if (atom && !jsfun->hasGuessedAtom()) {
-    funcname = Util::GetString(atom, mp_, jscontext_);
+    char *name = Util::GetString(atom, mp_, jscontext_);
+    JSMIRFunction *curFunc = jsbuilder_->GetCurrentFunction();
+    ScopeNode *snp = curFunc->scope;
+    funcname = Util::GetNameWithScopeSuffix(name, (uint32_t)snp, mp_);
   } else {
     funcname = scope_->GetAnonyFunctionName(pc);
   }
@@ -265,10 +275,19 @@ bool JSClosure::IsLocalVar(JSMIRFunction *func, char *name) {
   DEBUGPRINT2(name);
   for (i = locals.begin(); i != locals.end(); i++) {
     jsfun = (*i).first;
-    funcname = Util::GetString(jsfun->name(), mp_, jscontext_);
+    char *fname = Util::GetString(jsfun->name(), mp_, jscontext_);
     // anonymous function.
-    if (!funcname) {
+    if (!fname) {
       funcname = (char *)Util::GetSequentialName0("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_);
+    } else {
+      JSMIRFunction *curFunc = jsbuilder_->GetCurrentFunction();
+      ScopeNode *snp;
+      if (jsbuilder_->IsMain(curFunc)) {
+        snp = curFunc->scope;
+      } else {
+        snp = curFunc->scope->GetParent();
+      }
+      funcname = (char *)Util::GetNameWithScopeSuffix(fname, (uint32_t)snp, mp_);
     }
     DEBUGPRINT2(funcname);
     MIRSymbol *funcSt = GlobalTables::GetGsymTable().GetSymbolFromStIdx(func->stIdx.Idx());
@@ -301,11 +320,15 @@ char *JSClosure::GetLocalVar(JSMIRFunction *func, uint32_t localNo) {
   int i;
   for (i = 0; i < locals.size(); i++) {
     jsfun = locals[i].first;
-    funcname = Util::GetString(jsfun->name(), mp_, jscontext_);
+    char *fname = Util::GetString(jsfun->name(), mp_, jscontext_);
     DEBUGPRINT2(jsfun);
     // set name for anonymous functions same as in jsscript_->funcLocals.
-    if (!funcname) {
+    if (!fname) {
       funcname = (char *)Util::GetSequentialName0("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_);
+    } else {
+      JSMIRFunction *curFunc = jsbuilder_->GetCurrentFunction();
+      ScopeNode *snp = curFunc->scope;
+      funcname = (char *)Util::GetNameWithScopeSuffix(fname, (uint32_t)snp, mp_);
     }
     DEBUGPRINT2(funcname);
     // found the function
