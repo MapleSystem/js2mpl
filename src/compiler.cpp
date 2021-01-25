@@ -277,7 +277,6 @@ BaseNode *JSCompiler::CompileOpBinary(JSOp opcode, BaseNode *op0, BaseNode *op1)
       break;
     case JSOP_DIV:
       mop = OP_div;
-      restype = GlobalTables::GetTypeTable().GetInt32();
       break;
     case JSOP_MOD:
       mop = OP_rem;
@@ -790,8 +789,8 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc, bool isRealJso
   }
 
   // Generate unique name with suffix if not builtin function
-  if (strcmp(name, "print") && 
-      strcmp(name, "$ERROR") && 
+  if (strcmp(name, "print") &&
+      strcmp(name, "$ERROR") &&
       strcmp(name, "SetCycleHeader") &&
       !IsCCall(name) &&
       !IsXcCall(name)) {
@@ -806,7 +805,7 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc, bool isRealJso
       sn = sn->GetParent();
     }
   }
-  
+
   BaseNode *bn = NULL;
   if (scope_->IsFunction(name)) {
     DEBUGPRINT2(name);
