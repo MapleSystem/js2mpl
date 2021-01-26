@@ -212,7 +212,8 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
 
     char *name;
     char *parent;
-    JSOp lastOp;
+    JSOp lastOp = JSOP_NOP;
+    JSOp secondLastOp = JSOP_NOP;
     JSScript *scr;
 
     while (pc < pcend) {
@@ -291,18 +292,22 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
             break;
         }
 
-        use = (use < 0) ? use0 : use;
-        int inc = def - use;
+        if (op != JSOP_ENDITER ||
+            (op == JSOP_ENDITER && lastOp == JSOP_IFNE && secondLastOp == JSOP_MOREITER)) {
+          use = (use < 0) ? use0 : use;
+          int inc = def - use;
 
-        if (js2mplDebug > 3)
-          cout << "line : " << lineNo << "  " << Util::getOpcodeName[op] << "  stackDepth: " << stackDepth << " == (u"
-               << use << ", d" << def << ")==>" << stackDepth + inc << endl;
-        stackDepth += inc;
-        if (stackDepth < 0) {
-          assert(false && "the spidermonkey emitted bytecode has issue in operator stack");
+          if (js2mplDebug > 3)
+            cout << "line : " << lineNo << "  " << Util::getOpcodeName[op] << "  stackDepth: " << stackDepth << " == (u"
+                 << use << ", d" << def << ")==>" << stackDepth + inc << endl;
+          stackDepth += inc;
+          if (stackDepth < 0) {
+            assert(false && "the spidermonkey emitted bytecode has issue in operator stack");
+          }
         }
       }
 
+      secondLastOp = lastOp;
       lastOp = op;
       pc = js::GetNextPc(pc);
     }

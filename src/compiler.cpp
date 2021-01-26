@@ -2073,7 +2073,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
   char linenoText[1040];  // for printing current src line number
   char srcText[1024];     // for content of current src line to be printed
 
-  JSOp lastOp;
+  JSOp lastOp = JSOP_NOP;
+  JSOp secondLastOp = JSOP_NOP;
   while (pc < pcend) {
     JSOp op = JSOp(*pc);  // Convert *pc to JSOP
     unsigned lineNo = js::PCToLineNumber(script, pc);
@@ -2691,8 +2692,10 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         break;
       }
       case JSOP_ENDITER: { /*78, 1, 1, 0*/
-        Pop();
-        opstack_->flag_has_iter = false;
+        if (lastOp == JSOP_IFNE && secondLastOp == JSOP_MOREITER) {
+          Pop();
+          opstack_->flag_has_iter = false;
+        }
         break;
       }
       case JSOP_DUP: { /*12, 1, 1, 2*/
@@ -3437,6 +3440,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
       }
     }  // End switch (op)
 
+    secondLastOp = lastOp;
     lastOp = op;
     prePc = pc;
     pc = js::GetNextPc(pc);
