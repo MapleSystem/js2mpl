@@ -343,9 +343,10 @@ BaseNode *JSCompiler::CompileOpUnary(JSOp opcode, BaseNode *val) {
           return val;
         }
       }
+      if (IsPrimitiveInteger(val->primType)) {
+        restype = GlobalTables::GetTypeTable().GetPrimType(val->primType);
+      }
       mop = OP_neg;
-      restype = GlobalTables::GetTypeTable().GetInt32();
-      val = CheckConvertToInt32(val);
       break;
     }
     default:
