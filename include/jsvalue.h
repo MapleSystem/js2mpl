@@ -52,7 +52,9 @@ enum js_builtin_id {  // must in accordance with js_value.h:js_builtin_id in the
   JS_BUILTIN_SYNTAXERROR_OBJECT,
   JS_BUILTIN_TYPEERROR_OBJECT,
   JS_BUILTIN_URIERROR_OBJECT,
-  JS_BUILTIN_COUNT
+  JS_BUILTIN_COUNT,
+  JS_BUILTIN_DATE,
+  JS_BUILTIN_DATE_PROTOTYPE
 };
 }  // namespace maple
 #endif

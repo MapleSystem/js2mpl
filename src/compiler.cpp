@@ -417,6 +417,8 @@ int32_t JSCompiler::GetBuiltinMethod(uint32_t argc, bool *needThis) {
             return INTRN_JS_NEW_ARR_ELEMS;
           }
           break;
+        case JS_BUILTIN_DATE:
+          return INTRN_JS_DATE;
         default:
           break;
       }
@@ -723,6 +725,8 @@ js_builtin_id JSCompiler::EcmaNameToId(char *name) {
     return JS_BUILTIN_JSON;
   } else if (!strcmp(name, "ReferenceError")) {
     return JS_BUILTIN_REFERENCEERROR_OBJECT;
+  } else if (!strcmp(name, "Date")) {
+    return JS_BUILTIN_DATE;
   } else {
     return JS_BUILTIN_COUNT;
   }
