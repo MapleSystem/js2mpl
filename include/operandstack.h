@@ -44,7 +44,7 @@ class OperandStack {
       PrintIndentation(js2mplDebugIndent);
       std::cout << "------stack depth increased to " << current_depth_ << "------- " << node << std::endl;
     }
-    assert(current_depth_ <= max_depth_);
+    //assert(current_depth_ <= max_depth_);
   }
 
   void *Pop() {
