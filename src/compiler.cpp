@@ -3064,7 +3064,9 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         break;
       }
       case JSOP_REGEXP: { /*160, 5, 0, 1*/
-        SIMULATESTACK(0, 1);
+        BaseNode *exprStr = CompileOpString(script->getAtom(pc));
+        BaseNode *bn = CompileGeneric1((MIRIntrinsicID)INTRN_JS_REGEXP, exprStr, false);
+        Push(bn);
         break;
       }
       case JSOP_ZERO: { /*62, 1, 0, 1*/
