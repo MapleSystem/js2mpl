@@ -2,6 +2,8 @@
 #include <string>
 #include "js/src/vm/ScopeObject.h"
 #include "../include/closure.h"
+#include "../include/jsvalue.h"
+#include "../include/compiler.h"
 
 namespace maple {
 
@@ -506,6 +508,28 @@ bool JSClosure::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *
         JSAtom *atom = script->getName(pc);
         char *name = Util::GetString(atom, mp_, jscontext_);
         UpdateFuncMod(name);
+        break;
+      }
+      case JSOP_BINDNAME: {
+        // workaround for Mozilla 31.2 generating JSOP_NAME instead of JSOP_GETGNAME (Mozilla 52).
+        JSAtom *atom = script->getName(pc);
+        
+        char *name = Util::GetString(atom, mp_, jscontext_);
+        JS_ASSERT(!name && "empty name");
+        js_builtin_id id = JSCompiler::EcmaNameToId(name);
+        if (id == JS_BUILTIN_COUNT) {
+          JSMIRFunction *func = funcstack_.top();
+          while (func) {
+            if (IsLocalVar(func, name)) {
+              break;
+            }
+            if (func == jsmain_) {
+              jsbuilder_->InsertGlobalName(name);
+              break;
+            }
+            func = func->scope->GetParentFunc();
+          }
+        }
         break;
       }
     }

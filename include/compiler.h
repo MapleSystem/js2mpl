@@ -122,7 +122,7 @@ class JSCompiler {
   AddrofNode *NodeFromSavingInATemp(BaseNode *expr);
   // Compile Functions.
   BaseNode *CompileOpConstValue(uint32_t jsvalue_tag, int32_t payload);
-  js_builtin_id EcmaNameToId(char *name);
+  static js_builtin_id EcmaNameToId(char *name);
   int32_t GetBuiltinStringId(const jschar *chars, size_t length);
   BaseNode *CompileBuiltinObject(char *name);
   BaseNode *CompileBuiltinMethod(int32_t idx, int arg_num, bool need_this);
