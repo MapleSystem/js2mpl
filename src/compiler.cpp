@@ -725,6 +725,8 @@ js_builtin_id JSCompiler::EcmaNameToId(char *name) {
     return JS_BUILTIN_JSON;
   } else if (!strcmp(name, "ReferenceError")) {
     return JS_BUILTIN_REFERENCEERROR_OBJECT;
+  } else if (!strcmp(name, "TypeError")) {
+    return JS_BUILTIN_TYPEERROR_CONSTRUCTOR;
   } else if (!strcmp(name, "Date")) {
     return JS_BUILTIN_DATE;
   } else {
