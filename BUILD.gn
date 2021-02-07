@@ -44,14 +44,14 @@ executable("js2mpl"){
         "${MOZJS_SOURCE_DIR}/js/public",
         "${MAPLE_ROOT}/mapleall/maple_util/include",
         "${MAPLE_ROOT}/mapleall/mempool/include",
-        "${MAPLE_ROOT}/zeiss/huawei_secure_c/include",
+        "${MAPLE_ROOT}/huawei_secure_c/include",
     ]
 
     deps = [
         "${MAPLE_ROOT}/mapleall/maple_ir:libmplir",
         "${MAPLE_ROOT}/mapleall/maple_util:libmplutil",
         "${MAPLE_ROOT}/mapleall/mempool:libmempool",
-        "${MAPLE_ROOT}/zeiss/huawei_secure_c:libHWSecureC",
+        "${MAPLE_ROOT}/huawei_secure_c:libHWSecureC",
     ]
 
     cflags_cc +=[
