@@ -1857,7 +1857,7 @@ BaseNode *JSCompiler::CheckConvertToBoolean(BaseNode *node) {
     return jsbuilder_->CreateExprTypeCvt(OP_cvt, GlobalTables::GetTypeTable().GetUInt1(), GlobalTables::GetTypeTable().GetPrimType(node->primType), node);
   }
   MapleVector<BaseNode *> sizeVec(mirModule->memPoolAllocator.Adapter());
-  sizeVec.push_back(node);
+  sizeVec.push_back(CheckConvertToJSValueType(node));
   return jsbuilder_->CreateExprIntrinsicop(INTRN_JS_BOOLEAN, GlobalTables::GetTypeTable().GetUInt1(), sizeVec);
 }
 
