@@ -729,8 +729,6 @@ js_builtin_id JSCompiler::EcmaNameToId(char *name) {
     return JS_BUILTIN_TYPEERROR_CONSTRUCTOR;
   } else if (!strcmp(name, "Date")) {
     return JS_BUILTIN_DATE;
-  } else if (!strcmp(name, "isNaN")) {
-    return JS_BUILTIN_ISNAN;
   } else {
     return JS_BUILTIN_COUNT;
   }
@@ -757,15 +755,15 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc, bool isRealJso
   if (!strcmp(name, "Infinity")) {
     return CompileOpConstValue(JSTYPE_INFINITY, 0);
   }
-  if (!strcmp(name, "isNaN" )) {
-    return CompileBuiltinObject("isNaN");
-  }
 #if 0
   if (!strcmp(name, "parseInt")) {
     assert(false && "Can not support parseInt.");
   }
   if (!strcmp(name, "parseFloat")) {
     assert(false && "Can not support parseFloat.");
+  }
+  if (!strcmp(name, "isNaN")) {
+    assert(false && "Can not support isNaN.");
   }
   if (!strcmp(name, "isFinite")) {
     assert(false && "Can not support isFinite.");
