@@ -3066,7 +3066,10 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         break;
       }
       case JSOP_REGEXP: { /*160, 5, 0, 1*/
-        BaseNode *exprStr = CompileOpString(script->getAtom(pc));
+        JSObject *obj = script->getRegExp(GET_UINT32_INDEX(pc));
+        JS::RootedValue objv(jscontext_, ObjectValue(*obj));
+        JSString *str = ValueToSource(jscontext_, objv);
+        BaseNode *exprStr = CompileOpString(str);
         BaseNode *bn = CompileGeneric1((MIRIntrinsicID)INTRN_JS_REGEXP, exprStr, false);
         Push(bn);
         break;
