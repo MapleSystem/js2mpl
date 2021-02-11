@@ -12,6 +12,8 @@
 #include "../include/eh.h"
 #include "../include/util.h"
 
+#define USE_THIS_PROP false
+
 namespace maple {
 class JSCompiler {
  private:
@@ -163,7 +165,7 @@ class JSCompiler {
   BaseNode *CompileOpBindName(JSAtom *atom);
   BaseNode *CompileOpCall(uint32_t argc);
   BaseNode *CompileOpNew(uint32_t argc);
-  BaseNode *CompileOpName(JSAtom *atom, jsbytecode *pc, bool isRealJsopName = false);
+  BaseNode *CompileOpName(JSScript *atom, jsbytecode *pc, bool isRealJsopName = false);
   StmtNode *CompileOpIfJump(JSOp op, BaseNode *cond, jsbytecode *pcend);
 
   LabelIdx CreateLabel(char *pref = NULL);
@@ -190,6 +192,11 @@ class JSCompiler {
   bool CollectInfo(JSScript *script, jsbytecode *pcstart, jsbytecode *pcend);
   // Finish job.
   void Finish();
+  void InitThisPropWithUndefined(bool, BaseNode *);
+  void CreateThisPropSetName(JSString *, BaseNode *, unsigned);
+  BaseNode* CreateThisPropGetName(JSString *str);
+  bool CompileThisPropOpSetName(JSString *str, BaseNode *val);
+  bool CompileOpThisDefVar(JSString *str);
 };  // class JSCompiler
 }  // namespace maple
 #endif  // JS2MPL_INCLUDE_COMPILER_H_

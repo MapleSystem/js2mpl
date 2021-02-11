@@ -78,6 +78,18 @@ MIRSymbol *JSCompiler::CreateTempJSValueTypeVar() {
   return CreateTempVar(jsvalueType);
 }
 
+void JSCompiler::InitThisPropWithUndefined(bool doit, BaseNode *bNode) {
+  if (doit) {
+    BaseNode *undefined = CompileOpConstValue(JSTYPE_UNDEFINED, 0);
+    // BaseNode *stmt = jsbuilder_->CreateStmtDassign(var, 0, undefined, linenum_);
+    MapleVector<BaseNode *> arguments(mirModule->memPoolAllocator.Adapter());
+    arguments.push_back(bNode);
+    arguments.push_back(undefined);
+    StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_SET_THIS_PROP_BY_NAME,  arguments, (const MIRSymbol *)NULL);
+    jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
+  }
+}
+
 void JSCompiler::InitWithUndefined(bool doit, MIRSymbol *var) {
   if (doit) {
     BaseNode *undefined = CompileOpConstValue(JSTYPE_UNDEFINED, 0);
@@ -746,7 +758,8 @@ BaseNode *JSCompiler::CompileBuiltinObject(char *name) {
 }
 
 // JSOP_NAME 59
-BaseNode *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc, bool isRealJsopName) {
+BaseNode *JSCompiler::CompileOpName(JSScript *script, jsbytecode *pc, bool isRealJsopName) {
+  JSAtom *atom = script->getAtom(GET_UINT32_INDEX(pc));
   char *name = Util::GetString(atom, mp_, jscontext_);
   JS_ASSERT(!name && "empty name");
 
@@ -816,6 +829,7 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc, bool isRealJso
   }
 
   BaseNode *bn = NULL;
+  bool isFuncName = false;
   if (scope_->IsFunction(name)) {
     DEBUGPRINT2(name);
     char *objname = Util::GetNameWithSuffix(name, "_obj_", mp_);
@@ -824,8 +838,42 @@ BaseNode *JSCompiler::CompileOpName(JSAtom *atom, jsbytecode *pc, bool isRealJso
       objFuncMap.push_back(p);
     }
     name = objname;
+    isFuncName = true;
   }
 
+  if (USE_THIS_PROP && !isFuncName) {
+    JSString *str = script->getAtom(pc);
+    bool created = true;
+    if (!strcmp(name, "print") || !strcmp(name, "$ERROR") || !strcmp(name, "SetCycleHeader") || IsCCall(name) ||
+        IsXcCall(name) || !strcmp(name, "isNaN")) {
+      created = false;
+      MIRSymbol *var = NULL;
+      if (jsbuilder_->IsGlobalName(name) || IsCCall(name) || IsXcCall(name)) {
+        var = jsbuilder_->GetGlobalDecl(name);
+        if (!var) {
+          var = jsbuilder_->CreateGlobalDecl(name, jsvalueType, kScGlobal);
+        }
+      } else {
+        var = jsbuilder_->GetLocalDecl(name);
+        if (!var) {
+          var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalueType);
+        }
+      }
+     StIdx stidx = var->GetStIdx();
+     DEBUGPRINT3(stidx.Idx());
+     return jsbuilder_->CreateExprDread(jsvalueType, var);
+    }
+    if (!isRealJsopName) {
+      InitThisPropWithUndefined(created, CompileOpString(str));
+    }
+    BaseNode *bn = CreateThisPropGetName(str);
+    if (!isRealJsopName && created && eh_->IsInEHrange(pc)) {
+      StmtNode *throwstmt = jsbuilder_->CreateStmtThrow(bn);
+      throwstmt->srcPosition.SetLinenum(linenum_);
+      jsbuilder_->AddStmtInCurrentFunctionBody(throwstmt);
+    }
+    return bn;
+  }
   // ??? Generate a dread node to pass the name.
   MIRSymbol *var = NULL;
   bool created = false;
@@ -1258,6 +1306,21 @@ BaseNode *JSCompiler::CompileOpBindName(JSAtom *atom) {
 
   return bn;
 }
+void JSCompiler::CreateThisPropSetName(JSString *str, BaseNode *val, unsigned lineNum) {
+  BaseNode *bNode = CompileOpString(str);
+  MapleVector<BaseNode *> arguments(mirModule->memPoolAllocator.Adapter());
+  arguments.push_back(bNode);
+  arguments.push_back(val);
+  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_SET_THIS_PROP_BY_NAME,  arguments, (const MIRSymbol *)NULL);
+  stmt->srcPosition.SetLinenum(lineNum);
+  jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
+}
+
+BaseNode* JSCompiler::CreateThisPropGetName(JSString *str) {
+  BaseNode *bNode = CompileOpString(str);
+  BaseNode *getThis = CompileGeneric1(INTRN_JSOP_GET_THIS_PROP_BY_NAME, bNode, false);
+  return getThis;
+}
 
 // JSOP_SETNAME 110
 bool JSCompiler::CompileOpSetName(JSAtom *atom, BaseNode *val) {
@@ -1275,6 +1338,20 @@ bool JSCompiler::CompileOpSetName(JSAtom *atom, BaseNode *val) {
   opstack_->ReplaceStackItemsWithTemps(this, var);
   jsbuilder_->CreateStmtDassign(var, 0, CheckConvertToJSValueType(val), linenum_);
   BaseNode *bn = jsbuilder_->CreateExprDread(jsvalueType, var);
+  Push(bn);
+  return true;
+}
+
+bool JSCompiler::CompileThisPropOpSetName(JSString *str, BaseNode *val) {
+  JSMIRFunction *func = funcstack_.top();
+
+  // if the stack is not empty, for each stack item that contains the
+  // variable being set, evaluate and store the result in a new temp and replace
+  // the stack items by the temp
+  // opstack_->ReplaceStackItemsWithTemps(this, var);
+  // jsbuilder_->CreateStmtDassign(var, 0, CheckConvertToJSValueType(val), linenum_);
+  CreateThisPropSetName(str, CheckConvertToJSValueType(val), linenum_);
+  BaseNode *bn = CreateThisPropGetName(str);
   Push(bn);
   return true;
 }
@@ -1334,6 +1411,16 @@ bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
 }
 
 // JSOP_DEFVAR 129
+bool JSCompiler::CompileOpThisDefVar(JSString *str) {
+  JSMIRFunction *fun = jsbuilder_->GetCurrentFunction();
+  DEBUGPRINT2((fun == funcstack_.top()));
+  DEBUGPRINT2(fun);
+  BaseNode *name = CompileOpString(str);
+  // BaseNode *val = CompileGeneric2(INTRN_JSOP_GET_THIS_PROP_BY_NAME, name, false);
+  InitThisPropWithUndefined(true, name);
+  return true;
+}
+
 bool JSCompiler::CompileOpDefVar(JSAtom *atom) {
   char *name = Util::GetString(atom, mp_, jscontext_);
   JS_ASSERT(!name && "empty name");
@@ -2906,7 +2993,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         // Actually I think it is a bug in SpiderMonkey.
         Pop();
         JSAtom *atom = script->getAtom(GET_UINT32_INDEX(pc));
-        BaseNode *bn = CompileOpName(atom, pc);
+        BaseNode *bn = CompileOpName(script, pc);
         Push(bn);
         break;
       }
@@ -2922,11 +3009,18 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
       }
       case JSOP_SETGNAME: { /*155, 5, 2, 1*/
         case JSOP_SETNAME:  /*111, 5, 2, 1*/
-          JSAtom *atom = script->getName(pc);
           BaseNode *val = Pop();
           Pop();  // pop the scope
-          if (!CompileOpSetName(atom, val)) {
-            return false;
+          if (USE_THIS_PROP) {
+            JSString *str = script->getAtom(pc);
+            if (!CompileThisPropOpSetName(str, val)) {
+              return false;
+            }
+          } else {
+            JSAtom *atom = script->getName(pc);
+            if (!CompileOpSetName(atom, val)) {
+              return false;
+            }
           }
           break;
       }
@@ -3000,13 +3094,13 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
       }
       case JSOP_GETGNAME: {   /*154, 5, 0, 1*/
         JSAtom *atom = script->getAtom(GET_UINT32_INDEX(pc));
-        BaseNode *bn = CompileOpName(atom, pc);
+        BaseNode *bn = CompileOpName(script, pc);
         Push(bn);
         break;
       }
       case JSOP_NAME: {   /*59, 5, 0, 1*/
         JSAtom *atom = script->getAtom(GET_UINT32_INDEX(pc));
-        BaseNode *bn = CompileOpName(atom, pc, true);
+        BaseNode *bn = CompileOpName(script, pc, true);
         Push(bn);
         break;
       }
@@ -3257,8 +3351,13 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
       }
       case JSOP_DEFVAR: { /*129, 5, 0, 0*/
         DEBUGPRINT2(JSOP_DEFVAR);
-        JSAtom *atom = script->getAtom(GET_UINT32_INDEX(pc));
-        CompileOpDefVar(atom);
+        if (USE_THIS_PROP) {
+          JSString *str = script->getAtom(pc);
+          CompileOpThisDefVar(str);
+        } else {
+          JSAtom *atom = script->getAtom(GET_UINT32_INDEX(pc));
+          CompileOpDefVar(atom);
+        }
         break;
       }
       case JSOP_DEFFUN: { /*127, 5, 0, 0*/
