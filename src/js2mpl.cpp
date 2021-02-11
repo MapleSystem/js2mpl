@@ -85,12 +85,12 @@ static void help() {
 }
 
 int main(int argc, const char *argv[]) {
-  if (!strcmp(argv[1], "-help")) {
-    help();
-    exit(1);
-  }
   if (argc < 2) {
     fprintf(stderr, "usage: js2mpl javaScript [-d=n | -plugin]\n");
+    exit(1);
+  }
+  if (!strcmp(argv[1], "-help")) {
+    help();
     exit(1);
   }
   bool isplugin = false;
