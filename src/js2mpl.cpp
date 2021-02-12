@@ -6,6 +6,8 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
+#include <unistd.h>
+#include <sys/types.h>
 #include "js/src/jsapi.h"
 #include "js/src/jscntxt.h"
 #include "../include/js2mpl.h"
@@ -194,20 +196,7 @@ static inline void SkipUTF8BOM(FILE *file) {
 
 static void myErrReproter(JSContext *cx, const char *message, JSErrorReport *report) {
   bool reportWarnings = false;
-  FILE *errFile = fopen("/tmp/error.log", "w");
-  js::PrintError(cx, errFile, message, report, reportWarnings);
-  fclose(errFile);
-
-  string line;
-  ifstream errStream("/tmp/error.log");
-  if (errStream.is_open()) {
-    while (getline(errStream, line)) {
-      cout << line << '\n';
-    }
-    errStream.close();
-  } else {
-    cout << "Unable to open file";
-  }
+  js::PrintError(cx, stdout, message, report, reportWarnings);
 }
 
 bool js2mpldriver(const char *fn, maple::MIRModule *module, JSMIRContext &jsmirctx) {
