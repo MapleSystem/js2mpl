@@ -743,6 +743,12 @@ js_builtin_id JSCompiler::EcmaNameToId(char *name) {
     return JS_BUILTIN_DATE;
   } else if (!strcmp(name, "isNaN")) {
     return JS_BUILTIN_ISNAN;
+  } else if (!strcmp(name, "NaN")) {
+    return JS_BUILTIN_NAN;
+  } else if (!strcmp(name, "Infinity")) {
+    return JS_BUILTIN_INFINITY;
+  } else if (!strcmp(name, "undefined")) {
+    return JS_BUILTIN_UNDEFINED;
   } else {
     return JS_BUILTIN_COUNT;
   }
@@ -2890,7 +2896,52 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         break;
       }
       case JSOP_DELNAME: { /*36, 5, 0, 1*/
-        SIMULATESTACK(0, 1);
+        // SIMULATESTACK(0, 1);
+        JSAtom *atom = script->getAtom(GET_UINT32_INDEX(pc));
+        char *name = Util::GetString(atom, mp_, jscontext_);
+        JS_ASSERT(!name && "empty name");
+        BaseNode *obj, *res;
+        bool isLocal = false;
+        // check if name is local variable on scope chain
+        JSMIRFunction *func = jsbuilder_->GetCurrentFunction();
+        while (func) {
+          if (func == jsmain_) {
+            break;
+          }
+          if (closure_->IsLocalVar(func, name)) {
+             JSString *str = script->getAtom(pc);
+             // BaseNode *nameIndex = CheckConvertToJSValueType(CompileOpString(str));
+             BaseNode *bn = CreateThisPropGetName(str);
+             res = CompileGeneric1(INTRN_JS_DELNAME, bn, true);
+             Push(res);
+             isLocal = true;
+             break;
+          }
+          func = func->scope->GetParentFunc();
+        }
+        if (isLocal) {
+          break;
+        }
+        // check if name is builtin obj
+        if (!strcmp(name, "NaN" )) {
+          obj = CompileBuiltinObject("NaN");
+          res = CompileGeneric1(INTRN_JS_DELNAME, obj, true);
+          Push(res);
+        } else if (!strcmp(name, "Infinity" )) {
+          obj = CompileBuiltinObject("Infinity");
+          res = CompileGeneric1(INTRN_JS_DELNAME, obj, true);
+          Push(res);
+        } else if (!strcmp(name, "undefined" )) {
+          obj = CompileBuiltinObject("undefined");
+          res = CompileGeneric1(INTRN_JS_DELNAME, obj, true);
+          Push(res);
+        } else {
+          // name is a global var
+          JSString *str = script->getAtom(pc);
+          BaseNode *bn = CreateThisPropGetName(str);
+          res = CompileGeneric1(INTRN_JS_DELNAME, bn, true);
+          Push(res);
+        }
         break;
       }
       case JSOP_DELPROP: { /*37, 5, 1, 1*/

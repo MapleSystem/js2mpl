@@ -58,6 +58,9 @@ enum js_builtin_id {  // must in accordance with js_value.h:js_builtin_id in the
   JS_BUILTIN_ISNAN,
   JS_BUILTIN_REGEXP,
   JS_BUILTIN_REGEXPPROTOTYPE,
+  JS_BUILTIN_NAN,
+  JS_BUILTIN_INFINITY,
+  JS_BUILTIN_UNDEFINED,
   JS_BUILTIN_COUNT,
 };
 }  // namespace maple
