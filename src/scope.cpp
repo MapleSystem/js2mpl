@@ -238,7 +238,9 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
             ScopeNode *snp = GetOrCreateSN(parent);
             name = Util::GetNameWithScopeSuffix(funcName, (uint32_t)snp, mp_);
           } else {
-            name = (char *)Util::GetSequentialName0("anonymous_func_", GetAnonyidx(jsfun), mp_);
+            //name = (char *)Util::GetSequentialName0("anonymous_func_", GetAnonyidx(jsfun), mp_);
+            name = (char *)Util::GetSequentialName0WithLineNo("anonymous_func_", GetAnonyidx(jsfun), mp_, lineNo);
+            SetAnonyidxLineNum(GetAnonyidx(jsfun), lineNo);
             pair<jsbytecode *, char *> p(pc, name);
             bytecodeAnonyFunc.push_back(p);
           }

@@ -131,8 +131,9 @@ class Scope {
   int stackDepth;
 
   map<JSFunction *, unsigned> funcToAnonyidx_;
+  map<unsigned, unsigned> anonyidxToLineNum_;
   vector<pair<char *, JSFunction *>> nameJSfunc_;
-
+;
  public:
   Scope(JSContext *context, JSScript *script, maple::MIRModule *module, JSMIRBuilder *jsbuilder)
     : mp_(module->memPool), anon_func_no_(0), stackDepth(0), ctx_(context), jsbuilder_(jsbuilder), jsscript_(script) {}
@@ -147,6 +148,14 @@ class Scope {
 
   void SetAnonyidx(JSFunction *jsfun, unsigned idx) {
     funcToAnonyidx_[jsfun] = idx;
+  }
+
+  unsigned GetAnonyidxLineNum(unsigned anonyidx) {
+    return anonyidxToLineNum_[anonyidx];
+  }
+
+  void SetAnonyidxLineNum(unsigned anonyidx, unsigned lineNum) {
+    anonyidxToLineNum_[anonyidx] = lineNum;
   }
 
   list<pair<char *, ScopeNode *>> scopeChain;

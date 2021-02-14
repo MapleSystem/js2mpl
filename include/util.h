@@ -27,6 +27,7 @@ class Util {
   static void AdjIndent(int n);
   static void SetIndent(int n);
   static char *GetString(JSAtom *atom, MemPool *mp, JSContext *ctx);
+  static char *GetSequentialName0WithLineNo(const char *prefix, uint32_t num, MemPool *mp, unsigned lineNo);
   static char *GetSequentialName0(const char *prefix, uint32_t num, MemPool *mp);
   static char *GetSequentialName(const char *prefix, uint32_t &num, MemPool *mp);
   static char *GetNameWithPrefix(const char *orig_name, const char *prefix, MemPool *mp);

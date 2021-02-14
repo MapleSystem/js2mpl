@@ -129,7 +129,10 @@ void JSClosure::AddFuncFormalsToEnvType(JSMIRFunction *func) {
     DEBUGPRINT2(jsfun);
     // anonymous function.
     if (!fname) {
-      funcname = (char *)Util::GetSequentialName0("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_);
+//      funcname = (char *)Util::GetSequentialName0("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_);
+      unsigned anonyIdx = scope_->GetAnonyidx(jsfun);
+      unsigned lineNum = scope_->GetAnonyidxLineNum(anonyIdx);
+      funcname = (char *)Util::GetSequentialName0WithLineNo("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_, lineNum);
     } else {
       JSMIRFunction *curFunc = jsbuilder_->GetCurrentFunction();
       ScopeNode *snp = curFunc->scope;
@@ -280,8 +283,11 @@ bool JSClosure::IsLocalVar(JSMIRFunction *func, char *name) {
     char *fname = Util::GetString(jsfun->name(), mp_, jscontext_);
     // anonymous function.
     if (!fname) {
-      funcname = (char *)Util::GetSequentialName0("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_);
-    } else {
+      // funcname = (char *)Util::GetSequentialName0("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_);
+      unsigned anonyIdx = scope_->GetAnonyidx(jsfun);
+      unsigned lineNum = scope_->GetAnonyidxLineNum(anonyIdx);
+      funcname = (char *)Util::GetSequentialName0WithLineNo("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_, lineNum);
+   } else {
       JSMIRFunction *curFunc = jsbuilder_->GetCurrentFunction();
       ScopeNode *snp;
       if (jsbuilder_->IsMain(curFunc)) {
@@ -326,7 +332,10 @@ char *JSClosure::GetLocalVar(JSMIRFunction *func, uint32_t localNo) {
     DEBUGPRINT2(jsfun);
     // set name for anonymous functions same as in jsscript_->funcLocals.
     if (!fname) {
-      funcname = (char *)Util::GetSequentialName0("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_);
+      // funcname = (char *)Util::GetSequentialName0("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_);
+      unsigned anonyIdx = scope_->GetAnonyidx(jsfun);
+      unsigned lineNum = scope_->GetAnonyidxLineNum(anonyIdx);
+      funcname = (char *)Util::GetSequentialName0WithLineNo("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_, lineNum);
     } else {
       JSMIRFunction *curFunc = jsbuilder_->GetCurrentFunction();
       ScopeNode *snp = curFunc->scope;
