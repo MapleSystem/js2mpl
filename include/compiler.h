@@ -195,7 +195,7 @@ class JSCompiler {
   void InitThisPropWithUndefined(bool, BaseNode *);
   void CreateThisPropSetName(JSString *, BaseNode *, unsigned);
   BaseNode* CreateThisPropGetName(JSString *str);
-  bool CompileThisPropOpSetName(JSString *str, BaseNode *val);
+  bool CompileThisPropOpSetName(JSScript *script, jsbytecode *pc, BaseNode *val);
   bool CompileOpThisDefVar(JSString *str);
 };  // class JSCompiler
 }  // namespace maple

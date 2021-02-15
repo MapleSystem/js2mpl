@@ -887,10 +887,8 @@ BaseNode *JSCompiler::CompileOpName(JSScript *script, jsbytecode *pc, bool isRea
 
   if (USE_THIS_PROP && !isFuncName) {
     JSString *str = script->getAtom(pc);
-    bool created = true;
     if (!strcmp(name, "print") || !strcmp(name, "$ERROR") || !strcmp(name, "SetCycleHeader") || IsCCall(name) ||
         IsXcCall(name) || !strcmp(name, "isNaN")) {
-      created = false;
       MIRSymbol *var = NULL;
       if (jsbuilder_->IsGlobalName(name) || IsCCall(name) || IsXcCall(name)) {
         var = jsbuilder_->GetGlobalDecl(name);
@@ -907,15 +905,20 @@ BaseNode *JSCompiler::CompileOpName(JSScript *script, jsbytecode *pc, bool isRea
      DEBUGPRINT3(stidx.Idx());
      return jsbuilder_->CreateExprDread(jsvalueType, var);
     }
+    /*
+    bool created = jsbuilder_->IsGlobalName(name);
     if (!isRealJsopName) {
       InitThisPropWithUndefined(created, CompileOpString(str));
     }
+    */
     BaseNode *bn = CreateThisPropGetName(str);
+    /*
     if (!isRealJsopName && created && eh_->IsInEHrange(pc)) {
       StmtNode *throwstmt = jsbuilder_->CreateStmtThrow(bn);
       throwstmt->srcPosition.SetLinenum(linenum_);
       jsbuilder_->AddStmtInCurrentFunctionBody(throwstmt);
     }
+    */
     return bn;
   }
   // ??? Generate a dread node to pass the name.
@@ -1386,17 +1389,30 @@ bool JSCompiler::CompileOpSetName(JSAtom *atom, BaseNode *val) {
   return true;
 }
 
-bool JSCompiler::CompileThisPropOpSetName(JSString *str, BaseNode *val) {
+bool JSCompiler::CompileThisPropOpSetName(JSScript *script, jsbytecode *pc, BaseNode *val) {
+  JSAtom *atom = script->getName(pc);
+  char *name = Util::GetString(atom, mp_, jscontext_);
+  JS_ASSERT(!name && "empty name");
   JSMIRFunction *func = funcstack_.top();
+  // MIRSymbol *var = closure_->GetSymbolFromEnclosingScope(func, name);
 
   // if the stack is not empty, for each stack item that contains the
   // variable being set, evaluate and store the result in a new temp and replace
   // the stack items by the temp
-  // opstack_->ReplaceStackItemsWithTemps(this, var);
-  // jsbuilder_->CreateStmtDassign(var, 0, CheckConvertToJSValueType(val), linenum_);
-  CreateThisPropSetName(str, CheckConvertToJSValueType(val), linenum_);
-  BaseNode *bn = CreateThisPropGetName(str);
-  Push(bn);
+  /*
+  if (var) {
+    opstack_->ReplaceStackItemsWithTemps(this, var);
+    jsbuilder_->CreateStmtDassign(var, 0, CheckConvertToJSValueType(val), linenum_);
+    BaseNode *bn = jsbuilder_->CreateExprDread(jsvalueType, var);
+    Push(bn);
+  } else {
+  */
+    JSString *str = script->getAtom(pc);
+    opstack_->ReplaceStackItemsWithThisOpTemps(this, str);
+    CreateThisPropSetName(str, CheckConvertToJSValueType(val), linenum_);
+    BaseNode *bn = CreateThisPropGetName(str);
+    Push(bn);
+  // }
   return true;
 }
 
@@ -3101,8 +3117,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
           BaseNode *val = Pop();
           Pop();  // pop the scope
           if (USE_THIS_PROP) {
-            JSString *str = script->getAtom(pc);
-            if (!CompileThisPropOpSetName(str, val)) {
+            if (!CompileThisPropOpSetName(script, pc, val)) {
               return false;
             }
           } else {

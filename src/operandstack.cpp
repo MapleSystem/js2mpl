@@ -18,4 +18,25 @@ void OperandStack::ReplaceStackItemsWithTemps(JSCompiler *compiler, MIRSymbol *v
   }
 }
 
+void OperandStack::ReplaceStackItemsWithThisOpTemps(JSCompiler *compiler, JSString *jsstr) {
+  for (unsigned i = 0; i < current_depth_; i++) {
+    BaseNode *cur = (BaseNode *)stack_[i];
+    if (cur == NULL) {
+      continue;
+    }
+    if (cur->op == OP_intrinsicop) {
+      IntrinsicopNode *intrinNode = static_cast<IntrinsicopNode *>(cur);
+      if (intrinNode->intrinsic == INTRN_JSOP_GET_THIS_PROP_BY_NAME) {
+        BaseNode *nmNode = compiler->CompileOpString(jsstr);
+        if(nmNode == intrinNode->nOpnd[0]) {
+          stack_[i] = (void *)compiler->NodeFromSavingInATemp(cur);
+        }
+      }
+    }
+    // if (cur->HasSymbol(compiler->mirModule, var)) {
+    //  stack_[i] = (void *)compiler->NodeFromSavingInATemp(cur);
+    // }
+  }
+}
+
 }  // namespace maple
