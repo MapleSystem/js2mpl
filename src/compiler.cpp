@@ -1317,8 +1317,10 @@ bool JSCompiler::CompileOpSetProp(BaseNode *obj, JSString *str, BaseNode *val) {
 }
 
 // JSOP_BINDNAME 110
-BaseNode *JSCompiler::CompileOpBindName(JSAtom *atom) {
+BaseNode *JSCompiler::CompileOpBindName(JSScript *script, jsbytecode *pc) {
+  JSAtom *atom = script->getAtom(GET_UINT32_INDEX(pc));
   char *name = Util::GetString(atom, mp_, jscontext_);
+  JSString *str = script->getAtom(pc);
   JS_ASSERT(!name && "empty name");
   BaseNode *builtinObject = CompileBuiltinObject(name);
   if (builtinObject) {
@@ -1328,6 +1330,7 @@ BaseNode *JSCompiler::CompileOpBindName(JSAtom *atom) {
   MIRSymbol *var;
   JSMIRFunction *func = funcstack_.top();
   bool created;
+  bool isGlbVar = false;
   // search the scope chain
   while (func) {
     if (closure_->IsLocalVar(func, name)) {
@@ -1340,7 +1343,12 @@ BaseNode *JSCompiler::CompileOpBindName(JSAtom *atom) {
     // function introduced a global var
     if (func == jsmain_) {
       var = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalueType);
-      InitWithUndefined(created, var);
+      if (USE_THIS_PROP) {
+        isGlbVar = true;
+        // InitThisPropWithUndefined(true, name);
+      } else {
+        InitWithUndefined(created, var);
+      }
       jsbuilder_->InsertGlobalName(name);
       break;
     }
@@ -1349,7 +1357,13 @@ BaseNode *JSCompiler::CompileOpBindName(JSAtom *atom) {
   }
 
   // ??? Generate a dread node to pass the name.
-  BaseNode *bn = jsbuilder_->CreateExprDread(jsvalueType, var);
+  BaseNode *bn = NULL;
+  if (USE_THIS_PROP && isGlbVar) {
+    // JS_NewStringCopyZ(jscontext_, );
+    bn = CreateThisPropGetName(str);
+  } else {
+    bn = jsbuilder_->CreateExprDread(jsvalueType, var);
+  }
 
   return bn;
 }
@@ -2900,8 +2914,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
       }
       case JSOP_BINDGNAME: { /*214, 5, 0, 1*/
         case JSOP_BINDNAME:  /*110, 5, 0, 1*/
-          JSAtom *atom = script->getName(pc);
-          BaseNode *node = CompileOpBindName(atom);
+          // JSAtom *atom = script->getName(pc);
+          BaseNode *node = CompileOpBindName(script, pc);
           Push(node);
           break;
       }

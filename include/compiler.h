@@ -162,7 +162,7 @@ class JSCompiler {
   BaseNode *CompileOpGetAliasedVar(JSAtom *atom);
   BaseNode *CompileOpSetAliasedVar(JSAtom *atom, BaseNode *val);
   BaseNode *CompileOpLambda(jsbytecode *pc, JSFunction *jsfun);
-  BaseNode *CompileOpBindName(JSAtom *atom);
+  BaseNode *CompileOpBindName(JSScript *script, jsbytecode *pc);
   BaseNode *CompileOpCall(uint32_t argc);
   BaseNode *CompileOpNew(uint32_t argc);
   BaseNode *CompileOpName(JSScript *atom, jsbytecode *pc, bool isRealJsopName = false);
