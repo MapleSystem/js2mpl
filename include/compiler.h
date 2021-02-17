@@ -12,7 +12,7 @@
 #include "../include/eh.h"
 #include "../include/util.h"
 
-#define USE_THIS_PROP false
+#define USE_THIS_PROP true
 
 namespace maple {
 class JSCompiler {
