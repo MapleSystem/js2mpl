@@ -26,7 +26,7 @@ enum __jstype {
 // Bit is set for large strs whose length > 255
 #define JSSTRING_LARGE ((uint8_t)0x04)
 
-enum js_builtin_id {  // must in accordance with js_value.h:js_builtin_id in the runtime
+enum js_builtin_id {  // must in accordance with js_value.h:js_builtin_id in the runtime (maple_engine/include/jsvalue.h)
   JS_BUILTIN_GLOBAL = 0,
   JS_BUILTIN_OBJECT,
   JS_BUILTIN_OBJECT_PROTOTYPE,
@@ -61,6 +61,13 @@ enum js_builtin_id {  // must in accordance with js_value.h:js_builtin_id in the
   JS_BUILTIN_NAN,
   JS_BUILTIN_INFINITY,
   JS_BUILTIN_UNDEFINED,
+  JS_BUILTIN_PARSEINT,
+  JS_BUILTIN_DECODEURI,
+  JS_BUILTIN_DECODEURICOMPONENT,
+  JS_BUILTIN_PARSEFLOAT,
+  JS_BUILTIN_ISFINITE,
+  JS_BUILTIN_ENCODEURI,
+  JS_BUILTIN_ENCODEURICOMPONENT,
   JS_BUILTIN_COUNT,
 };
 }  // namespace maple
