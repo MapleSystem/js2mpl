@@ -749,6 +749,10 @@ js_builtin_id JSCompiler::EcmaNameToId(char *name) {
     return JS_BUILTIN_INFINITY;
   } else if (!strcmp(name, "undefined")) {
     return JS_BUILTIN_UNDEFINED;
+  } else if (!strcmp(name, "RegExp")) {
+    return JS_BUILTIN_REGEXP;
+  } else if (!strcmp(name, "Error")) {
+    return JS_BUILTIN_ERROR_OBJECT;
   } else {
     return JS_BUILTIN_COUNT;
   }
@@ -775,9 +779,6 @@ BaseNode *JSCompiler::CompileOpName(JSScript *script, jsbytecode *pc, bool isRea
   }
   if (!strcmp(name, "Infinity")) {
     return CompileOpConstValue(JSTYPE_INFINITY, 0);
-  }
-  if (!strcmp(name, "isNaN" )) {
-    return CompileBuiltinObject("isNaN");
   }
 #if 0
   if (!strcmp(name, "parseInt")) {
@@ -810,10 +811,25 @@ BaseNode *JSCompiler::CompileOpName(JSScript *script, jsbytecode *pc, bool isRea
   if (!strcmp(name, "undefined")) {
     return CompileOpConstValue(JSTYPE_UNDEFINED, 0);
   }
-
-  BaseNode *builtinObject = CompileBuiltinObject(name);
-  if (builtinObject) {
-    return builtinObject;
+  
+  // check if name is a defined fuction in scope chain
+  JSMIRFunction *curFunc = jsbuilder_->GetCurrentFunction();
+  ScopeNode *sn = curFunc->scope;
+  bool isFunc = false;
+  while (sn) {
+    char *tmpName = Util::GetNameWithScopeSuffix(name, (uint32_t)sn, mp_);
+    if (scope_->IsFunction(tmpName)) {
+      isFunc = true;
+      break;
+    }
+    sn = sn->GetParent();
+  }
+  if (!isFunc) {
+    // Not a defined function in scope chain, now check if a builtin
+    BaseNode *builtinObject = CompileBuiltinObject(name);
+    if (builtinObject) {
+      return builtinObject;
+    }
   }
 
   // Generate unique name with suffix if not builtin function
