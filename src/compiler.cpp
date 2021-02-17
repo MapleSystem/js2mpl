@@ -753,6 +753,14 @@ js_builtin_id JSCompiler::EcmaNameToId(char *name) {
     return JS_BUILTIN_REGEXP;
   } else if (!strcmp(name, "Error")) {
     return JS_BUILTIN_ERROR_OBJECT;
+  } else if (!strcmp(name, "SyntaxError")) {
+    return JS_BUILTIN_SYNTAXERROR_OBJECT;
+  } else if (!strcmp(name, "URIError")) {
+    return JS_BUILTIN_URIERROR_OBJECT;
+  } else if (!strcmp(name, "RangeError")) {
+    return JS_BUILTIN_RANGEERROR_OBJECT;
+  } else if (!strcmp(name, "EvalError")) {
+    return JS_BUILTIN_EVALERROR_OBJECT;
   } else {
     return JS_BUILTIN_COUNT;
   }
