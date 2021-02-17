@@ -833,7 +833,7 @@ BaseNode *JSCompiler::CompileOpName(JSScript *script, jsbytecode *pc, bool isRea
   if (!strcmp(name, "undefined")) {
     return CompileOpConstValue(JSTYPE_UNDEFINED, 0);
   }
-  
+
   // check if name is a defined fuction in scope chain
   JSMIRFunction *curFunc = jsbuilder_->GetCurrentFunction();
   ScopeNode *sn = curFunc->scope;
@@ -904,6 +904,10 @@ BaseNode *JSCompiler::CompileOpName(JSScript *script, jsbytecode *pc, bool isRea
      StIdx stidx = var->GetStIdx();
      DEBUGPRINT3(stidx.Idx());
      return jsbuilder_->CreateExprDread(jsvalueType, var);
+    }
+    MIRSymbol *localVar = jsbuilder_->GetLocalDecl(name);
+    if (localVar) {
+     return jsbuilder_->CreateExprDread(jsvalueType, localVar);
     }
     /*
     bool created = jsbuilder_->IsGlobalName(name);
