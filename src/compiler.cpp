@@ -887,7 +887,7 @@ BaseNode *JSCompiler::CompileOpName(JSScript *script, jsbytecode *pc, bool isRea
 
   if (USE_THIS_PROP && !isFuncName) {
     JSString *str = script->getAtom(pc);
-    if (!strcmp(name, "print") || !strcmp(name, "$ERROR") || !strcmp(name, "SetCycleHeader") || IsCCall(name) ||
+    if (!strcmp(name, "require") || !strcmp(name, "print") || !strcmp(name, "$ERROR") || !strcmp(name, "SetCycleHeader") || IsCCall(name) ||
         IsXcCall(name) || !strcmp(name, "isNaN")) {
       MIRSymbol *var = NULL;
       if (jsbuilder_->IsGlobalName(name) || IsCCall(name) || IsXcCall(name)) {
