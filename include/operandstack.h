@@ -84,6 +84,7 @@ class OperandStack {
 
   void ReplaceStackItemsWithTemps(JSCompiler *compiler, MIRSymbol *var);
   void ReplaceStackItemsWithThisOpTemps(JSCompiler *compiler, JSString *jsstr);
+  bool HasTheSameGetThisProp(BaseNode *cur, BaseNode *destNode);
 };
 }  // namespace maple
 #endif  // JS2MPL_INCLUDE_OPERANDSTACK_H_

@@ -1003,8 +1003,7 @@ bool IsAsciiChars(const jschar *chars, uint32_t length) {
   return true;
 }
 
-// JSOP_STRING 61
-BaseNode *JSCompiler::CompileOpString(JSString *str) {
+BaseNode *JSCompiler::GetCompileOpString(JSString *str) {
   size_t length = 0;
   const jschar *chars = JS_GetInternedStringCharsAndLength(str, &length);
   int32_t id = GetBuiltinStringId(chars, length);
@@ -1020,6 +1019,17 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
   if (length >= pow(2, 16)) {
     assert(false && "Not Support too long string now");
   }
+  return NULL;
+}
+
+// JSOP_STRING 61
+BaseNode *JSCompiler::CompileOpString(JSString *str) {
+  BaseNode *prevBN = GetCompileOpString(str);
+  if (prevBN) {
+    return prevBN;
+  }
+  size_t length = 0;
+  const jschar *chars = JS_GetInternedStringCharsAndLength(str, &length);
   MIRType *unitType = IsAsciiChars(chars, length) ? GlobalTables::GetTypeTable().GetUInt8() : GlobalTables::GetTypeTable().GetUInt16();
   uint32_t pad = IsAsciiChars(chars, length) ? 4 : 2;
   uint32_t stringClass = IsAsciiChars(chars, length) ? 0 : JSSTRING_UNICODE;
@@ -1319,6 +1329,7 @@ bool JSCompiler::CompileOpSetProp(BaseNode *obj, JSString *str, BaseNode *val) {
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   return true;
 }
+
 
 // JSOP_BINDNAME 110
 BaseNode *JSCompiler::CompileOpBindName(JSScript *script, jsbytecode *pc) {

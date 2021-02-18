@@ -141,6 +141,7 @@ class JSCompiler {
   BaseNode *CompileOpGetProp(BaseNode *obj, JSString *name);
   BaseNode *CompileOpCallprop(BaseNode *obj, JSAtom *atom);
   BaseNode *CompileOpString(JSString *str);
+  BaseNode *GetCompileOpString(JSString *str);
   BaseNode *CompileOpNewIterator(BaseNode *bn, uint8_t flags);
   BaseNode *CompileOpIterNext(BaseNode *iterator);
   BaseNode *CompileOpMoreIterator(BaseNode *iterator);
