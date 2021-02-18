@@ -252,6 +252,7 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
 
           parent = funcstack_.top();
           SetSNParent(name, parent);
+          SetSNClosure(name);
           break;
         }
         case JSOP_GETALIASEDVAR:   /*136, 5, 0, 1*/
