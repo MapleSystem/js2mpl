@@ -78,6 +78,13 @@ MIRSymbol *JSCompiler::CreateTempJSValueTypeVar() {
   return CreateTempVar(jsvalueType);
 }
 
+void JSCompiler::InitThisPropAll(BaseNode *bNode) {
+  MapleVector<BaseNode *> arguments(mirModule->memPoolAllocator.Adapter());
+  arguments.push_back(bNode);
+  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_INIT_THIS_PROP_BY_NAME,  arguments, (const MIRSymbol *)NULL);
+  jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
+}
+
 void JSCompiler::InitThisPropWithUndefined(bool doit, BaseNode *bNode) {
   if (doit) {
     BaseNode *undefined = CompileOpConstValue(JSTYPE_UNDEFINED, 0);
@@ -1506,7 +1513,7 @@ bool JSCompiler::CompileOpThisDefVar(JSString *str) {
   DEBUGPRINT2(fun);
   BaseNode *name = CompileOpString(str);
   // BaseNode *val = CompileGeneric2(INTRN_JSOP_GET_THIS_PROP_BY_NAME, name, false);
-  InitThisPropWithUndefined(true, name);
+  InitThisPropAll(name);
   return true;
 }
 

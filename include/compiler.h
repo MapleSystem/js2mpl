@@ -194,6 +194,7 @@ class JSCompiler {
   // Finish job.
   void Finish();
   void InitThisPropWithUndefined(bool, BaseNode *);
+  void InitThisPropAll(BaseNode *);
   void CreateThisPropSetName(JSString *, BaseNode *, unsigned);
   BaseNode* CreateThisPropGetName(JSString *str);
   bool CompileThisPropOpSetName(JSScript *script, jsbytecode *pc, BaseNode *val);
