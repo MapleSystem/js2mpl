@@ -3001,8 +3001,9 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
           if (closure_->IsLocalVar(func, name)) {
              JSString *str = script->getAtom(pc);
              // BaseNode *nameIndex = CheckConvertToJSValueType(CompileOpString(str));
-             BaseNode *bn = CreateThisPropGetName(str);
-             res = CompileGeneric1(INTRN_JS_DELNAME, bn, true);
+             BaseNode *thisNode = CompileGeneric0(INTRN_JSOP_THIS, false);
+             BaseNode *bNode = CheckConvertToJSValueType(CompileOpString(str));
+             res = CompileGeneric2(INTRN_JS_DELNAME, thisNode, bNode, true);
              Push(res);
              isLocal = true;
              break;
@@ -3013,23 +3014,15 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
           break;
         }
         // check if name is builtin obj
-        if (!strcmp(name, "NaN" )) {
-          obj = CompileBuiltinObject("NaN");
-          res = CompileGeneric1(INTRN_JS_DELNAME, obj, true);
-          Push(res);
-        } else if (!strcmp(name, "Infinity" )) {
-          obj = CompileBuiltinObject("Infinity");
-          res = CompileGeneric1(INTRN_JS_DELNAME, obj, true);
-          Push(res);
-        } else if (!strcmp(name, "undefined" )) {
-          obj = CompileBuiltinObject("undefined");
-          res = CompileGeneric1(INTRN_JS_DELNAME, obj, true);
-          Push(res);
+        if (!strcmp(name, "NaN" ) || !strcmp(name, "Infinity")
+           || !strcmp(name, "undefined")) { // can't delete those things
+          Push(CompileOpConstValue(JSTYPE_BOOLEAN, false));
         } else {
           // name is a global var
+          BaseNode *thisNode = CompileGeneric0(INTRN_JSOP_THIS, false);
           JSString *str = script->getAtom(pc);
-          BaseNode *bn = CreateThisPropGetName(str);
-          res = CompileGeneric1(INTRN_JS_DELNAME, bn, true);
+          BaseNode *bNode = CheckConvertToJSValueType(CompileOpString(str));
+          res = CompileGeneric2(INTRN_JS_DELNAME, thisNode, bNode, true);
           Push(res);
         }
         break;
