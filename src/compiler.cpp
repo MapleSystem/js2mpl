@@ -2999,18 +2999,13 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
             break;
           }
           if (closure_->IsLocalVar(func, name)) {
-             JSString *str = script->getAtom(pc);
-             // BaseNode *nameIndex = CheckConvertToJSValueType(CompileOpString(str));
-             BaseNode *thisNode = CompileGeneric0(INTRN_JSOP_THIS, false);
-             BaseNode *bNode = CheckConvertToJSValueType(CompileOpString(str));
-             res = CompileGeneric2(INTRN_JS_DELNAME, thisNode, bNode, true);
-             Push(res);
              isLocal = true;
              break;
           }
           func = func->scope->GetParentFunc();
         }
-        if (isLocal) {
+        if (isLocal || jsbuilder_->GetLocalDecl(name)) {
+          Push(CompileOpConstValue(JSTYPE_BOOLEAN, false));
           break;
         }
         // check if name is builtin obj
