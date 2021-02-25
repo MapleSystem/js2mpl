@@ -120,4 +120,27 @@ char *Util::GetNameWithScopeSuffix(const char *origName, uint32_t scope, MemPool
   return name.c_str();
 }
 
+void Util::GetSrcFile(const char *fileName, std::vector<char *>&srcLines) {
+  FILE *f = fopen(fileName, "rb");
+  fseek(f, 0, SEEK_END);
+  long fsize = ftell(f);
+  fseek(f, 0, SEEK_SET);
+
+  char *buf = (char *)malloc(fsize + 1);
+  fread(buf, fsize, 1, f);
+  fclose(f);
+  buf[fsize] = 0;
+
+  srcLines.push_back(buf);
+  for (int i=0; i<fsize; ++i) {
+    if (buf[i] == 0xa) {
+      buf[i] = 0;
+      if (i+1 < fsize) {
+        srcLines.push_back(&buf[i+1]);
+      }
+    }
+  }
+}
+
+
 }  // namespace maple

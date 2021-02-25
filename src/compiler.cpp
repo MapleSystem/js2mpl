@@ -2261,9 +2261,12 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
   jsbytecode *pc = pcstart;
   unsigned lastLineNo = 0;
   unsigned lastLinePrinted = 0;
-  FILE *srcfileptr = script->sourceObject() ? fopen(script->filename(), "r") : NULL;  // for src line printing
   char linenoText[1040];  // for printing current src line number
-  char srcText[1024];     // for content of current src line to be printed
+
+  std::vector<char *> srcLines;
+  if (script->sourceObject()) {
+    Util::GetSrcFile(script->filename(), srcLines);
+  }
 
   JSOp lastOp = JSOP_NOP;
   JSOp secondLastOp = JSOP_NOP;
@@ -2278,19 +2281,15 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
     }
     if (lastLineNo != lineNo && mirModule->CurFunction() != NULL) {
       sprintf(linenoText, "LINE %s : %d: ", this->filename_, lineNo);
-
-      srcText[0] = 0;
-      if (lineNo > lastLinePrinted && srcfileptr != NULL) {
-        // read and skip source file to start of current line
-        for (unsigned i = lastLinePrinted + 1; i < lineNo; i++) {
-          fgets(srcText, sizeof(srcText), srcfileptr);
-        }
-        fgets(srcText, sizeof(srcText), srcfileptr);  // read current line
-        srcText[strlen(srcText) - 1] = 0;             // trim away the last \n character
-        lastLinePrinted = lineNo;
-      }
+      char *srcLine;
+      JS_ASSERT(lineNo-1 > srcLines.size() && "Bad lineNo");
+      if (lineNo-1 < srcLines.size()) {
+        srcLine = srcLines[lineNo-1];
+      } else if (lineNo-1 == srcLines.size()) {  // mimic old behavior to work with module.exports
+        srcLine = srcLines[srcLines.size()-1];
+      } 
       // Create Comments node, line no text and src text
-      StmtNode *cmntstmt = jsbuilder_->CreateStmtComment(strncat(linenoText, srcText, sizeof(linenoText)-strlen(linenoText)-1));
+      StmtNode *cmntstmt = jsbuilder_->CreateStmtComment(strncat(linenoText, srcLine, sizeof(linenoText)-strlen(linenoText)-1));
       cmntstmt->srcPosition.SetLinenum(lineNo);
       jsbuilder_->AddStmtInCurrentFunctionBody(cmntstmt);
       lastLineNo = lineNo;

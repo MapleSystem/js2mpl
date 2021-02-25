@@ -33,6 +33,7 @@ class Util {
   static char *GetNameWithPrefix(const char *orig_name, const char *prefix, MemPool *mp);
   static char *GetNameWithSuffix(const char *orig_name, const char *suffix, MemPool *mp);
   static char *GetNameWithScopeSuffix(const char *orig_name, uint32_t scope, MemPool *mp);
+  static void GetSrcFile(const char *fileName, std::vector<char *>&srcLines);
 };
 }  // namespace maple
 
