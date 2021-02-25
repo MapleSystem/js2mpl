@@ -1867,7 +1867,7 @@ SwitchNode *JSCompiler::CompileOpTableSwitch(BaseNode *opnd, int32_t len, JSScri
   pcjump = pc + len;
   mirlabel = GetorCreateLabelofPc(pcjump);
   defaultlabel = mirlabel;
-  BaseNode *cond = CheckConvertToInt32(opnd);
+  BaseNode *cond = CheckConvertToJSValueType(opnd);
 
   SwitchNode *stmt = jsbuilder_->CreateStmtSwitch(cond, defaultlabel, switchtable);
   stmt->srcPosition.SetLinenum(linenum_);
