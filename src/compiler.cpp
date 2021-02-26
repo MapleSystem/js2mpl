@@ -1983,8 +1983,20 @@ BaseNode *JSCompiler::CheckConvertToJSValueType(BaseNode *data) {
       toType = GlobalTables::GetTypeTable().GetDynbool();
       break;
     case PTY_i32:
-    case PTY_u32:
       toType = GlobalTables::GetTypeTable().GetDyni32();
+      if (data->op == OP_constval) {
+        ConstvalNode *cv = static_cast<ConstvalNode *>(data);
+        if (cv) {
+          cv->primType = PTY_dyni32;
+          MIRIntConst *ic = static_cast<MIRIntConst *>(cv->constVal);
+          ic->value = (int64_t)((uint64_t)JSTYPE_NUMBER << 32 | (ic->value & 0xffffffff));
+          cv->constVal = ic;
+          return cv;
+        }
+      }
+      break;
+    case PTY_u32:
+      toType = GlobalTables::GetTypeTable().GetDynf64();
       if (data->op == OP_constval) {
         ConstvalNode *cv = static_cast<ConstvalNode *>(data);
         if (cv) {
