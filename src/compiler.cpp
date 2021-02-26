@@ -299,7 +299,6 @@ BaseNode *JSCompiler::CompileOpBinary(JSOp opcode, BaseNode *op0, BaseNode *op1)
       break;
     case JSOP_MOD:
       mop = OP_rem;
-      restype = GlobalTables::GetTypeTable().GetInt32();
       break;
     case JSOP_ADD:
       return CompileGeneric2(INTRN_JSOP_ADD, CheckConvertToJSValueType(op0), CheckConvertToJSValueType(op1), true);
