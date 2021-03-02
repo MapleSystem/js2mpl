@@ -758,15 +758,15 @@ js_builtin_id JSCompiler::EcmaNameToId(char *name) {
   } else if (!strcmp(name, "RegExp")) {
     return JS_BUILTIN_REGEXP;
   } else if (!strcmp(name, "Error")) {
-    return JS_BUILTIN_ERROR_OBJECT;
+    return JS_BUILTIN_ERROR_CONSTRUCTOR;
   } else if (!strcmp(name, "SyntaxError")) {
-    return JS_BUILTIN_SYNTAXERROR_OBJECT;
+    return JS_BUILTIN_SYNTAXERROR_CONSTRUCTOR;
   } else if (!strcmp(name, "URIError")) {
-    return JS_BUILTIN_URIERROR_OBJECT;
+    return JS_BUILTIN_URIERROR_CONSTRUCTOR;
   } else if (!strcmp(name, "RangeError")) {
-    return JS_BUILTIN_RANGEERROR_OBJECT;
+    return JS_BUILTIN_RANGEERROR_CONSTRUCTOR;
   } else if (!strcmp(name, "EvalError")) {
-    return JS_BUILTIN_EVALERROR_OBJECT;
+    return JS_BUILTIN_EVALERROR_CONSTRUCTOR;
   } else if (!strcmp(name, "parseInt")) {
     return JS_BUILTIN_PARSEINT;
   } else if (!strcmp(name, "decodeURI")) {
@@ -2298,7 +2298,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         srcLine = srcLines[lineNo-1];
       } else if (lineNo-1 == srcLines.size()) {  // mimic old behavior to work with module.exports
         srcLine = srcLines[srcLines.size()-1];
-      } 
+      }
       // Create Comments node, line no text and src text
       StmtNode *cmntstmt = jsbuilder_->CreateStmtComment(strncat(linenoText, srcLine, sizeof(linenoText)-strlen(linenoText)-1));
       cmntstmt->srcPosition.SetLinenum(lineNo);
