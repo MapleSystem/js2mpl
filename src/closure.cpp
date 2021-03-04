@@ -214,14 +214,12 @@ JSMIRFunction *JSClosure::ProcessFunc(JSFunction *jsfun, char *funcname) {
             break;
           }
         }
+        std::string str(name);
         if (dup) {
-          std::string str = name+to_string(i);
-          MapleString argname(str, mirModule->memPool);
-          arguments.push_back(ArgPair(argname.c_str(), GlobalTables::GetTypeTable().GetDynany()));
-        } else {
-          MapleString argname(name, mirModule->memPool);
-          arguments.push_back(ArgPair(argname.c_str(), GlobalTables::GetTypeTable().GetDynany()));
+          str += to_string(i);
         }
+        MapleString argname(str, mirModule->memPool);
+        arguments.push_back(ArgPair(argname.c_str(), GlobalTables::GetTypeTable().GetDynany()));
       }
       break;
     }
