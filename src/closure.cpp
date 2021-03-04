@@ -206,8 +206,22 @@ JSMIRFunction *JSClosure::ProcessFunc(JSFunction *jsfun, char *funcname) {
       for (uint32 i = 0; i < jsfun->nargs(); i++) {
         char *name = Util::GetString(args[i], mp_, jscontext_);
         DEBUGPRINT3(name);
-        MapleString argname(name, mirModule->memPool);
-        arguments.push_back(ArgPair(argname.c_str(), GlobalTables::GetTypeTable().GetDynany()));
+        // check for duplicate formal arg name
+        bool dup = false;
+        for (uint32 j = 0; j < arguments.size(); ++j) {
+          if (strcmp(arguments[j].first.c_str(), name) == 0) {
+            dup = true;
+            break;
+          }
+        }
+        if (dup) {
+          std::string str = name+to_string(i);
+          MapleString argname(str, mirModule->memPool);
+          arguments.push_back(ArgPair(argname.c_str(), GlobalTables::GetTypeTable().GetDynany()));
+        } else {
+          MapleString argname(name, mirModule->memPool);
+          arguments.push_back(ArgPair(argname.c_str(), GlobalTables::GetTypeTable().GetDynany()));
+        }
       }
       break;
     }
