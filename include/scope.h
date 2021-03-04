@@ -108,7 +108,7 @@ class ScopeNode {
   }
 
   bool IsMain() {
-    return !strcmp(name_, "main");
+    return !strcmp(name_, "__jsmain");
   }
 
   void Dump();

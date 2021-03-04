@@ -55,7 +55,7 @@ class JSMIRBuilder : public MIRBuilder {
     if (jsmir_context_.isplugin_) {
       char *name = GetName(func);
       // if (name && strncmp(name, PLUGINPREFIX, 7) == 0) {
-      if (name && strcmp(name, "main") == 0) {
+      if (name && strcmp(name, "__jsmain") == 0) {
         return true;
       }
     }

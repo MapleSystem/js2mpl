@@ -151,7 +151,7 @@ int main(int argc, const char *argv[]) {
 
   // set entryfuncname_ in MIRModule
   if (!isplugin) {
-    themodule.entryFuncName = "main";
+    themodule.entryFuncName = "__jsmain";
   } else {  // entryfunc_ is the last function generated
     themodule.entryFuncName = GlobalTables::GetGsymTable().GetSymbolFromStIdx(themodule.functionList.back()->stIdx.Idx())->GetName();
   }

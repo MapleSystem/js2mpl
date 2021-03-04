@@ -14,11 +14,11 @@ JSMIRFunction *JSMIRBuilder::CreateJSMain() {
   JSMIRFunction *jsmain = NULL;
   if (IsPlugin()) {
     // jsmain = GetOrCreateFunction(GetWrapperName(), GlobalTables::GetTypeTable().GetDynany(), arguments, false);
-    jsmain = GetOrCreateFunction("main", GlobalTables::GetTypeTable().GetDynany(), arguments, false);
+    jsmain = GetOrCreateFunction("__jsmain", GlobalTables::GetTypeTable().GetDynany(), arguments, false);
     SetCurrentFunction(jsmain);
   } else {
     MapleVector<BaseNode *> argsVec(mirModule->memPoolAllocator.Adapter());
-    jsmain = GetOrCreateFunction("main", GlobalTables::GetTypeTable().GetInt32(), arguments, false);
+    jsmain = GetOrCreateFunction("__jsmain", GlobalTables::GetTypeTable().GetInt32(), arguments, false);
     SetCurrentFunction(jsmain);
     IntrinsiccallNode *stmt = CreateStmtIntrinsicCallAssigned((MIRIntrinsicID)INTRN_JS_INIT_CONTEXT, argsVec, (const MIRSymbol *)NULL);
     AddStmtInCurrentFunctionBody(stmt);
@@ -57,7 +57,7 @@ void JSMIRBuilder::Init() {
   // Now we create the main function as jsmain.
   // If the script is called by another program, the name should be jsmain.
   jsmain_ = CreateJSMain();
-  char *name = "main";
+  char *name = "__jsmain";
   if (IsPlugin()) {
    // name = GetWrapperName();
   }

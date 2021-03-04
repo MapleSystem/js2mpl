@@ -30,7 +30,7 @@ void JSCompiler::Init() {
   jsvalue_ptr_ = jsbuilder_->jsvalue_ptr_;
 
   // push main() on funcstack_
-  char *name = "main";
+  char *name = "__jsmain";
   if (jsbuilder_->IsPlugin()) {
     // name = jsbuilder_->GetWrapperName();
   }
@@ -1753,7 +1753,7 @@ void JSCompiler::CloseFuncBookKeeping() {
 
     if (funcstack_.size() == 1) {
       DEBUGPRINT0;
-      DEBUGPRINTfunc("main");
+      DEBUGPRINTfunc("__jsmain");
     }
   }
 }

@@ -461,7 +461,7 @@ void JSClosure::CloseFuncBookKeeping() {
 void JSClosure::Init() {
   jsmain_ = jsbuilder_->jsmain_;
   funcstack_.push(jsmain_);
-  char *name = "main";
+  char *name = "__jsmain";
   if (jsbuilder_->IsPlugin()) {
     // name = jsbuilder_->GetWrapperName();
   }

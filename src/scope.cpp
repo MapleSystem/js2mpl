@@ -198,7 +198,7 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
 
   } else {
     if (script == jsscript_) {
-      char *name = "main";
+      char *name = "__jsmain";
       if (jsbuilder_->IsPlugin()) {
         // name = jsbuilder_->GetWrapperName();
       }

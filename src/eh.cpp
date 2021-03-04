@@ -54,7 +54,7 @@ bool EH::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcend) 
   JSFunction *jsfun;
 
   if (script == jsscript_) {
-    char *name = "main";
+    char *name = "__jsmain";
     if (jsbuilder_->IsPlugin()) {
       // name = jsbuilder_->GetWrapperName();
     }
