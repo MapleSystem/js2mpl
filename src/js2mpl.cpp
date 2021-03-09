@@ -247,7 +247,7 @@ bool js2mpldriver(const char *fn, maple::MIRModule *module, JSMIRContext &jsmirc
     ///////////////////////////////////////////////
     DEBUGPRINTs("\n\n =====> Pass To Set Up JSMIRBuilder <===\n");
     maple::JSMIRBuilder jsbuilder(module, jsmirctx);
-    jsbuilder.Init();
+    jsbuilder.Init(script->strict());
 
     maple::OperandStack *opstack = module->memPool->New<maple::OperandStack>(50);
 

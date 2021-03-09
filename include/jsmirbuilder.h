@@ -98,9 +98,9 @@ class JSMIRBuilder : public MIRBuilder {
 
   // Initializations.
   MIRType *CreateJSValueType();
-  JSMIRFunction *CreateJSMain();
+  JSMIRFunction *CreateJSMain(bool);
   void InitBuiltinMethod();
-  void Init();
+  void Init(bool);
 
   bool IsMain(JSMIRFunction *func) {
     return func == jsmain_;
