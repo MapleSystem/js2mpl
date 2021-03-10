@@ -1478,6 +1478,9 @@ bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
     uint32_t nargs = (uint32_t)(uint8_t)jsfun->nargs();
     uint32_t length = nargs;
     uint32_t flag = jsfun->strict() ? JSFUNCPROP_STRICT | JSFUNCPROP_USERFUNC : JSFUNCPROP_USERFUNC;
+    if (jsfun->strict()) {
+      mfun->SetAttr(FUNCATTR_strict);
+    }
     uint32_t attrs = vargP << 24 | nargs << 16 | length << 8 | flag;
     BaseNode *funcNode =
       CompileGeneric3(INTRN_JS_NEW_FUNCTION, ptr, jsbuilder_->GetConstInt(0), jsbuilder_->GetConstUInt32(attrs), true);
