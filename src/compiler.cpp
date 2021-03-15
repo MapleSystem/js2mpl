@@ -840,58 +840,48 @@ BaseNode *JSCompiler::CompileOpName(JSScript *script, jsbytecode *pc, bool isRea
     return CompileOpConstValue(JSTYPE_UNDEFINED, 0);
   }
 
-  // check if name is a defined fuction in scope chain
+  // check if name is a function defined within scope chain
   JSMIRFunction *curFunc = jsbuilder_->GetCurrentFunction();
   ScopeNode *sn = curFunc->scope;
   bool isFunc = false;
+  char *mangledName = Util::GetNameWithScopeSuffix(name, (uint32_t)sn, mp_);
   while (sn) {
-    char *tmpName = Util::GetNameWithScopeSuffix(name, (uint32_t)sn, mp_);
-    if (scope_->IsFunction(tmpName)) {
+    mangledName = Util::GetNameWithScopeSuffix(name, (uint32_t)sn, mp_);
+    if (scope_->IsFunction(mangledName)) {
       isFunc = true;
       break;
     }
     sn = sn->GetParent();
   }
   if (!isFunc) {
-    // Not a defined function in scope chain, now check if a builtin
+    // if name is not a function in scope chain, check if a builtin
     BaseNode *builtinObject = CompileBuiltinObject(name);
     if (builtinObject) {
       return builtinObject;
     }
   }
-
-  // Generate unique name with suffix if not builtin function
-  if (strcmp(name, "print") &&
-      strcmp(name, "$ERROR") &&
-      strcmp(name, "SetCycleHeader") &&
+  // Use mangled name if is a function but not a Maple reserved function
+  if (isFunc &&
+      strcmp(name, "print") != 0 &&
+      strcmp(name, "$ERROR")!= 0 &&
+      strcmp(name, "SetCycleHeader") != 0 &&
       !IsCCall(name) &&
       !IsXcCall(name)) {
-    JSMIRFunction *curFunc = jsbuilder_->GetCurrentFunction();
-    ScopeNode *sn = curFunc->scope;
-    while (sn) {
-      char *tmpName = Util::GetNameWithScopeSuffix(name, (uint32_t)sn, mp_);
-      if (scope_->IsFunction(tmpName)) {
-        name = tmpName;
-        break;
-      }
-      sn = sn->GetParent();
-    }
+    name = mangledName;
   }
-
   BaseNode *bn = NULL;
-  bool isFuncName = false;
-  if (scope_->IsFunction(name)) {
+  if (isFunc) {
     DEBUGPRINT2(name);
+    // create function_obj for invokation
     char *objname = Util::GetNameWithSuffix(name, "_obj_", mp_);
     if (!GetFuncName(objname)) {
       std::pair<char *, char *> p(objname, name);
       objFuncMap.push_back(p);
     }
     name = objname;
-    isFuncName = true;
   }
 
-  if (USE_THIS_PROP && !isFuncName) {
+  if (USE_THIS_PROP && !isFunc) {
     JSString *str = script->getAtom(pc);
     if (!strcmp(name, "require") || !strcmp(name, "print") || !strcmp(name, "$ERROR") || !strcmp(name, "SetCycleHeader") || IsCCall(name) ||
         IsXcCall(name) || !strcmp(name, "isNaN")) {
