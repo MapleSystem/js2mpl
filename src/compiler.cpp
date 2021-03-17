@@ -1037,14 +1037,12 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
   }
   size_t length = 0;
   bool isAsciiChars = false;
-  MIRType *unitType = GlobalTables::GetTypeTable().GetUInt16();
   const jschar *chars = JS_GetInternedStringCharsAndLength(str, &length);
 
   std::u16string utf16;
   if (IsAsciiChars(chars, length)) {
     if (IsStdAsciiChars(chars,length)) {
       isAsciiChars = true;
-      unitType = GlobalTables::GetTypeTable().GetUInt8();
     } else {
       // build single byte string and check for UTF8 to 16 mapping
       std::string utf8(length, 0);
@@ -1062,18 +1060,14 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
         chars  = utf16.data();
         length = utf16.length();
         if (IsAsciiChars(utf16.data(), utf16.length())) {
-          // if high bytes of mapped string all 0, set flags to return 8 bit string.
-          unitType = GlobalTables::GetTypeTable().GetUInt8();
-          isAsciiChars = true;
+          isAsciiChars = true; // if high bytes of mapped string all 0, flag to return 8 bit string
         }
       } else {
-        // unable to convert, give up and just pass the string unmodified but as 8 bit string
-        unitType = GlobalTables::GetTypeTable().GetUInt8();
-        isAsciiChars = true;
+        isAsciiChars = true;   // unable to convert. pass string unmodified but as 8 bit chars
       }
     }
   }
-
+  MIRType *unitType = isAsciiChars ? GlobalTables::GetTypeTable().GetUInt8() : GlobalTables::GetTypeTable().GetUInt16();
   uint32_t pad = isAsciiChars ? 4 : 2;
   uint32_t stringClass = isAsciiChars ? 0 : JSSTRING_UNICODE;
 
