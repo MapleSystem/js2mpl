@@ -554,7 +554,12 @@ BaseNode *JSCompiler::CompileBuiltinMethod(int32_t idx, int argNum, bool needThi
   if ((MIRIntrinsicID)idx == INTRN_JS_NUMBER || (MIRIntrinsicID)idx == INTRN_JS_STRING) {
     BaseNode *argument;
     if (argNum == 0) {
-      argument = CompileOpConstValue(JSTYPE_NONE, 0);
+      if ((MIRIntrinsicID)idx == INTRN_JS_STRING) {
+        BaseNode *bn = CompileGeneric1((MIRIntrinsicID)INTRN_JS_GET_BISTRING, jsbuilder_->GetConstUInt32(JSBUILTIN_STRING_EMPTY), false);
+        argument = CheckConvertToJSValueType(bn);
+      } else {
+        argument = CompileOpConstValue(JSTYPE_NONE, 0);
+      }
     } else {
       BaseNode *bn = tmpStack.top();
       argument = CheckConvertToJSValueType(bn);
