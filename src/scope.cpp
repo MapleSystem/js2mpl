@@ -245,7 +245,7 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
             bytecodeAnonyFunc.push_back(p);
           }
           DEBUGPRINT3(name);
-          funcNames_.push_back(name);
+          if (op != JSOP_LAMBDA) funcNames_.push_back(name);
           SetJSFunc(name, jsfun);
           pair<JSScript *, char *> p(scr, name);
           scriptstack_.push(p);
