@@ -2846,11 +2846,9 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
               INTRN_JS_GET_BISTRING, jsbuilder_->GetConstUInt32((uint32_t)JSBUILTIN_STRING_EXPORTS), false));
             BaseNode *retExpr = CompileGeneric2(INTRN_JSOP_GETPROP, node1, node2, true);
             jsbuilder_->CreateStmtReturn(retExpr, false, linenum_);
-          } else if (func == jsmain_) {
+          } else {
             BaseNode *undefined = CompileOpConstValue(JSTYPE_UNDEFINED, 0);
             jsbuilder_->CreateStmtReturn(undefined, false, linenum_);
-          } else {
-            jsbuilder_->CreateStmtReturn(jsbuilder_->GetConstInt(0), false, linenum_);
           }
         }
         break;
