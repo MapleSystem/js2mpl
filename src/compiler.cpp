@@ -931,17 +931,34 @@ BaseNode *JSCompiler::CompileOpName(JSScript *script, jsbytecode *pc, bool isRea
   // ??? Generate a dread node to pass the name.
   MIRSymbol *var = NULL;
   bool created = false;
-  if (jsbuilder_->IsGlobalName(name) || IsCCall(name) || IsXcCall(name)) {
-    var = jsbuilder_->GetGlobalDecl(name);
+  if (isFunc) {
+    // if the name is a function object, check if there is
+    // a local declaration for it in current function. If none, check
+    // if there is a global declaration for it. If none, it means
+    // the current function is referencing a name that is a function
+    // whose defintion is after current function, so we create a global
+    // declaration here, in order to generate the dread (below) for the name.
+    var = jsbuilder_->GetLocalDecl(name);
+    if (!var) {
+      var = jsbuilder_->GetGlobalDecl(name);
+    }
     if (!var) {
       var = jsbuilder_->CreateGlobalDecl(name, jsvalueType, kScGlobal);
       created = true;
     }
   } else {
-    var = jsbuilder_->GetLocalDecl(name);
-    if (!var) {
-      var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalueType);
-      created = true;
+    if (jsbuilder_->IsGlobalName(name) || IsCCall(name) || IsXcCall(name)) {
+      var = jsbuilder_->GetGlobalDecl(name);
+      if (!var) {
+        var = jsbuilder_->CreateGlobalDecl(name, jsvalueType, kScGlobal);
+        created = true;
+      }
+    } else {
+      var = jsbuilder_->GetLocalDecl(name);
+      if (!var) {
+        var = jsbuilder_->GetOrCreateLocalDecl(name, jsvalueType);
+        created = true;
+      }
     }
   }
 
@@ -1508,7 +1525,8 @@ bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
   assert(jsfun && "not a jsfunction");
 
   char *name = Util::GetNameWithSuffix(funcname, "_obj_", mp_);
-  if (jsbuilder_->GetStringIndex(name).GetIdx() == 0) {
+  if (jsbuilder_->GetStringIndex(name).GetIdx() == 0 ||
+      jsbuilder_->GetGlobalDecl(name)) {  // check if function is referenced before defined
     DEBUGPRINT2(name);
     uint32_t vargP = 0;
     uint32_t nargs = (uint32_t)(uint8_t)jsfun->nargs();
