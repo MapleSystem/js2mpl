@@ -359,7 +359,9 @@ BaseNode *JSCompiler::CompileOpUnary(JSOp opcode, BaseNode *val) {
         if(((uint64)intconst->value) >> 32 == JSTYPE_INFINITY) {
           // -infinity to be represented by 0xb00000001
           //  infinity to be represented by 0xb00000000
-          intconst->value = (int64_t)((uint64_t)(uint32_t)JSTYPE_INFINITY << 32 | 1);
+          uint32_t sign = ((uint64)intconst->value) & 0x00000000ffffffff;
+          sign = sign? 0: 1;
+          intconst->value = (int64_t)((uint64_t)(uint32_t)JSTYPE_INFINITY << 32 | sign);
           return val;
         }
       }
