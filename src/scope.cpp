@@ -192,8 +192,11 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
         case JSOP_BINDNAME:
         case JSOP_SETNAME:
         case JSOP_DELNAME:
+        case JSOP_INITPROP:
         case JSOP_GETPROP:
         case JSOP_SETPROP:
+        case JSOP_DEFVAR:
+        case JSOP_STRING:
         {
           atom = script->getAtom(GET_UINT32_INDEX(pc));
           name = Util::GetString(atom, mp_, ctx_);
