@@ -183,8 +183,44 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
       JSOp op = JSOp(*pc);
       JSScript *scr;
       unsigned lineNo = js::PCToLineNumber(script, pc);
+      JSFunction *jsfun;
+      JSAtom *atom;
+      char *name = NULL;
 
-      cout << right << setw(5) << lineNo << " " << Util::getOpcodeName[op] << endl;
+      switch(op) {
+        case JSOP_NAME:
+        case JSOP_BINDNAME:
+        case JSOP_SETNAME:
+        case JSOP_DELNAME:
+        case JSOP_GETPROP:
+        case JSOP_SETPROP:
+        {
+          atom = script->getAtom(GET_UINT32_INDEX(pc));
+          name = Util::GetString(atom, mp_, ctx_);
+          break;
+        }
+        case JSOP_DEFFUN: {
+          jsfun = script->getFunction(GET_UINT32_INDEX(pc));
+          atom = jsfun->displayAtom();
+          name = Util::GetString(atom, mp_, ctx_);
+          break;
+        }
+        case JSOP_LAMBDA: {
+          jsfun = script->getFunction(GET_UINT32_INDEX(pc));
+          atom = jsfun->displayAtom();
+          if (!jsfun->hasGuessedAtom()) {
+            name = Util::GetString(atom, mp_, ctx_);
+          }
+          break;
+        }
+        default:
+          break;
+      }
+      if (name) {
+        cout << right << setw(5) << lineNo << " " << left << setw(16) << Util::getOpcodeName[op] << "\"" << name << "\"" << endl;
+      } else {
+        cout << right << setw(5) << lineNo << " " << Util::getOpcodeName[op] << endl;
+      }
       switch (op) {
         case JSOP_DEFFUN:   /*127, 5, 0, 0*/
         case JSOP_LAMBDA: { /*130, 5, 0, 1*/
