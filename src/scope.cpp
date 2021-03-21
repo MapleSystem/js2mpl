@@ -1,4 +1,7 @@
 /// Copyright [year] <Copyright Owner>
+#include <stdio.h>
+#include <stdlib.h>
+#include "js/src/vm/ScopeObject.h"
 #include "../include/scope.h"
 
 namespace maple {
@@ -185,7 +188,8 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
       unsigned lineNo = js::PCToLineNumber(script, pc);
       JSFunction *jsfun;
       JSAtom *atom;
-      char *name = NULL;
+      const char *name = NULL;
+      bool isNum = false;
 
       switch(op) {
         case JSOP_NAME:
@@ -216,11 +220,37 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
           }
           break;
         }
+        case JSOP_GETLOCAL:
+        case JSOP_SETLOCAL:
+        {
+          uint32_t i = GET_LOCALNO(pc);
+          std::string str = to_string(i);
+          name = str.c_str();
+          isNum = true;
+          break;
+        }
+        case JSOP_CALL: {
+          uint32_t argc = GET_ARGC(pc);
+          std::string str = to_string(argc);
+          name = str.c_str();
+          isNum = true;
+          break;
+        }
+        case JSOP_GETALIASEDVAR:
+        case JSOP_SETALIASEDVAR:
+        {
+          JSAtom *atom = ScopeCoordinateName(ctx_->runtime()->scopeCoordinateNameCache, script, pc);
+          name = Util::GetString(atom, mp_, ctx_);
+          break;
+        }
         default:
           break;
       }
-      if (name) {
-        cout << right << setw(5) << lineNo << " " << left << setw(16) << Util::getOpcodeName[op] << "\"" << name << "\"" << endl;
+      if (isNum) {
+        cout << right << setw(5) << lineNo << " " << left << setw(20) << Util::getOpcodeName[op] << name << endl;
+      }
+      else if (name) {
+        cout << right << setw(5) << lineNo << " " << left << setw(20) << Util::getOpcodeName[op] << "\"" << name << "\"" << endl;
       } else {
         cout << right << setw(5) << lineNo << " " << Util::getOpcodeName[op] << endl;
       }
