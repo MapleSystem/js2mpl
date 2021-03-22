@@ -1651,7 +1651,7 @@ BaseNode *JSCompiler::CompileOpLambda(jsbytecode *pc, JSFunction *jsfun) {
 }
 
 // JSOP_GETALIASEDVAR 136
-int JSCompiler::ProcessAliasedVar(JSAtom *atom, MIRType *&envPtr, BaseNode *&envNode, int &depth) {
+int JSCompiler::ProcessAliasedVar(JSAtom *atom, MIRType *&envPtr, BaseNode *&envNode, int &depth, bool isSet) {
   JSMIRFunction *func = funcstack_.top();
   DEBUGPRINT3(func);
   char *name = Util::GetString(atom, mp_, jscontext_);
@@ -1737,7 +1737,12 @@ int JSCompiler::ProcessAliasedVar(JSAtom *atom, MIRType *&envPtr, BaseNode *&env
   }
 
   DEBUGPRINT2(depth);
-
+  if (idx && isSet) {
+    // if the stack is not empty, for each stack item that contains the
+    // variable being set, evaluate and store the result in a new temp and replace
+    // the stack items by the temp
+    opstack_->ReplaceStackItemsWithTemps(this, envVar);
+  }
   return idx;
 }
 
@@ -1746,7 +1751,7 @@ BaseNode *JSCompiler::CompileOpGetAliasedVar(JSAtom *atom) {
   BaseNode *envNode;
   int depth = 0;
 
-  int idx = ProcessAliasedVar(atom, envPtr, envNode, depth);
+  int idx = ProcessAliasedVar(atom, envPtr, envNode, depth, false);
 
   BaseNode *bn = NULL;
   if (idx) {
@@ -1768,7 +1773,7 @@ BaseNode *JSCompiler::CompileOpSetAliasedVar(JSAtom *atom, BaseNode *val) {
   BaseNode *envNode;
   int depth = 0;
 
-  int idx = ProcessAliasedVar(atom, envPtr, envNode, depth);
+  int idx = ProcessAliasedVar(atom, envPtr, envNode, depth, true);
 
   StmtNode *bn = NULL;
   if (idx) {

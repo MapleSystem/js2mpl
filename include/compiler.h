@@ -159,7 +159,7 @@ class JSCompiler {
   bool CompileOpInitPropSetter(BaseNode *obj, JSString *name, BaseNode *val);
   bool CompileOpInitElemGetter(BaseNode *obj, BaseNode *index, BaseNode *val);
   bool CompileOpInitElemSetter(BaseNode *obj, BaseNode *index, BaseNode *val);
-  int ProcessAliasedVar(JSAtom *atom, MIRType *&env_ptr, BaseNode *&base, int &depth);
+  int ProcessAliasedVar(JSAtom *atom, MIRType *&env_ptr, BaseNode *&base, int &depth, bool isSet);
   BaseNode *CompileOpGetAliasedVar(JSAtom *atom);
   BaseNode *CompileOpSetAliasedVar(JSAtom *atom, BaseNode *val);
   BaseNode *CompileOpLambda(jsbytecode *pc, JSFunction *jsfun);
