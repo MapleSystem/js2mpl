@@ -13,6 +13,7 @@
 #include "js/src/jscntxt.h"
 #include "js/src/jsatominlines.h"
 #include "js/src/vm/ScopeObject.h"
+#include "../include/scope.h"
 #include "../include/compiler.h"
 
 // const maple::OpcodeTable maple::kOpcodeInfo;
@@ -325,6 +326,7 @@ BaseNode *JSCompiler::CompileOpBinary(JSOp opcode, BaseNode *op0, BaseNode *op1)
     } else {
       assert(restype->GetPrimType() == PTY_i32);
       return jsbuilder_->CreateExprBinary(mop, restype, CheckConvertToInt32(op0), CheckConvertToInt32(op1));
+      //return jsbuilder_->CreateExprBinary(mop, restype, op0, op1);
     }
   }
 
@@ -2369,7 +2371,9 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
       jsbuilder_->AddStmtInCurrentFunctionBody(cmntstmt);
       lastLineNo = lineNo;
     }
-    sprintf(linenoText, "LINE %s : %d: %s", this->filename_, lineNo, Util::getOpcodeName[op]);
+    std::string str;
+    this->scope_->GetJSOPOperand(op, script, pc, str);
+    sprintf(linenoText, "LINE %s : %d: %-20s %s", this->filename_, lineNo, Util::getOpcodeName[op], str.c_str());
     StmtNode *cmntstmt = jsbuilder_->CreateStmtComment(linenoText);
     jsbuilder_->AddStmtInCurrentFunctionBody(cmntstmt);
     Util::SetIndent(4);

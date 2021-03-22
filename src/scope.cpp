@@ -186,74 +186,9 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
       JSOp op = JSOp(*pc);
       JSScript *scr;
       unsigned lineNo = js::PCToLineNumber(script, pc);
-      JSFunction *jsfun;
-      JSAtom *atom;
-      const char *name = NULL;
-      bool isNum = false;
-
-      switch(op) {
-        case JSOP_NAME:
-        case JSOP_BINDNAME:
-        case JSOP_SETNAME:
-        case JSOP_DELNAME:
-        case JSOP_INITPROP:
-        case JSOP_GETPROP:
-        case JSOP_SETPROP:
-        case JSOP_DEFVAR:
-        case JSOP_STRING:
-        {
-          atom = script->getAtom(GET_UINT32_INDEX(pc));
-          name = Util::GetString(atom, mp_, ctx_);
-          break;
-        }
-        case JSOP_DEFFUN: {
-          jsfun = script->getFunction(GET_UINT32_INDEX(pc));
-          atom = jsfun->displayAtom();
-          name = Util::GetString(atom, mp_, ctx_);
-          break;
-        }
-        case JSOP_LAMBDA: {
-          jsfun = script->getFunction(GET_UINT32_INDEX(pc));
-          atom = jsfun->displayAtom();
-          if (!jsfun->hasGuessedAtom()) {
-            name = Util::GetString(atom, mp_, ctx_);
-          }
-          break;
-        }
-        case JSOP_GETLOCAL:
-        case JSOP_SETLOCAL:
-        {
-          uint32_t i = GET_LOCALNO(pc);
-          std::string str = to_string(i);
-          name = str.c_str();
-          isNum = true;
-          break;
-        }
-        case JSOP_CALL: {
-          uint32_t argc = GET_ARGC(pc);
-          std::string str = to_string(argc);
-          name = str.c_str();
-          isNum = true;
-          break;
-        }
-        case JSOP_GETALIASEDVAR:
-        case JSOP_SETALIASEDVAR:
-        {
-          JSAtom *atom = ScopeCoordinateName(ctx_->runtime()->scopeCoordinateNameCache, script, pc);
-          name = Util::GetString(atom, mp_, ctx_);
-          break;
-        }
-        default:
-          break;
-      }
-      if (isNum) {
-        cout << right << setw(5) << lineNo << " " << left << setw(20) << Util::getOpcodeName[op] << name << endl;
-      }
-      else if (name) {
-        cout << right << setw(5) << lineNo << " " << left << setw(20) << Util::getOpcodeName[op] << "\"" << name << "\"" << endl;
-      } else {
-        cout << right << setw(5) << lineNo << " " << Util::getOpcodeName[op] << endl;
-      }
+      std::string str;
+      GetJSOPOperand(op, script, pc, str);
+      cout << right << setw(5) << lineNo << " " << left << setw(20) << Util::getOpcodeName[op] << str << endl;
       switch (op) {
         case JSOP_DEFFUN:   /*127, 5, 0, 0*/
         case JSOP_LAMBDA: { /*130, 5, 0, 1*/
@@ -488,5 +423,77 @@ void Scope::SetJSFunc(char *name, JSFunction *func) {
   pair<char *, JSFunction *> p(name, func);
   nameJSfunc_.push_back(p);
 }
+
+void Scope::GetJSOPOperand(JSOp op, JSScript *script, jsbytecode *pc, std::string &str) {
+  const char *name = NULL;
+  JSAtom *atom;
+  JSFunction *jsfun;
+  bool isNum = false;
+  string quote="\"";
+
+  switch(op) {
+    case JSOP_NAME:
+    case JSOP_BINDNAME:
+    case JSOP_SETNAME:
+    case JSOP_DELNAME:
+    case JSOP_INITPROP:
+    case JSOP_GETPROP:
+    case JSOP_SETPROP:
+    case JSOP_DEFVAR:
+    case JSOP_STRING:
+    {
+      atom = script->getAtom(GET_UINT32_INDEX(pc));
+      name = Util::GetString(atom, mp_, ctx_);
+      break;
+    }
+    case JSOP_DEFFUN: {
+      jsfun = script->getFunction(GET_UINT32_INDEX(pc));
+      atom = jsfun->displayAtom();
+      name = Util::GetString(atom, mp_, ctx_);
+      break;
+    }
+    case JSOP_LAMBDA: {
+      jsfun = script->getFunction(GET_UINT32_INDEX(pc));
+      atom = jsfun->displayAtom();
+      if (!jsfun->hasGuessedAtom()) {
+        name = Util::GetString(atom, mp_, ctx_);
+      }
+      break;
+    }
+    case JSOP_GETLOCAL:
+    case JSOP_SETLOCAL:
+    {
+      uint32_t i = GET_LOCALNO(pc);
+      std::string str = to_string(i);
+      name = str.c_str();
+      isNum = true;
+      break;
+    }
+    case JSOP_CALL: {
+      uint32_t argc = GET_ARGC(pc);
+      std::string str = to_string(argc);
+      name = str.c_str();
+      isNum = true;
+      break;
+    }
+    case JSOP_GETALIASEDVAR:
+    case JSOP_SETALIASEDVAR:
+    {
+      JSAtom *atom = ScopeCoordinateName(ctx_->runtime()->scopeCoordinateNameCache, script, pc);
+      name = Util::GetString(atom, mp_, ctx_);
+      break;
+    }
+    default:
+      break;
+  }
+  if (isNum) {
+    str = name;
+  } else if (name) {
+    str = quote + name + quote;
+  } else {
+    str = "";
+  }
+}
+
 
 }  // namespace maple

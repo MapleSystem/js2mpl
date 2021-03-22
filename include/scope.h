@@ -185,6 +185,8 @@ class Scope {
   void DecDepth() {
     stackDepth--;
   }
+
+  void GetJSOPOperand(JSOp op, JSScript *script, jsbytecode *pc, std::string &str);
 };
 
 }  // namespace maple
