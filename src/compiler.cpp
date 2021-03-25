@@ -792,6 +792,8 @@ js_builtin_id JSCompiler::EcmaNameToId(char *name) {
     return JS_BUILTIN_ENCODEURI;
   } else if (!strcmp(name, "encodeURIComponent")) {
     return JS_BUILTIN_ENCODEURICOMPONENT;
+  } else if (!strcmp(name, "eval")) {
+    return JS_BUILTIN_EVAL;
   } else {
     return JS_BUILTIN_COUNT;
   }
