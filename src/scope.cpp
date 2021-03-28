@@ -483,6 +483,13 @@ void Scope::GetJSOPOperand(JSOp op, JSScript *script, jsbytecode *pc, std::strin
       name = Util::GetString(atom, mp_, ctx_);
       break;
     }
+    case JSOP_INT8: {
+      int val = GET_INT8(pc);
+      std::string str = to_string(val);
+      name = str.c_str();
+      isNum = true;
+      break;
+    }
     default:
       break;
   }
