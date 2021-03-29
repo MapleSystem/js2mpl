@@ -3120,7 +3120,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         break;
       }
       case JSOP_TOID: { /*225, 1, 1, 1*/
-        SIMULATESTACK(1, 1);
+        BaseNode *bn = Pop();
+        Push(bn);
         break;
       }
       case JSOP_TYPEOFEXPR: /*197, 1, 1, 1*/
