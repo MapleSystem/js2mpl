@@ -281,7 +281,6 @@ BaseNode *JSCompiler::CompileOpBinary(JSOp opcode, BaseNode *op0, BaseNode *op1)
       break;
     case JSOP_LSH:
       mop = OP_shl;
-      restype = GlobalTables::GetTypeTable().GetInt32();
       break;
     case JSOP_RSH:
       mop = OP_ashr;
