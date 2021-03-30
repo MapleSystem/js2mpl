@@ -245,15 +245,12 @@ BaseNode *JSCompiler::CompileOpBinary(JSOp opcode, BaseNode *op0, BaseNode *op1)
   switch (opcode) {
     case JSOP_BITOR:
       mop = OP_bior;
-      restype = GlobalTables::GetTypeTable().GetInt32();
       break;
     case JSOP_BITXOR:
       mop = OP_bxor;
-      restype = GlobalTables::GetTypeTable().GetInt32();
       break;
     case JSOP_BITAND:
       mop = OP_band;
-      restype = GlobalTables::GetTypeTable().GetInt32();
       break;
     case JSOP_EQ:
       mop = OP_eq;
@@ -284,11 +281,9 @@ BaseNode *JSCompiler::CompileOpBinary(JSOp opcode, BaseNode *op0, BaseNode *op1)
       break;
     case JSOP_RSH:
       mop = OP_ashr;
-      restype = GlobalTables::GetTypeTable().GetInt32();
       break;
     case JSOP_URSH:
       mop = OP_lshr;
-      restype = GlobalTables::GetTypeTable().GetUInt32();
       break;
     case JSOP_SUB:
       mop = OP_sub;
