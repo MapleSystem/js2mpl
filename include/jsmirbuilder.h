@@ -21,7 +21,7 @@ class JSMIRBuilder : public MIRBuilder {
   explicit JSMIRBuilder(MIRModule *module, JSMIRContext &ctx) : MIRBuilder(module), jsmir_context_(ctx) {}
 
   JSMIRFunction *GetFunction(const char *name);
-  JSMIRFunction *GetOrCreateFunction(const char *name, MIRType *return_type, ArgVector arguments, bool isvarg);
+  JSMIRFunction *GetOrCreateFunction(const char *name, MIRType *return_type, ArgVector arguments, bool isvarg, bool isLambda);
   NaryStmtNode *CreateStmtReturn(BaseNode *rval, bool adj_type, unsigned linenum);
   StmtNode *CreateStmtDassign(MIRSymbol *symbol, FieldID field_id, BaseNode *src, unsigned linenum);
   IntrinsiccallNode *CreateStmtIntrinsicCall1N(MIRIntrinsicID idx, BaseNode *arg0, MapleVector<BaseNode *> &args);

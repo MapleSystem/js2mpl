@@ -77,8 +77,13 @@ char *Util::GetString(JSAtom *atom, MemPool *mp, JSContext *ctx) {
 
 char *Util::GetSequentialName0WithLineNo(const char *prefix, uint32_t num, MemPool *mp, unsigned lineNo) {
   std::stringstream ss;
-  ss << num;
-  ss << "_at_line_" << lineNo;
+
+  if (lineNo) { // anonym lambda
+    ss << num;
+    ss << "_at_line_" << lineNo;
+  } else {      // named lambda
+    ss << "_" << num << "_";
+  }
   MapleString name(prefix + ss.str(), mp);
   DEBUGPRINT2(name.c_str());
   return name.c_str();

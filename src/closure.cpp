@@ -128,11 +128,11 @@ void JSClosure::AddFuncFormalsToEnvType(JSMIRFunction *func) {
     char *fname = Util::GetString(jsfun->name(), mp_, jscontext_);
     DEBUGPRINT2(jsfun);
     // anonymous function.
-    if (!fname) {
-//      funcname = (char *)Util::GetSequentialName0("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_);
+    if (jsfun->isLambda()) {
       unsigned anonyIdx = scope_->GetAnonyidx(jsfun);
       unsigned lineNum = scope_->GetAnonyidxLineNum(anonyIdx);
-      funcname = (char *)Util::GetSequentialName0WithLineNo("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_, lineNum);
+      funcname = fname? (char *)Util::GetSequentialName0WithLineNo(fname, scope_->GetAnonyidx(jsfun), mp_, 0)
+                      : (char *)Util::GetSequentialName0WithLineNo("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_, lineNum);
     } else {
       JSMIRFunction *curFunc = jsbuilder_->GetCurrentFunction();
       ScopeNode *snp = curFunc->scope;
@@ -160,11 +160,11 @@ void JSClosure::AddFuncFormalsToEnvType(JSMIRFunction *func) {
   return;
 }
 
-JSMIRFunction *JSClosure::ProcessFunc(JSFunction *jsfun, char *funcname) {
+JSMIRFunction *JSClosure::ProcessFunc(JSFunction *jsfun, char *funcname, bool isLambda) {
   MIRType *retuenType = jsvalueType;
   ArgVector arguments(mirModule->memPoolAllocator.Adapter());
 
-  JSMIRFunction *func = jsbuilder_->GetOrCreateFunction(funcname, retuenType, arguments, false);
+  JSMIRFunction *func = jsbuilder_->GetOrCreateFunction(funcname, retuenType, arguments, false, isLambda);
   if (func->dup_name) {
     return func;
   }
@@ -249,7 +249,7 @@ bool JSClosure::ProcessOpDefFun(jsbytecode *pc) {
   JSMIRFunction *curFunc = jsbuilder_->GetCurrentFunction();
   ScopeNode *snp = curFunc->scope;
   char *funcname = Util::GetNameWithScopeSuffix(name, (uint32_t)snp, mp_);
-  JSMIRFunction *func = ProcessFunc(jsfun, funcname);
+  JSMIRFunction *func = ProcessFunc(jsfun, funcname, false);
 
   funcstack_.push(func);
 
@@ -262,21 +262,27 @@ void JSClosure::ProcessOpLambda(jsbytecode *pc) {
   JSAtom *atom = jsfun->displayAtom();
 
   // isLambda() does not seem reliable
-  DEBUGPRINT3((jsfun->isLambda()));
+  DEBUGPRINT3((jsfun->isLambda()));  // will be false if not in an expression
   // we already know it is a Lambda so only check other two parts in isNamedLambda()
   // isLambda() && displayAtom() && !hasGuessedAtom()
   // if((jsfun->isNamedLambda()))
+  //
+  // isLambda() is only true if the JSOP_LAMBDA function is in an expression
+  // but we need a way to tell a function is declared through JSOP_LAMBDA to
+  // do corresponding mangling in looking up names, so we put the info in JSMIRFunction.
   char *funcname;
   if (atom && !jsfun->hasGuessedAtom()) {
+    // a named "lambda"
     char *name = Util::GetString(atom, mp_, jscontext_);
     JSMIRFunction *curFunc = jsbuilder_->GetCurrentFunction();
     ScopeNode *snp = curFunc->scope;
-    funcname = Util::GetNameWithScopeSuffix(name, (uint32_t)snp, mp_);
+    funcname = Util::GetSequentialName0WithLineNo(name, scope_->GetAnonyidx(jsfun), mp_, 0);
   } else {
+    // an anonymous lambda
     funcname = scope_->GetAnonyFunctionName(pc);
   }
 
-  ProcessFunc(jsfun, funcname);
+  ProcessFunc(jsfun, funcname, true);
 
   return;
 }
@@ -294,11 +300,11 @@ bool JSClosure::IsLocalVar(JSMIRFunction *func, char *name) {
     jsfun = (*i).first;
     char *fname = Util::GetString(jsfun->name(), mp_, jscontext_);
     // anonymous function.
-    if (!fname) {
-      // funcname = (char *)Util::GetSequentialName0("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_);
+    if (!fname || func->isLambda()) {
       unsigned anonyIdx = scope_->GetAnonyidx(jsfun);
       unsigned lineNum = scope_->GetAnonyidxLineNum(anonyIdx);
-      funcname = (char *)Util::GetSequentialName0WithLineNo("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_, lineNum);
+      funcname = fname? (char *)Util::GetSequentialName0WithLineNo(fname, scope_->GetAnonyidx(jsfun), mp_, 0)
+                      : (char *)Util::GetSequentialName0WithLineNo("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_, lineNum);
    } else {
       JSMIRFunction *curFunc = jsbuilder_->GetCurrentFunction();
       ScopeNode *snp;
@@ -343,11 +349,11 @@ char *JSClosure::GetLocalVar(JSMIRFunction *func, uint32_t localNo) {
     char *fname = Util::GetString(jsfun->name(), mp_, jscontext_);
     DEBUGPRINT2(jsfun);
     // set name for anonymous functions same as in jsscript_->funcLocals.
-    if (!fname) {
-      // funcname = (char *)Util::GetSequentialName0("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_);
+    if (!fname || func->isLambda()) {
       unsigned anonyIdx = scope_->GetAnonyidx(jsfun);
       unsigned lineNum = scope_->GetAnonyidxLineNum(anonyIdx);
-      funcname = (char *)Util::GetSequentialName0WithLineNo("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_, lineNum);
+      funcname = fname? (char *)Util::GetSequentialName0WithLineNo(fname, scope_->GetAnonyidx(jsfun), mp_, 0)
+                      : (char *)Util::GetSequentialName0WithLineNo("anonymous_func_", scope_->GetAnonyidx(jsfun), mp_, lineNum);
     } else {
       JSMIRFunction *curFunc = jsbuilder_->GetCurrentFunction();
       ScopeNode *snp = curFunc->scope;

@@ -14,11 +14,11 @@ JSMIRFunction *JSMIRBuilder::CreateJSMain(bool isStrict) {
   JSMIRFunction *jsmain = NULL;
   if (IsPlugin()) {
     // jsmain = GetOrCreateFunction(GetWrapperName(), GlobalTables::GetTypeTable().GetDynany(), arguments, false);
-    jsmain = GetOrCreateFunction("__jsmain", GlobalTables::GetTypeTable().GetDynany(), arguments, false);
+    jsmain = GetOrCreateFunction("__jsmain", GlobalTables::GetTypeTable().GetDynany(), arguments, false, false);
     SetCurrentFunction(jsmain);
   } else {
     MapleVector<BaseNode *> argsVec(mirModule->memPoolAllocator.Adapter());
-    jsmain = GetOrCreateFunction("__jsmain", GlobalTables::GetTypeTable().GetInt32(), arguments, false);
+    jsmain = GetOrCreateFunction("__jsmain", GlobalTables::GetTypeTable().GetInt32(), arguments, false, false);
     SetCurrentFunction(jsmain);
     argsVec.push_back(GetConstUInt1(isStrict));
     IntrinsiccallNode *stmt = CreateStmtIntrinsicCallAssigned((MIRIntrinsicID)INTRN_JS_INIT_CONTEXT, argsVec, (const MIRSymbol *)NULL);
@@ -74,7 +74,7 @@ JSMIRFunction *JSMIRBuilder::GetFunction(const char *name) {
 }
 
 JSMIRFunction *JSMIRBuilder::GetOrCreateFunction(const char *name, MIRType *returnType, ArgVector arguments,
-                                                 bool isvarg) {
+                                                 bool isvarg, bool isLambda) {
   DEBUGPRINTsv2("GetOrCreateFunction", name);
   JSMIRFunction *fn = GetFunc(name);
   if (fn) {
@@ -100,6 +100,7 @@ JSMIRFunction *JSMIRBuilder::GetOrCreateFunction(const char *name, MIRType *retu
 
   fn = mirModule->memPool->New<JSMIRFunction>(mirModule, funcst->GetStIdx());
   fn->Init();
+  fn->is_lambda = isLambda;
   fn->puIdx = GlobalTables::GetFunctionTable().funcTable.size();
   GlobalTables::GetFunctionTable().funcTable.push_back(fn);
 

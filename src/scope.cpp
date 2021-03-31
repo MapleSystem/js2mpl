@@ -154,7 +154,7 @@ void Scope::Init() {
   for (i = formals.begin(); i != formals.end(); i++) {
     jsfun = (*i).first;
 
-    if (!jsfun->name()) {
+    if (jsfun->isLambda()) {
       DEBUGPRINT3(jsfun);
       SetAnonyidx(jsfun, anon_func_no_);
       anon_func_no_++;
@@ -240,7 +240,11 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
             char *funcName = Util::GetString(atom, mp_, ctx_);
             parent = funcstack_.top();
             ScopeNode *snp = GetOrCreateSN(parent);
-            name = Util::GetNameWithScopeSuffix(funcName, (uint32_t)snp, mp_);
+            if (op == JSOP_DEFFUN) {
+              name = Util::GetNameWithScopeSuffix(funcName, (uint32_t)snp, mp_);
+            } else {
+              name = Util::GetSequentialName0WithLineNo(funcName, GetOrCreateAnonyidx(jsfun), mp_, 0);
+            }
           } else {
             //name = (char *)Util::GetSequentialName0("anonymous_func_", GetAnonyidx(jsfun), mp_);
             name = (char *)Util::GetSequentialName0WithLineNo("anonymous_func_", GetAnonyidx(jsfun), mp_, lineNo);

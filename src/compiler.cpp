@@ -1602,7 +1602,7 @@ BaseNode *JSCompiler::CompileOpLambda(jsbytecode *pc, JSFunction *jsfun) {
     char *name = Util::GetString(atom, mp_, jscontext_);
     JSMIRFunction *curFunc = jsbuilder_->GetCurrentFunction();
     ScopeNode *snp = curFunc->scope;
-    funcname = Util::GetNameWithScopeSuffix(name, (uint32_t)snp, mp_);
+    funcname = Util::GetSequentialName0WithLineNo(name, scope_->GetAnonyidx(jsfun), mp_, 0);
     hasName = true;
   } else {
     funcname = scope_->GetAnonyFunctionName(pc);

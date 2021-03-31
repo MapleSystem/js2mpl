@@ -146,6 +146,15 @@ class Scope {
     return funcToAnonyidx_[jsfun];
   }
 
+  unsigned GetOrCreateAnonyidx(JSFunction *jsfun) {
+    if (funcToAnonyidx_[jsfun]) {
+      return funcToAnonyidx_[jsfun];
+    } else {
+      funcToAnonyidx_[jsfun] = ++anon_func_no_;
+      return funcToAnonyidx_[jsfun];
+    }
+  }
+
   void SetAnonyidx(JSFunction *jsfun, unsigned idx) {
     funcToAnonyidx_[jsfun] = idx;
   }

@@ -72,7 +72,7 @@ class JSClosure {
   MIRSymbol *GetSymbolFromEnclosingScope(JSMIRFunction *func, StIdx stidx);
 
   void ProcessAliasedVar(jsbytecode *pc);
-  JSMIRFunction *ProcessFunc(JSFunction *jsfun, char *funcname);
+  JSMIRFunction *ProcessFunc(JSFunction *jsfun, char *funcname, bool isLambda);
   void ProcessOpLambda(jsbytecode *pc);
   bool ProcessOpDefFun(jsbytecode *pc);
   void AddFuncFormalsToEnvType(JSMIRFunction *func);
