@@ -340,13 +340,9 @@ BaseNode *JSCompiler::CompileOpUnary(JSOp opcode, BaseNode *val) {
   switch (opcode) {
     case JSOP_NOT:
       mop = OP_lnot;
-      restype = GlobalTables::GetTypeTable().GetUInt1();
-      val = CheckConvertToBoolean(val);
       break;
     case JSOP_BITNOT:
       mop = OP_bnot;
-      restype = GlobalTables::GetTypeTable().GetInt32();
-      val = CheckConvertToInt32(val);
       break;
     case JSOP_NEG: {
       if (val->op == OP_constval) {
@@ -371,7 +367,7 @@ BaseNode *JSCompiler::CompileOpUnary(JSOp opcode, BaseNode *val) {
       break;
   }
   if (mop != 0) {
-    return jsbuilder_->CreateExprUnary(mop, restype, val);
+    return jsbuilder_->CreateExprUnary(mop, restype, CheckConvertToJSValueType(val));
   }
 
   if (opcode == JSOP_POS) {
