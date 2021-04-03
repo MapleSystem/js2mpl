@@ -1,7 +1,7 @@
 /// Copyright [year] <Copyright Owner>
 #ifndef JS2MPL_INCLUDE_SCOPE_H_
 #define JS2MPL_INCLUDE_SCOPE_H_
-#include <assert.h>
+#include <cassert>
 #include <vector>
 #include "js/src/jsscript.h"
 #include "js/src/jsopcode.h"

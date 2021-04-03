@@ -1,7 +1,7 @@
 /// Copyright [year] <Copyright Owner>
 #ifndef JS2MPL_INCLUDE_JS2MPL_H_
 #define JS2MPL_INCLUDE_JS2MPL_H_
-#include <string.h>
+#include <string>
 using namespace std;
 namespace maple {
 class MIRModule;

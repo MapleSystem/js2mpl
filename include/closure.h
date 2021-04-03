@@ -1,7 +1,7 @@
 /// Copyright [year] <Copyright Owner>
 #ifndef JS2MPL_INCLUDE_JSCLOSURE_H_
 #define JS2MPL_INCLUDE_JSCLOSURE_H_
-#include <assert.h>
+#include <cassert>
 #include <string>
 #include <utility>
 #include <vector>

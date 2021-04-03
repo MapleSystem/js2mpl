@@ -3,7 +3,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
-#include <assert.h>
+#include <cassert>
 #include <locale>
 #include <codecvt>
 #include "js/src/jsscript.h"

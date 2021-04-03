@@ -1,7 +1,7 @@
 /// Copyright [year] <Copyright Owner>
 #ifndef JS2MPL_INCLUDE_OPSTACK_H_
 #define JS2MPL_INCLUDE_OPSTACK_H_
-#include <assert.h>
+#include <cassert>
 #include <vector>
 #include "maple_ir/include/mir_builder.h"
 #include "util.h"

@@ -1,7 +1,7 @@
 /// Copyright [year] <Copyright Owner>
 #ifndef JS2MPL_INCLUDE_EH_H
 #define JS2MPL_INCLUDE_EH_H
-#include <assert.h>
+#include <cassert>
 #include <vector>
 #include "js/src/jsscript.h"
 #include "js/src/jsopcode.h"

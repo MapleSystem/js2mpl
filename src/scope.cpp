@@ -1,6 +1,6 @@
 /// Copyright [year] <Copyright Owner>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include "js/src/vm/ScopeObject.h"
 #include "../include/scope.h"
 
