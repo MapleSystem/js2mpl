@@ -3249,7 +3249,12 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_SETPROP, arguments, (const MIRSymbol *)NULL);
         stmt->srcPosition.SetLinenum(lineNo);
         jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
-        Push(obj);
+        if (op == JSOP_SETELEM) {
+          BaseNode *elem = CompileGeneric2(INTRN_JSOP_GETPROP, obj, index, false);
+          Push(elem);
+        } else {
+          Push(obj);
+        }
         break;
       }
       case JSOP_EVAL: { /*123, 3, -1, 1*/
