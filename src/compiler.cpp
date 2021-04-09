@@ -3261,7 +3261,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         arguments.push_back(obj);
         arguments.push_back(index);
         arguments.push_back(CheckConvertToJSValueType(val));
-        StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_SETPROP, arguments, (const MIRSymbol *)NULL);
+        MIRIntrinsicID intrinId = (op == JSOP_INITELEM)? INTRN_JSOP_INITPROP: INTRN_JSOP_SETPROP;
+        StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(intrinId, arguments, (const MIRSymbol *)NULL);
         stmt->srcPosition.SetLinenum(lineNo);
         jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
         if (op == JSOP_SETELEM) {
