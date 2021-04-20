@@ -755,6 +755,8 @@ js_builtin_id JSCompiler::EcmaNameToId(char *name) {
     return JS_BUILTIN_MATH;
   } else if (!strcmp(name, "JSON")) {
     return JS_BUILTIN_JSON;
+  } else if (!strcmp(name, "Intl")) {
+    return JS_BUILTIN_INTL;
   } else if (!strcmp(name, "ReferenceError")) {
     return JS_BUILTIN_REFERENCEERROR_OBJECT;
   } else if (!strcmp(name, "TypeError")) {
@@ -1060,17 +1062,9 @@ BaseNode *JSCompiler::GetCompileOpString(JSString *str) {
   return NULL;
 }
 
-// JSOP_STRING 61
-BaseNode *JSCompiler::CompileOpString(JSString *str) {
-  BaseNode *prevBN = GetCompileOpString(str);
-  if (prevBN) {
-    return prevBN;
-  }
-  size_t length = 0;
-  bool isAsciiChars = false;
-  const jschar *chars = JS_GetInternedStringCharsAndLength(str, &length);
-
+BaseNode *JSCompiler::CompileOpJschar(const jschar *chars, size_t length) {
   std::u16string utf16;
+  bool isAsciiChars = false;
   if (IsAsciiChars(chars, length)) {
     if (IsStdAsciiChars(chars,length)) {
       isAsciiChars = true;
@@ -1148,6 +1142,17 @@ BaseNode *JSCompiler::CompileOpString(JSString *str) {
   expr->primType = PTY_simplestr;
   jsstring_map_[chars] = expr;
   return expr;
+}
+
+// JSOP_STRING 61
+BaseNode *JSCompiler::CompileOpString(JSString *str) {
+  BaseNode *prevBN = GetCompileOpString(str);
+  if (prevBN) {
+    return prevBN;
+  }
+  size_t length = 0;
+  const jschar *chars = JS_GetInternedStringCharsAndLength(str, &length);
+  return CompileOpJschar(chars, length);
 }
 
 // JSOP_ITER 75
@@ -1544,7 +1549,12 @@ bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
     if (jsfun->strict()) {
       mfun->SetAttr(FUNCATTR_strict);
     }
+
     uint32_t attrs = vargP << 24 | nargs << 16 | length << 8 | flag;
+    const jschar *fnameJschar = atom->getCharsZ((js::ExclusiveContext *)jscontext_);
+    size_t jscharLength = atom->length();
+    BaseNode *nameNode = CompileOpJschar(fnameJschar, jscharLength);
+    InitThisPropAll(nameNode);
     BaseNode *funcNode =
       CompileGeneric3(INTRN_JS_NEW_FUNCTION, ptr, jsbuilder_->GetConstInt(0), jsbuilder_->GetConstUInt32(attrs), true);
 
@@ -3259,10 +3269,16 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         arguments.push_back(obj);
         arguments.push_back(index);
         arguments.push_back(CheckConvertToJSValueType(val));
-        StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_SETPROP, arguments, (const MIRSymbol *)NULL);
+        MIRIntrinsicID intrinId = (op == JSOP_INITELEM)? INTRN_JSOP_INITPROP: INTRN_JSOP_SETPROP;
+        StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(intrinId, arguments, (const MIRSymbol *)NULL);
         stmt->srcPosition.SetLinenum(lineNo);
         jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
-        Push(obj);
+        if (op == JSOP_SETELEM) {
+          BaseNode *elem = CompileGeneric2(INTRN_JSOP_GETPROP, obj, index, false);
+          Push(elem);
+        } else {
+          Push(obj);
+        }
         break;
       }
       case JSOP_EVAL: { /*123, 3, -1, 1*/

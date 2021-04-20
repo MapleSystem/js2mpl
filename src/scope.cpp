@@ -486,7 +486,9 @@ void Scope::GetJSOPOperand(JSOp op, JSScript *script, jsbytecode *pc, std::strin
       isNum = true;
       break;
     }
-    case JSOP_CALL: {
+    case JSOP_CALL:
+    case JSOP_NEW:
+    {
       uint32_t argc = GET_ARGC(pc);
       std::string str = to_string(argc);
       name = str.c_str();
