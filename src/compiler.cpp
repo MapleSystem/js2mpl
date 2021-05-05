@@ -2064,9 +2064,11 @@ BaseNode *JSCompiler::CheckConvertToJSValueType(BaseNode *data) {
     case PTY_ptr:
       return data;
     case PTY_u1:
+      return data;
       toType = GlobalTables::GetTypeTable().GetDynbool();
       break;
     case PTY_i32:
+      return data;
       toType = GlobalTables::GetTypeTable().GetDyni32();
       if (data->op == OP_constval) {
         ConstvalNode *cv = static_cast<ConstvalNode *>(data);
@@ -2080,6 +2082,7 @@ BaseNode *JSCompiler::CheckConvertToJSValueType(BaseNode *data) {
       }
       break;
     case PTY_u32:
+      return data;
       toType = GlobalTables::GetTypeTable().GetDynf64();
       if (data->op == OP_constval) {
         ConstvalNode *cv = static_cast<ConstvalNode *>(data);
@@ -2096,6 +2099,7 @@ BaseNode *JSCompiler::CheckConvertToJSValueType(BaseNode *data) {
       toType = GlobalTables::GetTypeTable().GetDynstr();
       break;
     case PTY_simpleobj:
+      return data;
       toType = GlobalTables::GetTypeTable().GetDynobj();
       break;
     default:
