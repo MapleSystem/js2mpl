@@ -149,7 +149,7 @@ void JSClosure::AddFuncFormalsToEnvType(JSMIRFunction *func) {
     } else {
       JSMIRFunction *curFunc = jsbuilder_->GetCurrentFunction();
       ScopeNode *snp = curFunc->scope;
-      funcname = (char *)Util::GetNameWithScopeSuffix(fname, (uint32_t)snp, mp_);
+      funcname = (char *)Util::GetNameWithSuffix(fname, std::to_string(snp->GetId()), mp_);
     }
     DEBUGPRINT2(funcname);
     MIRSymbol *funcSt = GlobalTables::GetGsymTable().GetSymbolFromStIdx(func->stIdx.Idx());
@@ -261,7 +261,7 @@ bool JSClosure::ProcessOpDefFun(jsbytecode *pc) {
 
   JSMIRFunction *curFunc = jsbuilder_->GetCurrentFunction();
   ScopeNode *snp = curFunc->scope;
-  char *funcname = Util::GetNameWithScopeSuffix(name, (uint32_t)snp, mp_);
+  char *funcname = Util::GetNameWithSuffix(name, std::to_string(snp->GetId()), mp_);
   JSMIRFunction *func = ProcessFunc(jsfun, funcname, false);
 
   funcstack_.push(func);
@@ -326,7 +326,7 @@ bool JSClosure::IsLocalVar(JSMIRFunction *func, char *name) {
       } else {
         snp = curFunc->scope->GetParent();
       }
-      funcname = (char *)Util::GetNameWithScopeSuffix(fname, (uint32_t)snp, mp_);
+      funcname = (char *)Util::GetNameWithSuffix(fname, std::to_string(snp->GetId()), mp_);
     }
     DEBUGPRINT2(funcname);
     MIRSymbol *funcSt = GlobalTables::GetGsymTable().GetSymbolFromStIdx(func->stIdx.Idx());
@@ -370,7 +370,7 @@ char *JSClosure::GetLocalVar(JSMIRFunction *func, uint32_t localNo) {
     } else {
       JSMIRFunction *curFunc = jsbuilder_->GetCurrentFunction();
       ScopeNode *snp = curFunc->scope;
-      funcname = (char *)Util::GetNameWithScopeSuffix(fname, (uint32_t)snp, mp_);
+      funcname = (char *)Util::GetNameWithSuffix(fname, std::to_string(snp->GetId()), mp_);
     }
     DEBUGPRINT2(funcname);
     // found the function
