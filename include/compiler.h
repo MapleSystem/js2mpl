@@ -153,6 +153,7 @@ class JSCompiler {
                             bool is_call);
   BaseNode *CompileOpGetProp(BaseNode *obj, JSString *name);
   BaseNode *CompileOpCallprop(BaseNode *obj, JSAtom *atom);
+  BaseNode *CompileOpJschar(const jschar *chars, size_t length);
   BaseNode *CompileOpString(JSString *str);
   BaseNode *GetCompileOpString(JSString *str);
   BaseNode *CompileOpNewIterator(BaseNode *bn, uint8_t flags);
