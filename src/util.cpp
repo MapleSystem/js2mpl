@@ -133,7 +133,7 @@ char *Util::GetNameWithSuffix(const char *origName, const char *suffix, MemPool 
 
 char *Util::GetNameWithSuffix(const char *origName, std::string suffix, MemPool *mp) {
   std::stringstream ss;
-  ss << "__" << suffix;
+  ss << "__snid" << suffix;
   MapleString name(origName + ss.str(), mp);
   return name.c_str();
 }
