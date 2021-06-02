@@ -3253,16 +3253,13 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
           }
           break;
       }
-      case JSOP_GETELEM: { /*55, 1, 2, 1*/
+      case JSOP_GETELEM:  /*55, 1, 2, 1*/
+      case JSOP_CALLELEM: { /*193, 1, 2, 1*/
         BaseNode *index = Pop();
         BaseNode *obj = CheckConvertToJSValueType(Pop());
         index = CheckConvertToJSValueType(index);
         BaseNode *elem = CompileGeneric2(INTRN_JSOP_GETPROP, obj, index, true);
         Push(elem);
-        break;
-      }
-      case JSOP_CALLELEM: { /*193, 1, 2, 1*/
-        SIMULATESTACK(2, 1);
         break;
       }
       case JSOP_INITELEM:  /*94, 1, 3, 1*/
