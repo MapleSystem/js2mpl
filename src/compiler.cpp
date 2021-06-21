@@ -2247,6 +2247,12 @@ void JSCompiler::EnvInit(JSMIRFunction *func) {
     stmt->srcPosition.SetLinenum(linenum_);
     jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   }
+  idx = 3; // starting from parentenv + 1
+  while (idx <= envStruct->fields.size()) {
+    StmtNode *initIassign = jsbuilder_->CreateStmtIassign(envPtr, idx, env, CompileOpConstValue(JSTYPE_UNDEFINED, 0));
+    jsbuilder_->AddStmtInCurrentFunctionBody(initIassign);
+    idx++;
+  }
 
 #ifdef DYNAMICLANG
   // set up arguments in env
