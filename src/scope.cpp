@@ -121,7 +121,7 @@ ScopeNode *Scope::GetOrCreateSN(char *name) {
   ScopeNode *sn = mp_->New<ScopeNode>(name);
   pair<char *, ScopeNode *> p(name, sn);
   scopeChain.push_back(p);
-  sn->SetId(AllocNextAvailScopeId());
+
   return sn;
 }
 
@@ -254,7 +254,7 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
             parent = funcstack_.top();
             ScopeNode *snp = GetOrCreateSN(parent);
             if (op == JSOP_DEFFUN) {
-              name = Util::GetNameWithSuffix(funcName, std::to_string(snp->GetId()), mp_);
+              name = Util::GetNameWithScopeSuffix(funcName, (uint32_t)snp, mp_);
             } else {
               name = Util::GetSequentialName0WithLineNo(funcName, GetOrCreateAnonyidx(jsfun), mp_, 0);
             }

@@ -799,6 +799,8 @@ js_builtin_id JSCompiler::EcmaNameToId(char *name) {
     return JS_BUILTIN_ENCODEURICOMPONENT;
   } else if (!strcmp(name, "eval")) {
     return JS_BUILTIN_EVAL;
+  } else if (!strcmp(name, "console")) {
+    return JS_BUILTIN_CONSOLE;
   } else {
     return JS_BUILTIN_COUNT;
   }
@@ -862,9 +864,9 @@ BaseNode *JSCompiler::CompileOpName(JSScript *script, jsbytecode *pc, bool isRea
   JSMIRFunction *curFunc = jsbuilder_->GetCurrentFunction();
   ScopeNode *sn = curFunc->scope;
   bool isFunc = false;
-  char *mangledName = Util::GetNameWithSuffix(name, std::to_string(sn->GetId()), mp_);
+  char *mangledName = Util::GetNameWithScopeSuffix(name, (uint32_t)sn, mp_);
   while (sn) {
-    mangledName = Util::GetNameWithSuffix(name, std::to_string(sn->GetId()), mp_);
+    mangledName = Util::GetNameWithScopeSuffix(name, (uint32_t)sn, mp_);
     if (scope_->IsFunction(mangledName)) {
       isFunc = true;
       break;
@@ -1530,7 +1532,7 @@ bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
 
   JSMIRFunction *curFunc = jsbuilder_->GetCurrentFunction();
   ScopeNode *snp = curFunc->scope;
-  char *funcname = Util::GetNameWithSuffix(fname, std::to_string(snp->GetId()), mp_);
+  char *funcname = Util::GetNameWithScopeSuffix(fname, (uint32_t)snp, mp_);
   JSMIRFunction *mfun = jsbuilder_->GetFunction(funcname);
   mfun->SetUserFunc();
 
@@ -2064,9 +2066,11 @@ BaseNode *JSCompiler::CheckConvertToJSValueType(BaseNode *data) {
     case PTY_ptr:
       return data;
     case PTY_u1:
+      return data;
       toType = GlobalTables::GetTypeTable().GetDynbool();
       break;
     case PTY_i32:
+      return data;
       toType = GlobalTables::GetTypeTable().GetDyni32();
       if (data->op == OP_constval) {
         ConstvalNode *cv = static_cast<ConstvalNode *>(data);
@@ -2080,6 +2084,7 @@ BaseNode *JSCompiler::CheckConvertToJSValueType(BaseNode *data) {
       }
       break;
     case PTY_u32:
+      return data;
       toType = GlobalTables::GetTypeTable().GetDynf64();
       if (data->op == OP_constval) {
         ConstvalNode *cv = static_cast<ConstvalNode *>(data);
@@ -2096,6 +2101,7 @@ BaseNode *JSCompiler::CheckConvertToJSValueType(BaseNode *data) {
       toType = GlobalTables::GetTypeTable().GetDynstr();
       break;
     case PTY_simpleobj:
+      return data;
       toType = GlobalTables::GetTypeTable().GetDynobj();
       break;
     default:
@@ -2240,6 +2246,12 @@ void JSCompiler::EnvInit(JSMIRFunction *func) {
     StmtNode *stmt = jsbuilder_->CreateStmtIassign(envPtr, idx, env, bn);
     stmt->srcPosition.SetLinenum(linenum_);
     jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
+  }
+  idx = 3; // starting from parentenv + 1
+  while (idx <= envStruct->fields.size()) {
+    StmtNode *initIassign = jsbuilder_->CreateStmtIassign(envPtr, idx, env, CompileOpConstValue(JSTYPE_UNDEFINED, 0));
+    jsbuilder_->AddStmtInCurrentFunctionBody(initIassign);
+    idx++;
   }
 
 #ifdef DYNAMICLANG
@@ -3247,16 +3259,13 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
           }
           break;
       }
-      case JSOP_GETELEM: { /*55, 1, 2, 1*/
+      case JSOP_GETELEM:  /*55, 1, 2, 1*/
+      case JSOP_CALLELEM: { /*193, 1, 2, 1*/
         BaseNode *index = Pop();
         BaseNode *obj = CheckConvertToJSValueType(Pop());
         index = CheckConvertToJSValueType(index);
         BaseNode *elem = CompileGeneric2(INTRN_JSOP_GETPROP, obj, index, true);
         Push(elem);
-        break;
-      }
-      case JSOP_CALLELEM: { /*193, 1, 2, 1*/
-        SIMULATESTACK(2, 1);
         break;
       }
       case JSOP_INITELEM:  /*94, 1, 3, 1*/

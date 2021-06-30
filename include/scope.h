@@ -41,7 +41,6 @@ class ScopeNode {
   bool useAliased_;
   bool withEnv_;
   bool flag_;
-  uint32_t id_;
 
  public:
   ScopeNode(BaseNode *node);
@@ -125,14 +124,6 @@ class ScopeNode {
     return !strcmp(name_, "__jsmain");
   }
 
-  uint32_t GetId() {
-    return id_;
-  }
-
-  void SetId(uint32_t id) {
-    id_ = id;
-  }
-
   void Dump();
   void PropWithEnv();
 };
@@ -150,7 +141,6 @@ class Scope {
   stack<pair<JSScript *, char *>> scriptstack_;
 
   uint32_t anon_func_no_;
-  uint32_t nextAvailId_;
   int stackDepth;
 
   map<JSFunction *, unsigned> funcToAnonyidx_;
@@ -159,15 +149,11 @@ class Scope {
 ;
  public:
   Scope(JSContext *context, JSScript *script, maple::MIRModule *module, JSMIRBuilder *jsbuilder)
-    : mp_(module->memPool), anon_func_no_(0), stackDepth(0), ctx_(context), jsbuilder_(jsbuilder), jsscript_(script), nextAvailId_(0) {}
+    : mp_(module->memPool), anon_func_no_(0), stackDepth(0), ctx_(context), jsbuilder_(jsbuilder), jsscript_(script) {}
 
   void Init();
   bool Build(JSScript *script);
   bool BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcend);
-
-  uint32_t AllocNextAvailScopeId() {
-    return nextAvailId_++;
-  }
 
   unsigned GetAnonyidx(JSFunction *jsfun) {
     return funcToAnonyidx_[jsfun];
