@@ -96,6 +96,8 @@ enum js_builtin_id {  // must in accordance with js_value.h:js_builtin_id in the
   JS_BUILTIN_INTL_DATETIMEFORMAT_CONSTRUCTOR,
   JS_BUILTIN_INTL_DATETIMEFORMAT_PROTOTYPE,
   JS_BUILTIN_CONSOLE,
+  JS_BUILTIN_ARRAYBUFFER,
+  JS_BUILTIN_ARRAYBUFFER_PROTOTYPE,
   JS_BUILTIN_COUNT,
 };
 }  // namespace maple

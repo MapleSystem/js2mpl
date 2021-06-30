@@ -801,6 +801,8 @@ js_builtin_id JSCompiler::EcmaNameToId(char *name) {
     return JS_BUILTIN_EVAL;
   } else if (!strcmp(name, "console")) {
     return JS_BUILTIN_CONSOLE;
+  } else if (!strcmp(name, "ArrayBuffer")) {
+    return JS_BUILTIN_ARRAYBUFFER;
   } else {
     return JS_BUILTIN_COUNT;
   }
