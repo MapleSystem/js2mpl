@@ -31,6 +31,11 @@ enum __jstype {
   JSTYPE_DOUBLE,
   JSTYPE_NAN,
   JSTYPE_INFINITY,
+  // the following tag generated for maple engine only
+  JSTYPE_SPBASE,
+  JSTYPE_FPBASE,
+  JSTYPE_GPBASE,
+  JSTYPE_FUNCTION,
 };
 
 // Bit is set for 16-bit code units
@@ -96,6 +101,10 @@ enum js_builtin_id {  // must in accordance with js_value.h:js_builtin_id in the
   JS_BUILTIN_INTL_DATETIMEFORMAT_CONSTRUCTOR,
   JS_BUILTIN_INTL_DATETIMEFORMAT_PROTOTYPE,
   JS_BUILTIN_CONSOLE,
+  JS_BUILTIN_ARRAYBUFFER,
+  JS_BUILTIN_ARRAYBUFFER_PROTOTYPE,
+  JS_BUILTIN_DATAVIEW,
+  JS_BUILTIN_DATAVIEW_PROTOTYPE,
   JS_BUILTIN_COUNT,
 };
 }  // namespace maple
