@@ -31,6 +31,11 @@ enum __jstype {
   JSTYPE_DOUBLE,
   JSTYPE_NAN,
   JSTYPE_INFINITY,
+  // the following tag generated for maple engine only
+  JSTYPE_SPBASE,
+  JSTYPE_FPBASE,
+  JSTYPE_GPBASE,
+  JSTYPE_FUNCTION,
 };
 
 // Bit is set for 16-bit code units
