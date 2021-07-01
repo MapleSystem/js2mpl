@@ -98,6 +98,8 @@ enum js_builtin_id {  // must in accordance with js_value.h:js_builtin_id in the
   JS_BUILTIN_CONSOLE,
   JS_BUILTIN_ARRAYBUFFER,
   JS_BUILTIN_ARRAYBUFFER_PROTOTYPE,
+  JS_BUILTIN_DATAVIEW,
+  JS_BUILTIN_DATAVIEW_PROTOTYPE,
   JS_BUILTIN_COUNT,
 };
 }  // namespace maple
