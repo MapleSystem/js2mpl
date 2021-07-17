@@ -2189,6 +2189,11 @@ BaseNode *JSCompiler::CheckConvertToRespectiveType(BaseNode *node, MIRType *ty) 
   return CheckConvertToInt32(node);
 }
 
+void JSCompiler::SetCurrFunctionJSArgument() {
+  JSMIRFunction *func = jsbuilder_->GetCurrentFunction();
+  func->SetAttr(FUNCATTR_jsarguments);
+}
+
 // This variable holds a special opcode value which is greater than all normal
 // opcodes, and is chosen such that the bitwise or of this value with any
 // opcode is this value.
@@ -3446,6 +3451,7 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
       case JSOP_ARGUMENTS: { /*9, 1, 0, 1*/
         // Pop();
         BaseNode *elem = CompileGeneric0(INTRN_JS_GET_ARGUMENTOBJECT, false);
+        SetCurrFunctionJSArgument();
         Push(elem);
         break;
       }

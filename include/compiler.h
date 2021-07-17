@@ -213,6 +213,9 @@ class JSCompiler {
   BaseNode* CreateThisPropGetName(JSString *str);
   bool CompileThisPropOpSetName(JSScript *script, jsbytecode *pc, BaseNode *val);
   bool CompileOpThisDefVar(JSString *str);
+
+private:
+  void SetCurrFunctionJSArgument();
 };  // class JSCompiler
 }  // namespace maple
 #endif  // JS2MPL_INCLUDE_COMPILER_H_
