@@ -868,9 +868,9 @@ BaseNode *JSCompiler::CompileOpName(JSScript *script, jsbytecode *pc, bool isRea
   JSMIRFunction *curFunc = jsbuilder_->GetCurrentFunction();
   ScopeNode *sn = curFunc->scope;
   bool isFunc = false;
-  char *mangledName = Util::GetNameWithScopeSuffix(name, (uint32_t)sn, mp_);
+  char *mangledName = Util::GetNameWithSuffix(name, std::to_string(sn->GetId()), mp_);
   while (sn) {
-    mangledName = Util::GetNameWithScopeSuffix(name, (uint32_t)sn, mp_);
+    mangledName = Util::GetNameWithSuffix(name, std::to_string(sn->GetId()), mp_);
     if (scope_->IsFunction(mangledName)) {
       isFunc = true;
       break;
@@ -1536,7 +1536,7 @@ bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
 
   JSMIRFunction *curFunc = jsbuilder_->GetCurrentFunction();
   ScopeNode *snp = curFunc->scope;
-  char *funcname = Util::GetNameWithScopeSuffix(fname, (uint32_t)snp, mp_);
+  char *funcname = Util::GetNameWithSuffix(fname, std::to_string(snp->GetId()), mp_);
   JSMIRFunction *mfun = jsbuilder_->GetFunction(funcname);
   mfun->SetUserFunc();
 

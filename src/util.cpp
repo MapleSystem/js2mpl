@@ -131,9 +131,9 @@ char *Util::GetNameWithSuffix(const char *origName, const char *suffix, MemPool 
   return name.c_str();
 }
 
-char *Util::GetNameWithScopeSuffix(const char *origName, uint32_t scope, MemPool *mp) {
+char *Util::GetNameWithSuffix(const char *origName, std::string suffix, MemPool *mp) {
   std::stringstream ss;
-  ss << "__" << std::hex << scope;
+  ss << "__snid" << suffix;
   MapleString name(origName + ss.str(), mp);
   return name.c_str();
 }
