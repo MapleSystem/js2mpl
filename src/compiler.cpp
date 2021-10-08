@@ -1565,7 +1565,7 @@ bool JSCompiler::CompileOpDefFun(JSFunction *jsfun) {
       CompileGeneric3(INTRN_JS_NEW_FUNCTION, ptr, jsbuilder_->GetConstInt(0), jsbuilder_->GetConstUInt32(attrs), true);
 
     MIRSymbol *funcObj;
-    if (mfun->scope->IsWithEnv()) {
+    if (mfun->scope->IsWithEnv() && curFunc != jsmain_) {
       funcObj = jsbuilder_->GetOrCreateLocalDecl(name, jsvalueType);
     } else {
       funcObj = jsbuilder_->GetOrCreateGlobalDecl(name, jsvalueType);
