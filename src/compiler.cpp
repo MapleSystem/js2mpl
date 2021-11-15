@@ -2955,13 +2955,20 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
       case JSOP_OR:    /*68, 5, 1, 1*/
       case JSOP_AND: { /*69, 5, 1, 1*/
         int offset = GET_JUMP_OFFSET(pc);
+        jsbytecode *eqPc = pc + offset;
+        // assert(JSOp(*eqPc) == JSOP_IFEQ);
         BaseNode *opnd0 = CheckConvertToJSValueType(Pop());  // Pop IFEQ stmt
         BaseNode *cond0 = CheckConvertToBoolean(opnd0);
         MIRSymbol *tempVar = SymbolFromSavingInATemp(opnd0, true);
         opnd0 = jsbuilder_->CreateExprDread(GlobalTables::GetTypeTable().GetUInt1(), tempVar);
         Push(opnd0);
 
-        LabelIdx mirlabel = GetorCreateLabelofPc(pc + offset);
+        LabelIdx mirlabel;
+        if (op == JSOP_AND && eqPc && JSOp(*eqPc) == JSOP_IFEQ) {
+          mirlabel = GetorCreateLabelofPc(pc + offset + GET_JUMP_OFFSET(eqPc));
+        } else {
+          mirlabel = GetorCreateLabelofPc(pc + offset);
+        }
         CondGotoNode *gotonode =
           jsbuilder_->CreateStmtCondGoto(cond0, (op == JSOP_AND) ? OP_brfalse : OP_brtrue, mirlabel);
         jsbuilder_->AddStmtInCurrentFunctionBody(gotonode);
