@@ -96,8 +96,15 @@ MIRSymbol *JSCompiler::CreateTempJSValueTypeVar() {
 
 void JSCompiler::InitThisPropAll(BaseNode *bNode) {
   MapleVector<BaseNode *> arguments(mirModule->memPoolAllocator.Adapter());
-  arguments.push_back(bNode);
-  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_INIT_THIS_PROP_BY_NAME,  arguments, (const MIRSymbol *)NULL);
+  bool isBistring = (bNode->op == OP_intrinsicop && static_cast<IntrinsicopNode *>(bNode)->intrinsic == INTRN_JS_GET_BISTRING);
+  if (isBistring) {
+    BaseNode *kid = bNode->Opnd(0);
+    JS_ASSERT(kid->op = OP_constval);
+    arguments.push_back(kid);
+  } else {
+    arguments.push_back(bNode);
+  }
+  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(isBistring ? INTRN_JSOP_INIT_THIS_PROP_BY_BINAME : INTRN_JSOP_INIT_THIS_PROP_BY_NAME,  arguments, (const MIRSymbol *)NULL);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
 }
 
@@ -106,9 +113,16 @@ void JSCompiler::InitThisPropWithUndefined(bool doit, BaseNode *bNode) {
     BaseNode *undefined = CompileOpConstValue(JSTYPE_UNDEFINED, 0);
     // BaseNode *stmt = jsbuilder_->CreateStmtDassign(var, 0, undefined, linenum_);
     MapleVector<BaseNode *> arguments(mirModule->memPoolAllocator.Adapter());
-    arguments.push_back(bNode);
+    bool isBistring = (bNode->op == OP_intrinsicop && static_cast<IntrinsicopNode *>(bNode)->intrinsic == INTRN_JS_GET_BISTRING);
+    if (isBistring) {
+      BaseNode *kid = bNode->Opnd(0);
+      JS_ASSERT(kid->op = OP_constval);
+      arguments.push_back(kid);
+    } else {
+      arguments.push_back(bNode);
+    }
     arguments.push_back(undefined);
-    StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_SET_THIS_PROP_BY_NAME,  arguments, (const MIRSymbol *)NULL);
+    StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(isBistring ? INTRN_JSOP_SET_THIS_PROP_BY_BINAME : INTRN_JSOP_SET_THIS_PROP_BY_NAME,  arguments, (const MIRSymbol *)NULL);
     jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
   }
 }
@@ -1464,16 +1478,28 @@ BaseNode *JSCompiler::CompileOpBindName(JSScript *script, jsbytecode *pc) {
 void JSCompiler::CreateThisPropSetName(JSString *str, BaseNode *val, unsigned lineNum) {
   BaseNode *bNode = CompileOpString(str);
   MapleVector<BaseNode *> arguments(mirModule->memPoolAllocator.Adapter());
-  arguments.push_back(bNode);
+  bool isBistring = (bNode->op == OP_intrinsicop && static_cast<IntrinsicopNode *>(bNode)->intrinsic == INTRN_JS_GET_BISTRING);
+  if (isBistring) {
+    BaseNode *kid = bNode->Opnd(0);
+    JS_ASSERT(kid->op = OP_constval);
+    arguments.push_back(kid);
+  } else {
+    arguments.push_back(bNode);
+  }
   arguments.push_back(val);
-  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(INTRN_JSOP_SET_THIS_PROP_BY_NAME,  arguments, (const MIRSymbol *)NULL);
+  StmtNode *stmt = jsbuilder_->CreateStmtIntrinsicCallAssigned(isBistring ? INTRN_JSOP_SET_THIS_PROP_BY_BINAME : INTRN_JSOP_SET_THIS_PROP_BY_NAME,  arguments, (const MIRSymbol *)NULL);
   stmt->srcPosition.SetLinenum(lineNum);
   jsbuilder_->AddStmtInCurrentFunctionBody(stmt);
 }
 
 BaseNode* JSCompiler::CreateThisPropGetName(JSString *str) {
   BaseNode *bNode = CompileOpString(str);
-  BaseNode *getThis = CompileGeneric1(INTRN_JSOP_GET_THIS_PROP_BY_NAME, bNode, false);
+  bool isBistring = (bNode->op == OP_intrinsicop && static_cast<IntrinsicopNode *>(bNode)->intrinsic == INTRN_JS_GET_BISTRING);
+  if (isBistring) {
+    bNode = bNode->Opnd(0);
+    JS_ASSERT(bNode->op = OP_constval);
+  }
+  BaseNode *getThis = CompileGeneric1(isBistring ? INTRN_JSOP_GET_THIS_PROP_BY_BINAME : INTRN_JSOP_GET_THIS_PROP_BY_NAME, bNode, false);
   return getThis;
 }
 
