@@ -763,8 +763,6 @@ js_builtin_id JSCompiler::EcmaNameToId(char *name) {
     return JS_BUILTIN_FUNCTION;
   } else if (!strcmp(name, "exports")) {
     return JS_BUILTIN_EXPORTS;  // for plugin
-  } else if (!strcmp(name, "module")) {
-    return JS_BUILTIN_MODULE;
   } else if (!strcmp(name, "Math")) {
     return JS_BUILTIN_MATH;
   } else if (!strcmp(name, "JSON")) {
@@ -2919,7 +2917,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
             // set to return exports anyway
             // BaseNode *id_node = jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE);
             BaseNode *node1 = CheckConvertToJSValueType(
-              CompileGeneric1(INTRN_JS_GET_BIOBJECT, jsbuilder_->GetConstUInt32((uint32_t)JS_BUILTIN_MODULE), false));
+               CompileGeneric1(INTRN_JSOP_GET_THIS_PROP_BY_BINAME, jsbuilder_->GetConstUInt32((uint32_t)JSBUILTIN_STRING_MODULE), false));
+              // CompileGeneric1(INTRN_JS_GET_BIOBJECT, jsbuilder_->GetConstUInt32((uint32_t)JS_BUILTIN_MODULE), false));
             BaseNode *node2 = CheckConvertToJSValueType(CompileGeneric1(
               INTRN_JS_GET_BISTRING, jsbuilder_->GetConstUInt32((uint32_t)JSBUILTIN_STRING_EXPORTS), false));
             BaseNode *retExpr = CompileGeneric2(INTRN_JSOP_GETPROP, node1, node2, true);
@@ -2935,7 +2934,8 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
           if (jsbuilder_->IsPluginFunc(func)) {
             // BaseNode *id_node = jsbuilder_->GetConstUInt32((uint32_t) JS_BUILTIN_MODULE);
             BaseNode *node1 = CheckConvertToJSValueType(
-              CompileGeneric1(INTRN_JS_GET_BIOBJECT, jsbuilder_->GetConstUInt32((uint32_t)JS_BUILTIN_MODULE), false));
+               CompileGeneric1(INTRN_JSOP_GET_THIS_PROP_BY_BINAME, jsbuilder_->GetConstUInt32((uint32_t)JSBUILTIN_STRING_MODULE), false));
+              // CompileGeneric1(INTRN_JS_GET_BIOBJECT, jsbuilder_->GetConstUInt32((uint32_t)JS_BUILTIN_MODULE), false));
             BaseNode *node2 = CheckConvertToJSValueType(CompileGeneric1(
               INTRN_JS_GET_BISTRING, jsbuilder_->GetConstUInt32((uint32_t)JSBUILTIN_STRING_EXPORTS), false));
             BaseNode *retExpr = CompileGeneric2(INTRN_JSOP_GETPROP, node1, node2, true);
