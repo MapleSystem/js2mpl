@@ -37,6 +37,9 @@ bool OperandStack::HasTheSameGetThisProp(BaseNode *cur, BaseNode *destNode) {
     if (intrinNode->intrinsic == INTRN_JSOP_GET_THIS_PROP_BY_NAME &&
       intrinNode->nOpnd[0] == destNode) {
       return true;
+    } else if (intrinNode->intrinsic == INTRN_JSOP_GET_THIS_PROP_BY_BINAME && destNode->op == OP_intrinsicop &&
+    destNode->Opnd(0) == intrinNode->Opnd(0)) {  // the same bi string number
+      return true;
     }
   }
   if (UnaryNode *unNode = dynamic_cast<UnaryNode *>(cur)) {
