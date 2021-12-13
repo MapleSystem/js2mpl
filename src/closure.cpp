@@ -269,6 +269,7 @@ bool JSClosure::ProcessOpDefFun(jsbytecode *pc) {
   return true;
 }
 
+
 // JSOP_LAMBDA 131
 void JSClosure::ProcessOpLambda(jsbytecode *pc) {
   JSFunction *jsfun = currscr_->getFunction(GET_UINT32_INDEX(pc));
@@ -520,6 +521,7 @@ bool JSClosure::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *
         ProcessOpDefFun(pc);
         break;
       }
+      case JSOP_LAMBDA_ARROW:
       case JSOP_LAMBDA: { /*130, 5, 0, 1*/
         ProcessOpLambda(pc);
         break;
@@ -538,7 +540,7 @@ bool JSClosure::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *
         JSMIRFunction *func = jsbuilder_->GetCurrentFunction();
         char *name = GetLocalVar(func, i);
         // not count the init
-        if (lastOp != JSOP_LAMBDA) {
+        if (lastOp != JSOP_LAMBDA || lastOp != JSOP_LAMBDA_ARROW) {
           UpdateFuncMod(name);
         }
         break;
@@ -553,7 +555,7 @@ bool JSClosure::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *
       case JSOP_BINDNAME: {
         // workaround for Mozilla 31.2 generating JSOP_NAME instead of JSOP_GETGNAME (Mozilla 52).
         JSAtom *atom = script->getName(pc);
-        
+
         char *name = Util::GetString(atom, mp_, jscontext_);
         JS_ASSERT(!name && "empty name");
         js_builtin_id id = JSCompiler::EcmaNameToId(name);

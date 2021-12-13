@@ -204,6 +204,7 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
       cout << right << setw(5) << lineNo << " " << left << setw(20) << Util::getOpcodeName[op] << str << endl;
       switch (op) {
         case JSOP_DEFFUN:   /*127, 5, 0, 0*/
+        case JSOP_LAMBDA_ARROW:
         case JSOP_LAMBDA: { /*130, 5, 0, 1*/
           JSFunction *jsfun = script->getFunction(GET_UINT32_INDEX(pc));
           scr = jsfun->nonLazyScript();
@@ -244,6 +245,7 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
 
       switch (op) {
         case JSOP_DEFFUN:   /*127, 5, 0, 0*/
+        case JSOP_LAMBDA_ARROW:
         case JSOP_LAMBDA: { /*130, 5, 0, 1*/
           jsfun = script->getFunction(GET_UINT32_INDEX(pc));
           DEBUGPRINT3(jsfun);
@@ -266,7 +268,7 @@ bool Scope::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcen
             bytecodeAnonyFunc.push_back(p);
           }
           DEBUGPRINT3(name);
-          if (op != JSOP_LAMBDA) funcNames_.push_back(name);
+          if (op != JSOP_LAMBDA || op!= JSOP_LAMBDA_ARROW) funcNames_.push_back(name);
           SetJSFunc(name, jsfun);
           pair<JSScript *, char *> p(scr, name);
           scriptstack_.push(p);
@@ -469,6 +471,7 @@ void Scope::GetJSOPOperand(JSOp op, JSScript *script, jsbytecode *pc, std::strin
       name = Util::GetString(atom, mp_, ctx_);
       break;
     }
+    case JSOP_LAMBDA_ARROW:
     case JSOP_LAMBDA: {
       jsfun = script->getFunction(GET_UINT32_INDEX(pc));
       atom = jsfun->displayAtom();

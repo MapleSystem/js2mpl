@@ -3647,16 +3647,23 @@ bool JSCompiler::CompileScriptBytecodes(JSScript *script, jsbytecode *pcstart, j
         CompileOpDefFun(jsfun);
         break;
       }
+      case JSOP_LAMBDA_ARROW: { /*131, 5, 1, 1*/
+        JSFunction *jsfun = script->getFunction(GET_UINT32_INDEX(pc));
+        BaseNode *bn = CompileOpLambda(pc, jsfun);
+        Pop();
+        Push(bn);
+        break;
+      }
       case JSOP_LAMBDA: { /*130, 5, 0, 1*/
         JSFunction *jsfun = script->getFunction(GET_UINT32_INDEX(pc));
         BaseNode *bn = CompileOpLambda(pc, jsfun);
         Push(bn);
         break;
       }
-      case JSOP_LAMBDA_ARROW: { /*131, 5, 1, 1*/
-        SIMULATESTACK(1, 1);
-        break;
-      }
+      // case JSOP_LAMBDA_ARROW: { /*131, 5, 1, 1*/
+      //   SIMULATESTACK(1, 1);
+      //  break;
+      // }
       case JSOP_CALLEE: { /*132, 1, 0, 1*/
         char *name = funcstack_.top()->scope->GetName();
         char *objname = Util::GetNameWithSuffix(name, "_obj_", mp_);
