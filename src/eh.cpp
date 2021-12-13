@@ -91,6 +91,7 @@ bool EH::BuildSection(JSScript *script, jsbytecode *pcstart, jsbytecode *pcend) 
     // collecting EH info
     switch (op) {
       case JSOP_DEFFUN:
+      case JSOP_LAMBDA_ARROW:
       case JSOP_LAMBDA: {
         jsfun = script->getFunction(GET_UINT32_INDEX(pc));
         scr = jsfun->nonLazyScript();
